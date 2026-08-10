@@ -15,6 +15,7 @@ import argparse
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 
 SPEC_ORDER = ["baseline", "slack_plus", "core"]
@@ -61,6 +62,7 @@ def metrics_from_release(release: dict) -> dict:
         "income_pressure_tilt": summary["income_pressure_tilt"],
         "most_pressured_group": summary["most_pressured_group"],
         "least_pressured_group": summary["least_pressured_group"],
+        "slack": release["dmi_by_group"][0]["slack"],
         "slack_measure": params["slack_measure"],
     }
 
@@ -112,17 +114,18 @@ def build_notes(releases_by_spec: dict) -> tuple[dict, list[str]]:
     return robustness, notes
 
 
-def main():
-    args = parse_args()
-    reference_period = args.reference_period
-
-    output_dir = Path("data/outputs")
-    releases_by_spec = {}
-
-    for spec_id in SPEC_ORDER:
-        suffix = SPEC_META[spec_id]["suffix"]
-        release_path = output_dir / f"dmi_release_{reference_period}{suffix}.json"
-        releases_by_spec[spec_id] = load_release(release_path)
+def build_specifications_manifest(
+    reference_period: str,
+    output_dir: Path = Path("data/outputs"),
+    releases_by_spec: Optional[dict] = None,
+) -> dict:
+    """Build the three-spec manifest, optionally from preloaded releases."""
+    if releases_by_spec is None:
+        releases_by_spec = {}
+        for spec_id in SPEC_ORDER:
+            suffix = SPEC_META[spec_id]["suffix"]
+            release_path = output_dir / f"dmi_release_{reference_period}{suffix}.json"
+            releases_by_spec[spec_id] = load_release(release_path)
 
     manifest_specs = []
     for spec_id in SPEC_ORDER:
@@ -151,12 +154,20 @@ def main():
         }
     }
 
+    return manifest
+
+
+def main():
+    args = parse_args()
+    output_dir = Path("data/outputs")
+    manifest = build_specifications_manifest(args.reference_period, output_dir)
+
     output_path = output_dir / "specifications.json"
     with open(output_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
     print(f"✓ Wrote specifications manifest: {output_path}")
-    for note in notes:
+    for note in manifest["robustness_assessment"]["notes"]:
         print(f"  - {note}")
 
     return 0

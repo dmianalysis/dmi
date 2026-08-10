@@ -1,6 +1,6 @@
 {
   "schema_version": "0.2.0",
-  "generated_at": "2026-07-15T11:51:49.828612Z",
+  "generated_at": "2026-08-10T05:08:42.852531Z",
   "reference_period": "2026-06",
   "headline_spec": "baseline",
   "specifications": [
@@ -16,6 +16,7 @@
         "income_pressure_tilt": -0.20237538623115725,
         "most_pressured_group": "Q4",
         "least_pressured_group": "Q1",
+        "slack": 4.2,
         "slack_measure": "u3"
       }
     },
@@ -31,6 +32,7 @@
         "income_pressure_tilt": -0.20237538623115725,
         "most_pressured_group": "Q4",
         "least_pressured_group": "Q1",
+        "slack": 7.9,
         "slack_measure": "u6"
       }
     },
@@ -46,6 +48,7 @@
         "income_pressure_tilt": -0.20237538623115725,
         "most_pressured_group": "Q4",
         "least_pressured_group": "Q1",
+        "slack": 4.2,
         "slack_measure": "u3"
       }
     }

@@ -24,7 +24,6 @@ from scripts.compute_dmi import (
     load_slack_data,
     load_weights,
     save_dmi_output,
-    save_release_note,
     update_health_json,
     update_latest_json,
     update_releases_json,
@@ -66,9 +65,11 @@ def ensure_period_available(reference_period: str, cpi_df, slack_df) -> None:
         )
 
 
-def load_prior_release(reference_period: str):
-    """Load the most recent prior release, excluding the target period if already present."""
-    releases_path = Path("data/outputs/releases.json")
+def load_prior_release(
+    reference_period: str,
+    releases_path: Path = Path("data/outputs/releases.json"),
+):
+    """Load the most recent release strictly before the target period."""
     if not releases_path.exists():
         return None
 
@@ -82,7 +83,10 @@ def load_prior_release(reference_period: str):
     else:
         releases = []
 
-    releases = [r for r in releases if r.get('release_id') != reference_period]
+    releases = [
+        r for r in releases
+        if r.get('release_id') and r['release_id'] < reference_period
+    ]
     if not releases:
         return None
 
@@ -104,6 +108,79 @@ def build_metrics_payload(results: dict) -> dict:
     }
 
 
+def load_release_manifest_entry(
+    reference_period: str,
+    releases_path: Path = Path("data/outputs/releases.json"),
+):
+    """Return the published manifest entry for a period when one exists."""
+    if not releases_path.exists():
+        return None
+    with open(releases_path, "r") as f:
+        manifest = json.load(f)
+    return next(
+        (
+            release
+            for release in manifest.get("releases", [])
+            if release.get("release_id") == reference_period
+        ),
+        None,
+    )
+
+
+def generate_release_note_for_period(
+    reference_period: str,
+    specifications: dict = None,
+    output_dir: Path = Path("data/outputs"),
+):
+    """Render the baseline note after the three-spec manifest is available."""
+    baseline_path = output_dir / f"dmi_release_{reference_period}.json"
+    if not baseline_path.exists():
+        raise SystemExit(f"Missing baseline release file: {baseline_path}")
+    with open(baseline_path, "r") as f:
+        baseline = json.load(f)
+
+    if specifications is None:
+        specifications_path = output_dir / "specifications.json"
+        if not specifications_path.exists():
+            raise SystemExit(
+                f"Missing specifications manifest: {specifications_path}. "
+                "Compute all three specifications first."
+            )
+        with open(specifications_path, "r") as f:
+            specifications = json.load(f)
+
+    releases_path = output_dir / "releases.json"
+    release_entry = load_release_manifest_entry(reference_period, releases_path)
+    if release_entry:
+        summary = release_entry.get("summary", "")
+        published_at = release_entry.get("published_at")
+    else:
+        year, month = reference_period.split("-")
+        current_release = {
+            "release_id": reference_period,
+            "data_through_label": f"{MONTH_NAMES[int(month) - 1]} {year}",
+            "metrics": build_metrics_payload(baseline),
+        }
+        prior_release = load_prior_release(reference_period, releases_path)
+        _, summary = build_release_summary(current_release, prior_release)
+        published_at = None
+
+    release_html = generate_release_note_html(
+        reference_period=reference_period,
+        metrics=build_metrics_payload(baseline),
+        summary=summary,
+        specifications=specifications,
+        published_at=published_at,
+    )
+
+    release_dir = output_dir / "releases"
+    release_dir.mkdir(parents=True, exist_ok=True)
+    release_path = release_dir / f"{reference_period}.html"
+    release_path.write_text(release_html)
+    print(f"✓ Saved release note to {release_path}")
+    return release_path
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compute and publish a DMI release for an explicit reference period."
@@ -123,6 +200,11 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=2023,
         help='Year weights were published, in YYYY format (for example 2023).',
+    )
+    parser.add_argument(
+        "--release-note-only",
+        action="store_true",
+        help="Generate the baseline release note from completed three-spec outputs.",
     )
     return parser.parse_args()
 
@@ -195,6 +277,12 @@ def spec_description(spec: str) -> str:
 def main() -> int:
     args = parse_args()
     reference_period = args.reference_period
+
+    if args.release_note_only:
+        print(f"Generating deferred release note for {reference_period}...")
+        generate_release_note_for_period(reference_period)
+        return 0
+
     spec = args.spec
     weights_year = args.weights_year
     suffix = output_suffix_for_spec(spec)
@@ -284,7 +372,8 @@ def main() -> int:
     print("=" * 80)
     export_csv_parquet(results, reference_period, spec)
 
-    # only baseline gets release note + manifests + health + timeseries
+    # Baseline owns manifests + health + timeseries. The release note is
+    # generated separately after all three specs and specifications.json land.
     if spec == "baseline":
         year, month = reference_period.split('-')
         current_release = {
@@ -294,16 +383,6 @@ def main() -> int:
         }
         prior_release = load_prior_release(reference_period)
         summary_facts, summary = build_release_summary(current_release, prior_release)
-    
-        print("\n" + "=" * 80)
-        print("Generating release note HTML...")
-        print("=" * 80)
-        release_html = generate_release_note_html(
-            reference_period=reference_period,
-            metrics=build_metrics_payload(results),
-            summary=summary,
-        )
-        save_release_note(release_html, reference_period)
     
         print("\n" + "=" * 80)
         print("Updating release manifests...")

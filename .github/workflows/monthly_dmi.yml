@@ -105,6 +105,12 @@ jobs:
           python -m scripts.build_specifications_manifest ${{ steps.period.outputs.period }}
           test -f data/outputs/specifications.json
 
+      - name: Generate deferred baseline release note
+        run: |
+          echo "Generating release note after all three specifications are available..."
+          python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --release-note-only
+          test -f data/outputs/releases/${{ steps.period.outputs.period }}.html
+
       - name: Update timeseries
         run: |
           echo "Appending ${{ steps.period.outputs.period }} to timeseries..."
@@ -247,7 +253,7 @@ jobs:
           cp data/outputs/dmi-"$PERIOD"*.parquet deploy/data/outputs/ || true
 
           # Copy release notes
-          cp data/outputs/releases/"$PERIOD".html deploy/data/outputs/releases/ || true
+          cp data/outputs/releases/"$PERIOD".html deploy/data/outputs/releases/
 
           # Copy published timeseries / lightweight published assets
           # IMPORTANT: exclude historical from routine monthly deploys
