@@ -4,10 +4,10 @@ authors:
   - family-names: Williams
     given-names: Thomas C.
 title: "Distributional Misery Index: Measuring Economic Pressure Across Income Groups"
-version: 0.1.10
-date-released: 2025-12-17
-url: "https://github.com/tcwilliams79/dmi"
-repository-code: "https://github.com/tcwilliams79/dmi"
+version: 0.1.12
+date-released: 2026-08-11
+url: "https://github.com/dmianalysis/dmi"
+repository-code: "https://github.com/dmianalysis/dmi"
 license: MIT
 keywords:
   - economics
@@ -40,5 +40,5 @@ references:
       - name: "U.S. Bureau of Labor Statistics"
     year: 2023
 contact:
-  - name: Thomas C. Williams
+  - name: DMI Analysis
     website: "https://dmianalysis.org"
