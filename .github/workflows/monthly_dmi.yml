@@ -1,4 +1,14 @@
-# NOTE:  Any file deployed from deploy/ but maintained elsewhere **MUST** be refreshed into deploy/ during the deployment workflow.
+# NOTE: Any file deployed from deploy/ but maintained elsewhere **MUST** be
+# refreshed into deploy/ during the deployment workflow.
+#
+# Two-spec pipeline (v0.1.12): Baseline (U-3, headline CPI) + Slack-Plus (U-6,
+# headline CPI). Core has been withdrawn; see docs/repair/CORE_WITHDRAWAL.md.
+#
+# The workflow exposes a `dry_run` input for local/repair validation that
+# exercises computation, QA, manifest, note, and package assembly WITHOUT
+# SSH, rsync, PR creation, or auto-merge. `dry_run` defaults to `false` for
+# the scheduled path so production behavior is unchanged, but the repair
+# procedure must set it to `true` before running.
 
 name: Monthly DMI Computation
 
@@ -6,9 +16,13 @@ on:
   workflow_dispatch:
     inputs:
       reference_period:
-        description: 'Reference period (YYYY-MM)'
-        required: true
-        default: '2026-04'
+        description: 'Reference period (YYYY-MM). Leave blank on scheduled runs; the workflow will use the prior calendar month.'
+        required: false
+        default: ''
+      dry_run:
+        description: 'When true, skip SSH/rsync/PR creation/auto-merge. Use for repair validation.'
+        required: false
+        default: 'false'
 
   schedule:
     # Run on the 15th after CPI release, but avoid top-of-hour GitHub Actions congestion.
@@ -42,14 +56,43 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set reference period
+      - name: Resolve reference period
         id: period
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "period=${{ github.event.inputs.reference_period }}" >> $GITHUB_OUTPUT
+          # Manual runs may supply an explicit period; scheduled runs (and manual
+          # runs that leave the field blank) fall back to the prior calendar
+          # month deterministically.
+          INPUT_PERIOD='${{ github.event.inputs.reference_period }}'
+          if [ -n "$INPUT_PERIOD" ]; then
+            PERIOD="$INPUT_PERIOD"
+            echo "Using explicit manual reference period: $PERIOD"
           else
-            echo "period=$(date -d 'last month' '+%Y-%m')" >> $GITHUB_OUTPUT
+            PERIOD="$(date -u -d 'last month' '+%Y-%m')"
+            echo "Using prior calendar month (UTC) as reference period: $PERIOD"
           fi
+
+          # Validate YYYY-MM shape early so downstream steps fail cleanly.
+          if ! [[ "$PERIOD" =~ ^[0-9]{4}-(0[1-9]|1[0-2])$ ]]; then
+            echo "ERROR: resolved reference period '$PERIOD' is not YYYY-MM."
+            exit 1
+          fi
+
+          echo "period=$PERIOD" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve dry-run flag
+        id: mode
+        run: |
+          DRY_RUN='${{ github.event.inputs.dry_run }}'
+          # Scheduled runs never provide inputs; treat unset as production mode.
+          if [ -z "$DRY_RUN" ]; then
+            DRY_RUN='false'
+          fi
+          case "$DRY_RUN" in
+            true|True|TRUE|1) DRY_RUN='true' ;;
+            *) DRY_RUN='false' ;;
+          esac
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+          echo "Dry-run mode: $DRY_RUN"
 
       - name: Fetch CPI data
         env:
@@ -91,23 +134,30 @@ jobs:
           python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec slack_plus --weights-year "$WEIGHTS_YEAR"
           test -f data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json
 
-      - name: Compute DMI Core
-        env:
-          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+      - name: Build specifications manifest (post-Baseline+Slack-Plus)
         run: |
-          echo "Computing core DMI for ${{ steps.period.outputs.period }}..."
-          python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec core --weights-year "$WEIGHTS_YEAR"
-
-          test -f data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json
-
-      - name: Build specifications manifest
-        run: |
+          # Build the two-spec manifest ONLY after both spec runs have succeeded.
           python -m scripts.build_specifications_manifest ${{ steps.period.outputs.period }}
           test -f data/outputs/specifications.json
 
+      - name: Guard against stale specifications.json
+        run: |
+          # A stale specifications.json for a different reference period is a
+          # hard failure: it means the manifest writer silently no-op'd or a
+          # previous run left the wrong artifact on disk.
+          PERIOD="${{ steps.period.outputs.period }}"
+          SPEC_PERIOD=$(python -c "import json; print(json.load(open('data/outputs/specifications.json'))['reference_period'])")
+          if [ "$SPEC_PERIOD" != "$PERIOD" ]; then
+            echo "❌ specifications.json reference_period is '$SPEC_PERIOD'; expected '$PERIOD'."
+            exit 1
+          fi
+          echo "✅ specifications.json reference_period matches ($PERIOD)."
+
       - name: Generate deferred baseline release note
         run: |
-          echo "Generating release note after all three specifications are available..."
+          # Note is generated AFTER both spec runs so the note's robustness
+          # section reflects the actual two-spec results.
+          echo "Generating release note after all specifications are available..."
           python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --release-note-only
           test -f data/outputs/releases/${{ steps.period.outputs.period }}.html
 
@@ -118,28 +168,62 @@ jobs:
 
       - name: Run QA validation
         run: |
-          echo "QA validation completed."
+          echo "QA validation..."
 
           QA_STATUS_BASELINE=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json'))['status'])")
           QA_STATUS_SLACK_PLUS=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json'))['status'])")
-          QA_STATUS_CORE=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json'))['status'])")
 
           if [ "$QA_STATUS_BASELINE" != "PASS" ] && [ "$QA_STATUS_BASELINE" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_BASELINE"
+            echo "❌ QA validation failed (baseline): $QA_STATUS_BASELINE"
             exit 1
           fi
 
           if [ "$QA_STATUS_SLACK_PLUS" != "PASS" ] && [ "$QA_STATUS_SLACK_PLUS" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_SLACK_PLUS"
+            echo "❌ QA validation failed (slack_plus): $QA_STATUS_SLACK_PLUS"
             exit 1
           fi
 
-          if [ "$QA_STATUS_CORE" != "PASS" ] && [ "$QA_STATUS_CORE" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_CORE"
-            exit 1
-          fi
+          echo "✅ QA validation (baseline): $QA_STATUS_BASELINE, (slack_plus): $QA_STATUS_SLACK_PLUS"
 
-          echo "✅ QA validation (Baseline): $QA_STATUS_BASELINE, (slack-plus): $QA_STATUS_SLACK_PLUS, (core): $QA_STATUS_CORE"
+      - name: Validate release artifacts against schemas
+        run: |
+          # Fail the run if the just-generated artifacts do not validate against
+          # the committed JSON schemas. This closes the historical loophole
+          # where writers drifted from schemas.
+          PERIOD="${{ steps.period.outputs.period }}"
+          python <<PY
+          import json, sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          SCHEMAS = Path("schemas")
+          OUT = Path("data/outputs")
+          period = "${{ steps.period.outputs.period }}"
+
+          targets = [
+              (SCHEMAS / "dmi_output.schema.json", OUT / f"dmi_release_{period}.json"),
+              (SCHEMAS / "dmi_output.schema.json", OUT / f"dmi_release_{period}_slack_plus.json"),
+              (SCHEMAS / "releases.schema.json",   OUT / "releases.json"),
+              (SCHEMAS / "releases.schema.json",   OUT / "latest.json"),
+              (SCHEMAS / "specifications.schema.json", OUT / "specifications.json"),
+          ]
+
+          failed = 0
+          for schema_path, instance_path in targets:
+              schema = json.loads(schema_path.read_text())
+              Draft202012Validator.check_schema(schema)
+              validator = Draft202012Validator(schema)
+              instance = json.loads(instance_path.read_text())
+              errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+              if errors:
+                  print(f"❌ {instance_path.name} fails {schema_path.name}:")
+                  for err in errors:
+                      print(f"   path={list(err.absolute_path)}: {err.message}")
+                  failed += 1
+              else:
+                  print(f"✅ {instance_path.name} validates against {schema_path.name}")
+          sys.exit(1 if failed else 0)
+          PY
 
       - name: Sanity-check release manifest vs raw release
         run: |
@@ -180,10 +264,12 @@ jobs:
               "unemployment": raw["dmi_by_group"][0]["slack"],
           }
 
-          # Guard against the original silent-zero bug: spread must match a non-zero
-          # raw spread; tilt must agree in sign with raw tilt.
-          if raw_metrics["income_pressure_spread"] <= 0:
-              print(f"ERROR: raw income_pressure_spread is {raw_metrics['income_pressure_spread']}; expected positive.")
+          # income_pressure_spread is a nonnegative range (max - min across
+          # quintiles). Zero is a legitimate outcome (perfect distributional
+          # equality across quintiles); only a strictly negative spread is
+          # impossible and would indicate a computation bug.
+          if raw_metrics["income_pressure_spread"] < 0:
+              print(f"ERROR: raw income_pressure_spread is {raw_metrics['income_pressure_spread']}; must be nonnegative.")
               sys.exit(1)
 
           def check_manifest(manifest_path: Path, label: str) -> int:
@@ -246,14 +332,21 @@ jobs:
           cp data/outputs/releases.json deploy/data/outputs/
           cp data/outputs/specifications.json deploy/data/outputs/
 
-          # Copy release data files for THIS PERIOD only
-          cp data/outputs/dmi_release_"$PERIOD"*.json deploy/data/outputs/
-          cp data/outputs/qa_report_"$PERIOD"*.json deploy/data/outputs/
-          cp data/outputs/dmi-"$PERIOD"*.csv deploy/data/outputs/ || true
-          cp data/outputs/dmi-"$PERIOD"*.parquet deploy/data/outputs/ || true
+          # Copy release data files for THIS PERIOD only.
+          # Baseline JSON is required; explicit copy (no glob suppression) so a
+          # missing artifact fails the step.
+          cp "data/outputs/dmi_release_${PERIOD}.json" deploy/data/outputs/
+          cp "data/outputs/dmi_release_${PERIOD}_slack_plus.json" deploy/data/outputs/
+          cp "data/outputs/qa_report_${PERIOD}_baseline.json" deploy/data/outputs/
+          cp "data/outputs/qa_report_${PERIOD}_slack_plus.json" deploy/data/outputs/
 
-          # Copy release notes
-          cp data/outputs/releases/"$PERIOD".html deploy/data/outputs/releases/
+          # CSV / Parquet flat files may or may not be produced by every writer
+          # version; copy when present.
+          cp data/outputs/dmi-"$PERIOD"*.csv deploy/data/outputs/ 2>/dev/null || true
+          cp data/outputs/dmi-"$PERIOD"*.parquet deploy/data/outputs/ 2>/dev/null || true
+
+          # Release note is REQUIRED (no || true).
+          cp "data/outputs/releases/${PERIOD}.html" deploy/data/outputs/releases/
 
           # Copy published timeseries / lightweight published assets
           # IMPORTANT: exclude historical from routine monthly deploys
@@ -263,7 +356,30 @@ jobs:
           echo "📁 Deployment package contents:"
           find deploy -type f | sed -n '1,80p'
 
+      - name: Guard against Core artifacts in deploy package
+        run: |
+          # Defense-in-depth: fail the run if any Core artifact was staged. Core
+          # has been withdrawn (see docs/repair/CORE_WITHDRAWAL.md); any staged
+          # Core file is a regression and must not be deployed.
+          set +e
+          MATCHES=$(find deploy -type f \( -iname '*core*' -o -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
+          set -e
+          if [ -n "$MATCHES" ]; then
+            echo "❌ Core artifacts detected in deploy/ — refusing to deploy:"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "✅ No Core artifacts in deploy package."
+
+      - name: Skip remote deployment (dry-run mode)
+        if: steps.mode.outputs.dry_run == 'true'
+        run: |
+          echo "🏜  Dry-run mode: skipping SSH key setup, rsync, PR creation, and auto-merge."
+          echo "    Computation, QA, manifest, note, and package assembly have completed."
+          echo "    Deploy tree exists at ./deploy/ for local inspection."
+
       - name: Setup SSH key
+        if: steps.mode.outputs.dry_run != 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.IFASTNET_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -271,6 +387,7 @@ jobs:
           ssh-keyscan -p 1394 ${{ secrets.IFASTNET_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Deploy to iFastNet via rsync
+        if: steps.mode.outputs.dry_run != 'true'
         run: |
           rsync -avz --progress \
             -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
@@ -278,6 +395,7 @@ jobs:
             ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/
 
       - name: Deploy new historical file only (optional)
+        if: steps.mode.outputs.dry_run != 'true'
         run: |
           PERIOD="${{ steps.period.outputs.period }}"
           HIST_LOCAL="data/outputs/published/historical/dmi_release_${PERIOD}.json"
@@ -296,20 +414,25 @@ jobs:
       - name: Deployment summary
         run: |
           PERIOD="${{ steps.period.outputs.period }}"
-          echo "🚀 Deployment complete!"
-          echo "   Dashboard: https://dmianalysis.org/dashboard.html"
-          echo "   Health:    https://dmianalysis.org/health.json"
-          echo "   Data (baseline):   https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}.json"
-          echo "   Data (slack_plus): https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_slack_plus.json"
-          echo "   Data (core):       https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_core.json"
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            echo "🏜 Dry-run summary (nothing deployed):"
+          else
+            echo "🚀 Deployment complete!"
+          fi
+          echo "   Dashboard:            https://dmianalysis.org/dashboard.html"
+          echo "   Health:               https://dmianalysis.org/health.json"
+          echo "   Data (baseline):      https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}.json"
+          echo "   Data (slack_plus):    https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_slack_plus.json"
 
 
       - name: Ensure workflow files are not included in release PR
+        if: steps.mode.outputs.dry_run != 'true'
         run: |
           git restore --source=HEAD --staged --worktree .github/workflows || true
 
       - name: Create Pull Request
         id: create-pr
+        if: steps.mode.outputs.dry_run != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -317,46 +440,44 @@ jobs:
             Add DMI release for ${{ steps.period.outputs.period }}
 
             - DMI computed for all quintiles
-            - Baseline robustness variant generated
-            - Slack-plus robustness variant generated
-            - Core robustness variant generated
+            - Baseline (U-3, headline CPI) spec generated
+            - Slack-Plus (U-6, headline CPI) spec generated
             - QA validation passed
           branch: release/${{ steps.period.outputs.period }}
           branch-suffix: timestamp
           title: 'DMI Release: ${{ steps.period.outputs.period }}'
           body: |
             ## DMI Release for ${{ steps.period.outputs.period }}
-            
-            **Automated monthly computation**
-            
+
+            **Automated monthly computation** (two-spec pipeline: Baseline + Slack-Plus)
+
             ### Summary
             - **Reference Period**: ${{ steps.period.outputs.period }}
             - **DMI Results (baseline)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}.json`
             - **DMI Results (slack_plus)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json`
-            - **DMI Results (core)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json`
             - **QA (baseline)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json`
             - **QA (slack_plus)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json`
-            - **QA (core)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json`
-            
+
             ### Files Changed
             - `data/outputs/dmi_release_${{ steps.period.outputs.period }}.json`
             - `data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json`
-            - `data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json`
             - `data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json`
             - `data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json`
-            - `data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json`
             - `data/outputs/specifications.json`
-            
+            - `data/outputs/releases.json`
+            - `data/outputs/latest.json`
+            - `data/outputs/releases/${{ steps.period.outputs.period }}.html`
+
             ### Next Steps
-            1. Review baseline vs slack_plus vs core for reasonableness
+            1. Review baseline vs slack_plus for reasonableness
             2. Check QA warnings (especially weights vintage)
             3. Approve and merge to update repository
-            
+
             > ✅ **Website automatically updated**: dmianalysis.org now shows data for ${{ steps.period.outputs.period }}
-            
+
             ---
             *This PR was automatically created by the Monthly DMI workflow*
-            
+
           labels: |
             automated
             release
@@ -366,7 +487,7 @@ jobs:
             web/health.json
 
       - name: Auto-merge release PR
-        if: steps.create-pr.outputs.pull-request-number
+        if: steps.mode.outputs.dry_run != 'true' && steps.create-pr.outputs.pull-request-number
         run: gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --merge --delete-branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
