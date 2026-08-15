@@ -388,7 +388,7 @@ def generate_release_note_html(
 ) -> str:
     """Generate HTML release note for the current release.
 
-    ``specifications`` is supplied only after all three published
+    ``specifications`` is supplied only after both published
     specifications have been computed.  Keeping it optional preserves the
     legacy single-spec command while allowing the monthly release workflow to
     defer the public note until the robustness assessment is complete.
@@ -447,7 +447,7 @@ def generate_release_note_html(
         if not flags_consistent:
             warning_html = """    <p class="robustness-warning" role="alert">
         <strong>Warning:</strong> The distributional pattern or highest-pressure
-        income group is not consistent across all three specifications.
+        income group is not consistent across the published specifications.
     </p>
 """
 

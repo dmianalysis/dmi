@@ -45,15 +45,6 @@ def specifications_manifest():
                     "slack_measure": "u6",
                 },
             },
-            {
-                "spec_id": "core",
-                "metrics": {
-                    "dmi_median": 8.56,
-                    "dmi_stress": 8.63,
-                    "slack": 4.3,
-                    "slack_measure": "u3",
-                },
-            },
         ],
         "robustness_assessment": {
             "pressure_tilt_sign_consistent": True,
@@ -64,7 +55,7 @@ def specifications_manifest():
 
 
 class TestReleaseNoteHtml(unittest.TestCase):
-    def test_renders_three_spec_table_without_warning_when_consistent(self):
+    def test_renders_two_spec_table_without_warning_when_consistent(self):
         html = generate_release_note_html(
             reference_period="2026-07",
             metrics=BASELINE_METRICS,
@@ -76,7 +67,7 @@ class TestReleaseNoteHtml(unittest.TestCase):
         self.assertIn("Robustness across specifications", html)
         self.assertIn("Baseline (U-3, headline CPI)", html)
         self.assertIn("Slack+ (U-6, headline CPI)", html)
-        self.assertIn("Core (U-3, core CPI)", html)
+        self.assertNotIn("Core (U-3, core CPI)", html)
         self.assertIn("12.36", html)
         self.assertIn("8.1% (U-6)", html)
         self.assertIn("Published:</strong> 2026-08-15", html)
@@ -95,7 +86,6 @@ class TestReleaseNoteHtml(unittest.TestCase):
         )
 
         self.assertIn("robustness-warning\" role=\"alert", html)
-        self.assertIn("not consistent across all three specifications", html)
 
     def test_rejects_manifest_for_another_period(self):
         specifications = specifications_manifest()
