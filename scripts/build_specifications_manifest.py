@@ -137,7 +137,7 @@ def build_specifications_manifest(
     robustness_assessment, notes = build_notes(releases_by_spec)
 
     manifest = {
-        "schema_version": "0.2.0",
+        "schema_version": "0.3.0",
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "reference_period": reference_period,
         "headline_spec": "baseline",

@@ -46,7 +46,7 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December",
 ]
 
-SCHEMA_VERSION = "2.0.0"
+SCHEMA_VERSION = "3.0.0"
 DEFAULT_METHODOLOGY_VERSION = "v0.1.12"
 
 
@@ -92,21 +92,33 @@ def derive_metrics(raw_release: dict) -> dict:
     }
 
 
-def build_spec_urls(release_id: str) -> dict:
-    # Only the baseline spec gets a release_note link. slack_plus uses the
-    # same underlying summary (the distributional pattern is robust across
-    # specs by design), so linking it to the baseline note misled users into
-    # thinking it was spec-specific.
+def build_spec_urls(release_id: str, output_dir: Path) -> dict:
+    """Build the spec_urls block for a release, gating slack_plus on artifact presence.
+
+    Only the baseline spec gets a release_note link. slack_plus uses the same
+    underlying summary (the distributional pattern is robust across specs by
+    design), so linking it to the baseline note misled users into thinking it
+    was spec-specific.
+
+    Historical releases (2025-12..2026-02) never had Slack-Plus artifacts
+    produced. Advertising slack_plus URLs for those periods would misrepresent
+    what was actually published, so slack_plus is included only when its CSV
+    exists on disk.
+    """
     base_release_note = f"/data/outputs/releases/{release_id}.html"
-    spec_urls = {}
-    for spec in ("baseline", "slack_plus"):
-        urls = {
-            "csv": f"/data/outputs/dmi-{release_id}-{spec}.csv",
-            "parquet": f"/data/outputs/dmi-{release_id}-{spec}.parquet",
+    spec_urls: dict = {
+        "baseline": {
+            "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
+            "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
+            "release_note": base_release_note,
         }
-        if spec == "baseline":
-            urls["release_note"] = base_release_note
-        spec_urls[spec] = urls
+    }
+    slack_plus_csv = output_dir / f"dmi-{release_id}-slack_plus.csv"
+    if slack_plus_csv.exists():
+        spec_urls["slack_plus"] = {
+            "csv": f"/data/outputs/dmi-{release_id}-slack_plus.csv",
+            "parquet": f"/data/outputs/dmi-{release_id}-slack_plus.parquet",
+        }
     return spec_urls
 
 
@@ -118,6 +130,7 @@ class RebuildPlan:
     raw_path: Path
     metrics: dict
     published_at: str
+    output_dir: Path
 
 
 def discover_releases(
@@ -156,6 +169,7 @@ def discover_releases(
             raw_path=path,
             metrics=metrics,
             published_at=published_at,
+            output_dir=output_dir,
         ))
         seen.add(release_id)
 
@@ -188,7 +202,7 @@ def build_release_entry(
         "methodology_version": methodology_version,
         "summary": "",
         "summary_facts": {},
-        "spec_urls": build_spec_urls(release_id),
+        "spec_urls": build_spec_urls(release_id, plan.output_dir),
         "metrics": dict(plan.metrics),
     }
 
