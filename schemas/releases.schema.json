@@ -108,16 +108,14 @@
           "spec_urls": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["baseline", "slack_plus", "core"],
+            "required": ["baseline"],
+            "description": "URL block per published specification. `baseline` is always present and carries the release_note link. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published, and never carries its own release_note (the baseline note covers the shared distributional summary).",
             "properties": {
               "baseline": {
-                "$ref": "#/$defs/spec_url_block"
+                "$ref": "#/$defs/baseline_spec_url_block"
               },
               "slack_plus": {
-                "$ref": "#/$defs/spec_url_block"
-              },
-              "core": {
-                "$ref": "#/$defs/spec_url_block"
+                "$ref": "#/$defs/slack_plus_spec_url_block"
               }
             }
           },
@@ -171,7 +169,7 @@
     }
   },
   "$defs": {
-    "spec_url_block": {
+    "baseline_spec_url_block": {
       "type": "object",
       "additionalProperties": false,
       "required": ["csv", "parquet", "release_note"],
@@ -185,6 +183,22 @@
           "format": "uri-reference"
         },
         "release_note": {
+          "type": "string",
+          "format": "uri-reference"
+        }
+      }
+    },
+    "slack_plus_spec_url_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["csv", "parquet"],
+      "description": "Slack-Plus artifacts do not carry a spec-specific release_note; the baseline note covers the shared distributional summary.",
+      "properties": {
+        "csv": {
+          "type": "string",
+          "format": "uri-reference"
+        },
+        "parquet": {
           "type": "string",
           "format": "uri-reference"
         }
