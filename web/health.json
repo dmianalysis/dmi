@@ -1,18 +1,18 @@
 {
   "status": "healthy",
   "version": "0.1.12",
-  "build_timestamp": "2026-07-15T11:51:47.123634Z",
+  "build_timestamp": "2026-08-15T10:42:13.765800Z",
   "git_sha": "production",
-  "latest_period": "2026-06",
+  "latest_period": "2026-07",
   "data_vintage": "2023",
   "observations_count": 895,
-  "last_updated": "2026-07-15",
+  "last_updated": "2026-08-15",
   "endpoints": {
     "dashboard": "/",
     "timeseries": "/data/outputs/published/dmi_timeseries.json",
-    "latest": "/data/outputs/dmi_release_2026-06.json",
-    "latest_u6": "/data/outputs/dmi_release_2026-06_slack_plus.json",
-    "latest_core": "/data/outputs/dmi_release_2026-06_core.json",
-    "latest_slack_plus": "/data/outputs/dmi_release_2026-06_slack_plus.json"
+    "latest": "/data/outputs/dmi_release_2026-07.json",
+    "latest_u6": "/data/outputs/dmi_release_2026-07_slack_plus.json",
+    "latest_core": "/data/outputs/dmi_release_2026-07_core.json",
+    "latest_slack_plus": "/data/outputs/dmi_release_2026-07_slack_plus.json"
   }
 }
