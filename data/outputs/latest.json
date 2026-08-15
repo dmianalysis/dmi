@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.0.0",
-  "generated_at": "2026-08-15T10:42:13.765411Z",
+  "schema_version": "3.0.0",
+  "generated_at": "2026-08-15T23:32:13.922121Z",
   "current_release_id": "2026-07",
   "releases": [
     {
@@ -33,10 +33,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-07-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-07-core.csv",
-          "parquet": "/data/outputs/dmi-2026-07-core.parquet"
         }
       },
       "metrics": {

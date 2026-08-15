@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.0.0",
-  "generated_at": "2026-08-15T10:42:13.764406Z",
+  "schema_version": "3.0.0",
+  "generated_at": "2026-08-15T23:32:13.922121Z",
   "current_release_id": "2026-07",
   "releases": [
     {
@@ -33,10 +33,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-07-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-07-core.csv",
-          "parquet": "/data/outputs/dmi-2026-07-core.parquet"
         }
       },
       "metrics": {
@@ -79,10 +75,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-06-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-06-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-06-core.csv",
-          "parquet": "/data/outputs/dmi-2026-06-core.parquet"
         }
       },
       "metrics": {
@@ -125,10 +117,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-05-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-05-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-05-core.csv",
-          "parquet": "/data/outputs/dmi-2026-05-core.parquet"
         }
       },
       "metrics": {
@@ -171,10 +159,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-04-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-04-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-04-core.csv",
-          "parquet": "/data/outputs/dmi-2026-04-core.parquet"
         }
       },
       "metrics": {
@@ -217,10 +201,6 @@
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-03-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-03-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-03-core.csv",
-          "parquet": "/data/outputs/dmi-2026-03-core.parquet"
         }
       },
       "metrics": {
@@ -259,14 +239,6 @@
           "csv": "/data/outputs/dmi-2026-02-baseline.csv",
           "parquet": "/data/outputs/dmi-2026-02-baseline.parquet",
           "release_note": "/data/outputs/releases/2026-02.html"
-        },
-        "slack_plus": {
-          "csv": "/data/outputs/dmi-2026-02-slack_plus.csv",
-          "parquet": "/data/outputs/dmi-2026-02-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-02-core.csv",
-          "parquet": "/data/outputs/dmi-2026-02-core.parquet"
         }
       },
       "metrics": {
@@ -305,14 +277,6 @@
           "csv": "/data/outputs/dmi-2026-01-baseline.csv",
           "parquet": "/data/outputs/dmi-2026-01-baseline.parquet",
           "release_note": "/data/outputs/releases/2026-01.html"
-        },
-        "slack_plus": {
-          "csv": "/data/outputs/dmi-2026-01-slack_plus.csv",
-          "parquet": "/data/outputs/dmi-2026-01-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-01-core.csv",
-          "parquet": "/data/outputs/dmi-2026-01-core.parquet"
         }
       },
       "metrics": {
@@ -345,14 +309,6 @@
           "csv": "/data/outputs/dmi-2025-12-baseline.csv",
           "parquet": "/data/outputs/dmi-2025-12-baseline.parquet",
           "release_note": "/data/outputs/releases/2025-12.html"
-        },
-        "slack_plus": {
-          "csv": "/data/outputs/dmi-2025-12-slack_plus.csv",
-          "parquet": "/data/outputs/dmi-2025-12-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2025-12-core.csv",
-          "parquet": "/data/outputs/dmi-2025-12-core.parquet"
         }
       },
       "metrics": {

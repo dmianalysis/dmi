@@ -42,13 +42,35 @@
             border-radius: 4px;
             margin: 1.5rem 0;
         }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #d7dce2;
+            padding: 0.65rem;
+            text-align: right;
+        }
+        thead th, tbody th {
+            background: #f5f7fa;
+            text-align: left;
+        }
+        .robustness-warning {
+            background: #fff4e5;
+            border-left: 4px solid #c05621;
+            padding: 0.75rem 1rem;
+        }
     </style>
 </head>
 <body>
     <h1>DMI Release: 2026-07-baseline</h1>
     <p><strong>Data Through:</strong> July 2026</p>
     <p><strong>Published:</strong> 2026-08-15</p>
-    
+
     <h2>Key Metrics</h2>
     <div class="metrics">
         <div class="metric-row">
@@ -80,10 +102,38 @@
             <span class="metric-value">4.1%</span>
         </div>
     </div>
-    
+
     <h2>Summary</h2>
     <div class="summary">
         <p>Economic pressure fell modestly in July 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.1%.</p>
+    </div>
+    <h2>Robustness across specifications</h2>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Specification</th>
+                    <th scope="col">DMI Median</th>
+                    <th scope="col">DMI Stress</th>
+                    <th scope="col">Slack</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">Baseline (U-3, headline CPI)</th>
+                    <td>7.52</td>
+                    <td>7.55</td>
+                    <td>4.1% (U-3)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Slack+ (U-6, headline CPI)</th>
+                    <td>11.32</td>
+                    <td>11.35</td>
+                    <td>7.9% (U-6)</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </body>
 </html>
