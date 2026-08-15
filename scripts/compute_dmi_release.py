@@ -191,7 +191,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
     "--spec",
-    choices=["baseline", "slack_plus", "core"],
+    choices=["baseline", "slack_plus"],
     default="baseline",
     help="Which DMI specification to compute."
     )
@@ -212,20 +212,9 @@ def output_suffix_for_spec(spec: str) -> str:
     return "" if spec == "baseline" else f"_{spec}"
 
 
-def build_core_weights(weights_df: pd.DataFrame) -> pd.DataFrame:
-    core_weights = weights_df[weights_df["category_id"] != "CPI_FOOD_BEVERAGES"].copy()
-
-    for group_id in core_weights["group_id"].unique():
-        mask = core_weights["group_id"] == group_id
-        total = core_weights.loc[mask, "weight"].sum()
-        core_weights.loc[mask, "weight"] = core_weights.loc[mask, "weight"] / total
-
-    return core_weights
-
-
 def load_slack_for_spec(reference_period: str, spec: str, start_year: int, end_year: int) -> pd.DataFrame:
-    # baseline/core: use staged U-3
-    if spec in ("baseline", "core"):
+    # baseline: use staged U-3
+    if spec == "baseline":
         slack_path = Path(f"data/staging/slack_u3_{start_year}_{end_year}.json")
         if not slack_path.exists():
             raise SystemExit(f"Missing staged U-3 slack file: {slack_path}")
@@ -270,7 +259,6 @@ def spec_description(spec: str) -> str:
     return {
         "baseline": "Headline DMI using current inflation inputs and U-3 unemployment.",
         "slack_plus": "Companion DMI using broader labor-market slack.",
-        "core": "Companion DMI using core inflation inputs."
     }[spec]
 
 
@@ -319,8 +307,8 @@ def main() -> int:
     cpi_df = load_cpi_data(cpi_path)
     print(f"  ✓ CPI data: {len(cpi_df)} periods from {cpi_path.name}")
 
-    # NEW: load slack according to spec (U3 baseline/core, U6 for slack_plus)
-    slack_df = load_slack_for_spec(reference_period, spec, start_year, end_year)   
+    # Load slack according to spec (U-3 for baseline, U-6 for slack_plus).
+    slack_df = load_slack_for_spec(reference_period, spec, start_year, end_year)
     print(f"  ✓ Slack data: {len(slack_df)} periods from {slack_path.name}")
 
     ensure_period_available(reference_period, cpi_df, slack_df)
@@ -342,14 +330,10 @@ def main() -> int:
     results["specification"] = spec
     results["description"] = spec_description(spec)
     results["parameters"]["spec_id"] = spec
-    results["parameters"]["slack_measure"] = slack_measure  #  slack_measure is set earlier based on the spec type
-    
-    if spec == "core":
-        results["parameters"]["inflation_measure"] = "CORE_CPI"
-        results["parameters"]["excluded_categories"] = ["CPI_FOOD_BEVERAGES"]
-    else:
-        results["parameters"]["inflation_measure"] = "HEADLINE_CPI"
-        
+    results["parameters"]["slack_measure"] = slack_measure  # slack_measure is set earlier based on the spec type
+    results["parameters"]["inflation_measure"] = "HEADLINE_CPI"
+
+
     # NEW: write outputs with suffix so specs don't overwrite each other
     suffix = output_suffix_for_spec(spec)
     output_path = Path(f"data/outputs/dmi_release_{reference_period}{suffix}.json")
