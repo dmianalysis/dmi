@@ -9,6 +9,7 @@ on:
       - 'web/health.json'
       - 'data/outputs/releases.json'
       - 'data/outputs/latest.json'
+      - 'data/outputs/releases/*.html'
   workflow_dispatch:
 
 permissions:
@@ -48,7 +49,7 @@ jobs:
           fi
           cp web/health.json deploy/health.json
 
-          mkdir -p deploy/data/outputs
+          mkdir -p deploy/data/outputs/releases
           if [ ! -f "data/outputs/releases.json" ]; then
             echo "data/outputs/releases.json not found in repository"
             exit 1
@@ -60,6 +61,12 @@ jobs:
             exit 1
           fi
           cp data/outputs/latest.json deploy/data/outputs/latest.json
+
+          if ! compgen -G "data/outputs/releases/*.html" > /dev/null; then
+            echo "No release-note HTML files found in repository"
+            exit 1
+          fi
+          cp data/outputs/releases/*.html deploy/data/outputs/releases/
 
           echo "Dashboard deployment contents:"
           find deploy -type f
@@ -78,11 +85,11 @@ jobs:
             ./deploy/dashboard.html \
             ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/dashboard.html
 
-      - name: Ensure /dashboard/ directory exists on iFastNet
+      - name: Ensure deployment directories exist on iFastNet
         run: |
           ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no \
             ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }} \
-            'mkdir -p /home/agiraces/dmianalysis/dashboard'
+            'mkdir -p /home/agiraces/dmianalysis/dashboard /home/agiraces/dmianalysis/data/outputs/releases'
 
       - name: Deploy /dashboard/.htaccess redirect to iFastNet via rsync
         run: |
@@ -106,6 +113,13 @@ jobs:
             ./deploy/data/outputs/latest.json \
             ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/data/outputs/
 
+      - name: Deploy release notes to iFastNet via rsync
+        run: |
+          rsync -avz --progress \
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+            ./deploy/data/outputs/releases/ \
+            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/data/outputs/releases/
+
       - name: Deployment summary
         run: |
           echo "Web dashboard deployment complete."
@@ -115,6 +129,7 @@ jobs:
           echo "    web/health.json            -> /home/agiraces/dmianalysis/health.json"
           echo "    data/outputs/releases.json -> /home/agiraces/dmianalysis/data/outputs/releases.json"
           echo "    data/outputs/latest.json   -> /home/agiraces/dmianalysis/data/outputs/latest.json"
+          echo "    data/outputs/releases/*.html -> /home/agiraces/dmianalysis/data/outputs/releases/"
           echo "  Site:"
           echo "    https://dmianalysis.org/dashboard.html (canonical)"
           echo "    https://dmianalysis.org/dashboard/     (301 -> /dashboard.html)"

@@ -382,15 +382,92 @@ def generate_release_note_html(
     metrics: dict,
     summary: str = "",
     spec: str="baseline",
-    slack_measure: str="U-3"
+    slack_measure: str="U-3",
+    specifications: Optional[dict] = None,
+    published_at: Optional[str] = None,
 ) -> str:
-    """Generate HTML release note for the current release."""
+    """Generate HTML release note for the current release.
+
+    ``specifications`` is supplied only after all three published
+    specifications have been computed.  Keeping it optional preserves the
+    legacy single-spec command while allowing the monthly release workflow to
+    defer the public note until the robustness assessment is complete.
+    """
     # Parse reference period to human-readable format
     year, month = reference_period.split('-')
     months = ['January', 'February', 'March', 'April', 'May', 'June',
               'July', 'August', 'September', 'October', 'November', 'December']
     month_name = months[int(month) - 1]
     data_through = f"{month_name} {year}"
+
+    robustness_html = ""
+    if specifications is not None:
+        manifest_period = specifications.get("reference_period")
+        if manifest_period != reference_period:
+            raise ValueError(
+                "Specifications manifest period "
+                f"{manifest_period!r} does not match release note period {reference_period!r}."
+            )
+
+        specs_by_id = {
+            item["spec_id"]: item
+            for item in specifications["specifications"]
+        }
+        spec_labels = {
+            "baseline": "Baseline (U-3, headline CPI)",
+            "slack_plus": "Slack+ (U-6, headline CPI)",
+            "core": "Core (U-3, core CPI)",
+        }
+        rows = []
+        for spec_id in ("baseline", "slack_plus", "core"):
+            spec_metrics = specs_by_id[spec_id]["metrics"]
+            measure = str(spec_metrics["slack_measure"]).upper()
+            measure = {"U3": "U-3", "U6": "U-6"}.get(measure, measure)
+            rows.append(
+                """
+                <tr>
+                    <th scope="row">{label}</th>
+                    <td>{median:.2f}</td>
+                    <td>{stress:.2f}</td>
+                    <td>{slack:.1f}% ({measure})</td>
+                </tr>""".format(
+                    label=spec_labels[spec_id],
+                    median=spec_metrics["dmi_median"],
+                    stress=spec_metrics["dmi_stress"],
+                    slack=spec_metrics["slack"],
+                    measure=measure,
+                )
+            )
+
+        assessment = specifications["robustness_assessment"]
+        flags_consistent = (
+            assessment["pressure_tilt_sign_consistent"]
+            and assessment["stress_group_consistent"]
+        )
+        warning_html = ""
+        if not flags_consistent:
+            warning_html = """    <p class="robustness-warning" role="alert">
+        <strong>Warning:</strong> The distributional pattern or highest-pressure
+        income group is not consistent across all three specifications.
+    </p>
+"""
+
+        robustness_html = f"""    <h2>Robustness across specifications</h2>
+{warning_html}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Specification</th>
+                    <th scope="col">DMI Median</th>
+                    <th scope="col">DMI Stress</th>
+                    <th scope="col">Slack</th>
+                </tr>
+            </thead>
+            <tbody>{''.join(rows)}
+            </tbody>
+        </table>
+    </div>"""
     
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -436,13 +513,35 @@ def generate_release_note_html(
             border-radius: 4px;
             margin: 1.5rem 0;
         }}
+        .table-wrap {{
+            overflow-x: auto;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }}
+        th, td {{
+            border: 1px solid #d7dce2;
+            padding: 0.65rem;
+            text-align: right;
+        }}
+        thead th, tbody th {{
+            background: #f5f7fa;
+            text-align: left;
+        }}
+        .robustness-warning {{
+            background: #fff4e5;
+            border-left: 4px solid #c05621;
+            padding: 0.75rem 1rem;
+        }}
     </style>
 </head>
 <body>
     <h1>DMI Release: {reference_period}-{spec}</h1>
     <p><strong>Data Through:</strong> {data_through}</p>
-    <p><strong>Published:</strong> {datetime.now().strftime('%Y-%m-%d')}</p>
-    
+    <p><strong>Published:</strong> {published_at or datetime.now().strftime('%Y-%m-%d')}</p>
+
     <h2>Key Metrics</h2>
     <div class="metrics">
         <div class="metric-row">
@@ -474,11 +573,12 @@ def generate_release_note_html(
             <span class="metric-value">{metrics['unemployment']:.1f}%</span>
         </div>
     </div>
-    
+
     <h2>Summary</h2>
     <div class="summary">
         <p>{summary if summary else 'Full release data available in the accompanying CSV and Parquet files.'}</p>
     </div>
+{robustness_html}
 </body>
 </html>"""
     
