@@ -5,7 +5,6 @@ Build public robustness/specifications manifest for the current DMI release.
 Reads:
 - data/outputs/dmi_release_YYYY-MM.json
 - data/outputs/dmi_release_YYYY-MM_slack_plus.json
-- data/outputs/dmi_release_YYYY-MM_core.json
 
 Writes:
 - data/outputs/specifications.json
@@ -18,7 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 
-SPEC_ORDER = ["baseline", "slack_plus", "core"]
+SPEC_ORDER = ["baseline", "slack_plus"]
 
 SPEC_META = {
     "baseline": {
@@ -30,11 +29,6 @@ SPEC_META = {
         "label": "DMI Slack+",
         "summary": "Companion DMI using broader labor-market slack.",
         "suffix": "_slack_plus",
-    },
-    "core": {
-        "label": "DMI Core",
-        "summary": "Companion DMI using core inflation inputs.",
-        "suffix": "_core",
     },
 }
 
@@ -88,7 +82,7 @@ def build_notes(releases_by_spec: dict) -> tuple[dict, list[str]]:
     tilt_consistent = True
     stress_consistent = True
 
-    for spec_id in ("slack_plus", "core"):
+    for spec_id in ("slack_plus",):
         release = releases_by_spec[spec_id]
         if pressure_pattern(release) != baseline_pattern:
             tilt_consistent = False

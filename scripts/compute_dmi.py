@@ -263,7 +263,7 @@ def compute_dmi_for_period(
         alpha: Inflation vs slack weight (default: 0.5)
         scale_factor: DMI scaling factor (default: 2.0)
         weights_year: year weights were computed (default: 2023)
-        spec: specification (baseline, slack-plus or core)
+        spec: specification (baseline or slack_plus)
     
     Returns:
         Dictionary with DMI results
@@ -416,10 +416,9 @@ def generate_release_note_html(
         spec_labels = {
             "baseline": "Baseline (U-3, headline CPI)",
             "slack_plus": "Slack+ (U-6, headline CPI)",
-            "core": "Core (U-3, core CPI)",
         }
         rows = []
-        for spec_id in ("baseline", "slack_plus", "core"):
+        for spec_id in ("baseline", "slack_plus"):
             spec_metrics = specs_by_id[spec_id]["metrics"]
             measure = str(spec_metrics["slack_measure"]).upper()
             measure = {"U3": "U-3", "U6": "U-6"}.get(measure, measure)
@@ -629,7 +628,7 @@ def update_releases_json(
 
     # Only baseline gets a release_note link. The released note is
     # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus/core was misleading; the WP plugin
+    # advertising it on slack_plus was misleading; the WP plugin
     # gracefully skips the link when the field is absent.
     spec_urls = {
         "baseline": {
@@ -640,10 +639,6 @@ def update_releases_json(
         "slack_plus": {
             "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
             "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-        "core": {
-            "csv": f"/data/outputs/dmi-{reference_period}-core.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-core.parquet",
         },
     }
 
@@ -721,7 +716,7 @@ def update_latest_json(
 
     # Only baseline gets a release_note link. The released note is
     # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus/core was misleading; the WP plugin
+    # advertising it on slack_plus was misleading; the WP plugin
     # gracefully skips the link when the field is absent.
     spec_urls = {
         "baseline": {
@@ -732,10 +727,6 @@ def update_latest_json(
         "slack_plus": {
             "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
             "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-        "core": {
-            "csv": f"/data/outputs/dmi-{reference_period}-core.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-core.parquet",
         },
     }
 
@@ -803,8 +794,8 @@ def update_health_json(reference_period: str):
     # Update current release endpoints
     health["endpoints"]["latest"] = f"/data/outputs/dmi_release_{reference_period}.json"
     health["endpoints"]["latest_slack_plus"] = f"/data/outputs/dmi_release_{reference_period}_slack_plus.json"
-    health["endpoints"]["latest_u6"] = health["endpoints"]["latest_slack_plus"]    
-    health["endpoints"]["latest_core"] = f"/data/outputs/dmi_release_{reference_period}_core.json"
+    health["endpoints"]["latest_u6"] = health["endpoints"]["latest_slack_plus"]
+    health["endpoints"].pop("latest_core", None)
 
     # Optional: only include latest_with_ci if current-period file exists
     latest_with_ci_path = Path(f"data/outputs/dmi_release_{reference_period}_with_ci.json")

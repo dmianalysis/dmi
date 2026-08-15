@@ -11,7 +11,7 @@ schema/methodology without re-running the full DMI pipeline. It can:
     regenerating ``summary`` / ``summary_facts`` via the canonical
     ``build_release_summary`` helper;
   * with ``--retrofit-raw``, rewrite the raw ``dmi_release_*.json`` files
-    (and their ``_core`` / ``_slack_plus`` / ``_u6`` / ``_with_ci`` variants)
+    (and their ``_slack_plus`` / ``_u6`` / ``_with_ci`` variants)
     so ``summary_metrics`` carries the v2.0.0 fields and the legacy
     ``dmi_income_pressure_gap`` field is removed;
   * with ``--retrofit-specs``, rewrite ``specifications.json`` to replace
@@ -93,13 +93,13 @@ def derive_metrics(raw_release: dict) -> dict:
 
 
 def build_spec_urls(release_id: str) -> dict:
-    # Only the baseline spec gets a release_note link. slack_plus and core
-    # use the same underlying summary (the distributional pattern is robust
-    # across specs by design), so linking them to the baseline note misled
-    # users into thinking they were spec-specific.
+    # Only the baseline spec gets a release_note link. slack_plus uses the
+    # same underlying summary (the distributional pattern is robust across
+    # specs by design), so linking it to the baseline note misled users into
+    # thinking it was spec-specific.
     base_release_note = f"/data/outputs/releases/{release_id}.html"
     spec_urls = {}
-    for spec in ("baseline", "slack_plus", "core"):
+    for spec in ("baseline", "slack_plus"):
         urls = {
             "csv": f"/data/outputs/dmi-{release_id}-{spec}.csv",
             "parquet": f"/data/outputs/dmi-{release_id}-{spec}.parquet",
@@ -129,7 +129,7 @@ def discover_releases(
     seen: set[str] = set()
 
     for path in sorted(output_dir.glob("dmi_release_*.json")):
-        # Ignore variant files (e.g. _core, _slack_plus, _u6, _with_ci).
+        # Ignore variant files (e.g. _slack_plus, _u6, _with_ci).
         stem = path.stem.replace("dmi_release_", "")
         if "_" in stem:
             continue

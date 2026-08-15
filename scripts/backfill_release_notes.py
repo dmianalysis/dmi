@@ -95,7 +95,7 @@ def recompute_companion_release(
     release["parameters"].update({
         "spec_id": spec_id,
         "slack_measure": slack_measure,
-        "inflation_measure": "CORE_CPI" if spec_id == "core" else "HEADLINE_CPI",
+        "inflation_measure": "HEADLINE_CPI",
     })
     return release
 
