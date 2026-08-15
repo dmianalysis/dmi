@@ -1,52 +1,52 @@
 {
   "schema_version": "2.0.0",
-  "generated_at": "2026-07-15T11:51:47.123176Z",
-  "current_release_id": "2026-06",
+  "generated_at": "2026-08-15T10:42:13.765411Z",
+  "current_release_id": "2026-07",
   "releases": [
     {
-      "release_id": "2026-06",
-      "data_through_label": "June 2026",
-      "published_at": "2026-07-15",
+      "release_id": "2026-07",
+      "data_through_label": "July 2026",
+      "published_at": "2026-08-15",
       "status": "current",
       "methodology_version": "v0.1.12",
-      "summary": "Economic pressure fell sharply in June 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed materially from the prior month.",
+      "summary": "Economic pressure fell modestly in July 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.1%.",
       "summary_facts": {
         "lower_income_more_pressure": false,
         "higher_income_more_pressure": true,
         "pressure_similar_across_bottom_top": false,
         "most_pressured_group": "Q4",
         "least_pressured_group": "Q1",
-        "median_delta_mom": -0.7699137066476398,
-        "stress_delta_mom": -0.7948983601093422,
-        "spread_delta_mom": -0.13401679085898355,
-        "tilt_delta_mom": 0.14954281855197493,
-        "unemployment_delta_mom": -0.09999999999999964,
-        "overall_direction": "fell_sharply",
-        "spread_direction": "spread_narrowed_materially"
+        "median_delta_mom": -0.27678480117446824,
+        "stress_delta_mom": -0.28426364528287884,
+        "spread_delta_mom": -0.03776332871727739,
+        "tilt_delta_mom": 0.03259818953309512,
+        "unemployment_delta_mom": -0.10000000000000053,
+        "overall_direction": "fell_modestly",
+        "spread_direction": "spread_narrowed_slightly"
       },
       "spec_urls": {
         "baseline": {
-          "csv": "/data/outputs/dmi-2026-06-baseline.csv",
-          "parquet": "/data/outputs/dmi-2026-06-baseline.parquet",
-          "release_note": "/data/outputs/releases/2026-06.html"
+          "csv": "/data/outputs/dmi-2026-07-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet",
+          "release_note": "/data/outputs/releases/2026-07.html"
         },
         "slack_plus": {
-          "csv": "/data/outputs/dmi-2026-06-slack_plus.csv",
-          "parquet": "/data/outputs/dmi-2026-06-slack_plus.parquet"
+          "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-07-slack_plus.parquet"
         },
         "core": {
-          "csv": "/data/outputs/dmi-2026-06-core.csv",
-          "parquet": "/data/outputs/dmi-2026-06-core.parquet"
+          "csv": "/data/outputs/dmi-2026-07-core.csv",
+          "parquet": "/data/outputs/dmi-2026-07-core.parquet"
         }
       },
       "metrics": {
-        "dmi_median": 7.793742264030375,
-        "dmi_stress": 7.83664036203053,
-        "income_pressure_spread": 0.21790141392414863,
-        "income_pressure_tilt": -0.20237538623115725,
+        "dmi_median": 7.516957462855907,
+        "dmi_stress": 7.552376716747651,
+        "income_pressure_spread": 0.18013808520687125,
+        "income_pressure_tilt": -0.16977719669806213,
         "most_pressured_group": "Q4",
         "least_pressured_group": "Q1",
-        "unemployment": 4.2
+        "unemployment": 4.1
       }
     }
   ]
