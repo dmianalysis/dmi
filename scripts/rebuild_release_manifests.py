@@ -392,10 +392,15 @@ def verify_against_raw(plans: list[RebuildPlan], tol: float = 1e-9) -> None:
                 f"ERROR: derived tilt ({derived_tilt}) does not match raw "
                 f"dmi_income_pressure_gap ({raw_gap}) for {plan.release_id}"
             )
-        if plan.metrics["income_pressure_spread"] <= 0:
+        # §9: `income_pressure_spread` is `max(DMI) - min(DMI)`, which is
+        # mathematically nonnegative (see docs/DMI_v0.1.12_Repository_Repair_Prompt
+        # -2026-08-15.md line 41). A spread of exactly zero is legitimate —
+        # it corresponds to perfect equality across the five quintiles.
+        # Only strictly negative values indicate a broken calculation.
+        if plan.metrics["income_pressure_spread"] < 0:
             raise SystemExit(
                 f"ERROR: income_pressure_spread for {plan.release_id} is "
-                f"{plan.metrics['income_pressure_spread']}; expected > 0"
+                f"{plan.metrics['income_pressure_spread']}; expected >= 0"
             )
 
 
@@ -615,7 +620,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
         verify_against_raw(plans)
-        print("Sanity check passed: derived tilt matches raw dmi_income_pressure_gap; spread > 0.")
+        print("Sanity check passed: derived tilt matches raw dmi_income_pressure_gap; spread >= 0.")
 
         releases_manifest, latest_manifest = assemble_manifests(plans)
 
