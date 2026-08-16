@@ -259,8 +259,20 @@ should fully reverse the change.
 
 - Withdrawal script:
   [`scripts/withdraw_core_artifacts.sh`](../../scripts/withdraw_core_artifacts.sh)
+- **Read-only local inventory helper (§10, added in Round 2):**
+  [`scripts/inventory_withdrawn_artifacts.py`](../../scripts/inventory_withdrawn_artifacts.py).
+  This script only *lists* withdrawn artifacts under the local working
+  tree and never touches the remote. Use it before running Step 0 to
+  confirm the local repository state you are about to compare against.
+- Withdrawal-tool safety-posture regression:
+  [`tests/test_withdrawal_tooling.py`](../../tests/test_withdrawal_tooling.py).
+  Locks the shell script's `--confirm`-gated posture and the Python
+  inventory tool's read-only surface so this runbook cannot silently
+  regress.
 - Rationale: [`docs/repair/CORE_WITHDRAWAL.md`](CORE_WITHDRAWAL.md)
 - Consumer impact:
   [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](../known-issues/CORE_OUTPUT_WITHDRAWAL.md)
 - Deployment workflow reference:
   [`.github/workflows/monthly_dmi.yml`](../../.github/workflows/monthly_dmi.yml)
+- Round-2 §1-§15 dispositions:
+  [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](V0.1.12_ALIGNMENT_AUDIT.md) §14.

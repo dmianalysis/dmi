@@ -64,6 +64,8 @@ actually implement.
 - `pytest tests/` → **46 passed / 5 skipped** (skipped are BLS-network
   CE weight tests). Identity, schema-validation, coherence,
   release-note, calculator, and summary-generator tests all green.
+  (**Round 2** extends this to 128 passed / 5 skipped — see the
+  Round-2 addendum at the bottom of this document.)
 - JSON parse OK: `data/outputs/releases.json`, `latest.json`,
   `specifications.json`, `web/health.json`, `deploy/health.json`,
   `deploy/metadata.json`.
@@ -136,7 +138,8 @@ actually implement.
 ## Links
 
 - Audit + dispositions:
-  [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](../repair/V0.1.12_ALIGNMENT_AUDIT.md) (§13).
+  [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](../repair/V0.1.12_ALIGNMENT_AUDIT.md)
+  (§13 for Round 1, §14 for Round 2 §1-§15 dispositions).
 - Release note: [`docs/releases/v0.1.12_RELEASE.md`](../releases/v0.1.12_RELEASE.md).
 - Core withdrawal (rationale):
   [`docs/repair/CORE_WITHDRAWAL.md`](../repair/CORE_WITHDRAWAL.md).
@@ -145,6 +148,60 @@ actually implement.
 - Remote withdrawal procedure:
   [`docs/repair/REMOTE_WITHDRAWAL.md`](../repair/REMOTE_WITHDRAWAL.md).
 - CHANGELOG: [`CHANGELOG.md`](../../CHANGELOG.md#0112---repair-release-unreleased).
+
+---
+
+## Round 2 addendum — §1-§15 repair-prompt dispositions
+
+The following commits extend the branch beyond the Round-1 set above to
+close the fifteen defects itemized in
+[`docs/DMI_v0.1.12_Repository_Repair_Prompt-2026-08-15.md`](../DMI_v0.1.12_Repository_Repair_Prompt-2026-08-15.md).
+Full dispositions are recorded in
+[`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](../repair/V0.1.12_ALIGNMENT_AUDIT.md)
+§14. Round-2 authorization boundary is unchanged: **local only, no
+push, no merge, no tag, no release, no deploy, no remote withdrawal**.
+
+### Round 2 commits
+
+- `d4b0094` fix(repair): remove unpublished concept note file (§1)
+- `9bbf99c` fix(repair): lock manifest schema const 3.0.0 + top-level release_note (§2)
+- `88f7ca7` fix(repair): repair historical manifest URLs + URL-existence test (§3)
+- `e3bc0ff` fix(repair): repair release-note generator (§4)
+- `86d586d` fix(repair): deterministic deployment staging rebuild (§5)
+- `8a3744e` fix(repair): remove auto-merge; safe dry-run default (§6)
+- `7241d9b` fix(repair): repair public timeseries contract + schema (§7)
+- `d9e5dfc` fix(repair): lock health endpoints against retired-key resurrection (§8)
+- `0ae9d5f` fix(repair): accept zero income_pressure_spread as legitimate (§9)
+- `a148b47` feat(repair): add inventory-only withdrawal tool + lock safety posture (§10)
+- `772c9f6` fix(repair): remove placeholder date-released from CITATION.cff (§11)
+- `07983c9` docs(repair): align operational documentation with v0.1.12 reality (§12)
+- `76ec37f` test(repair): add cross-cutting regression coverage (§13)
+
+Round-2 verification gates (§14) all pass:
+
+- `pytest tests/` → **128 passed / 5 skipped** (skipped are BLS-network
+  CE weight tests; net delta over Round-1 baseline is +48 tests).
+- `python -m scripts.prepare_deployment --verify` idempotent
+  (deterministic-rebuild check per §5).
+- `python -m scripts.inventory_withdrawn_artifacts` reports the two
+  known residual v0.1.10 files in `data/outputs/` (documented in
+  audit §14.2) and no new offenders.
+- Shipped-manifest schema validation: `latest.json`, `releases.json`,
+  `specifications.json`, `web/health.json` all validate.
+- All `.github/workflows/*.yml` parse; no workflow calls
+  `gh pr merge`; no workflow step is named `auto-merge`.
+
+### Deferrals (non-blocking, tracked in audit §14.2)
+
+- Two v0.1.10 residual files in `data/outputs/` (`dmi_release_2024-05_core.json`
+  and its `_u6` sibling) remain on disk but are not referenced by any
+  shipped manifest and cannot leak into a deployment because §5's
+  staging rebuild + §8's health sanitizer both reject retired names.
+- `dmi_pipeline/__version__ = "0.1.0"` is a package-init constant unused
+  by any published manifest; consolidation into a single version source
+  is deferred to a follow-up.
+- `qa_validator.py` `schema_version` hardcode refactor still deferred
+  as noted in the Round-1 "Not included in this PR" list.
 
 ---
 
