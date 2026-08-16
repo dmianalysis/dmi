@@ -1,12 +1,17 @@
 name: Deploy Web Dashboard
 
-# Sequencing constraint (Phase 5 / audit §7.2):
-# Any push to `main` that touches releases.json or latest.json auto-deploys the
-# manifests to the live site. The PR that lands under the two-spec pipeline
-# (Baseline + Slack-Plus) must therefore also land the matching dashboard.html
-# and WordPress plugins in the same merge commit so the live site never shows
-# manifests that disagree with the presentation surfaces. A dry-run path is
-# provided for manual repair validation via `workflow_dispatch`.
+# ROUND-3 REPAIR (§2/§3). This workflow no longer maintains an
+# independent ad-hoc staging recipe. It delegates staging to the single
+# deployment builder (`scripts.prepare_deployment`) — the same builder
+# used by `deploy_production.yml` and by the monthly preparation
+# workflow's local validation step — and then rsyncs a scoped subset of
+# the built tree (dashboard shell + release manifests + release notes)
+# for the paths that specifically trigger this workflow.
+#
+# It runs only after a reviewed change to `main` (or an explicitly
+# authorized manual dispatch). Manual dispatch defaults to dry-run.
+# Strict SSH host verification is required (§3); ssh-keyscan failure is
+# fatal.
 
 on:
   push:
@@ -20,194 +25,156 @@ on:
       - 'data/outputs/releases/*.html'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'When true, skip SSH/rsync. Use for repair validation.'
+      production:
+        description: >-
+          Set to true to actually rsync to the live site. Default false
+          is a dry-run: staging is built and validated locally, nothing
+          is uploaded.
         required: false
         default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: read
+
+env:
+  PYTHON_VERSION: '3.9'
 
 jobs:
   deploy-web-dashboard:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # §2: check out the exact triggering commit; do not hardcode ref.
+      - name: Checkout triggering commit
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ github.sha }}
 
-      - name: Resolve dry-run flag
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Resolve production flag
         id: mode
+        env:
+          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          DRY_RUN='${{ github.event.inputs.dry_run }}'
-          if [ -z "$DRY_RUN" ]; then
-            DRY_RUN='false'
+          if [ "$EVENT_NAME" = "push" ]; then
+            PROD="true"
+          else
+            PROD="${INPUT_PRODUCTION:-false}"
           fi
-          case "$DRY_RUN" in
-            true|True|TRUE|1) DRY_RUN='true' ;;
-            *) DRY_RUN='false' ;;
+          case "$PROD" in
+            true) PROD="true" ;;
+            *)    PROD="false" ;;
           esac
-          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
-          echo "Dry-run mode: $DRY_RUN"
+          echo "production=$PROD" >> "$GITHUB_OUTPUT"
 
-      - name: Prepare dashboard deployment package
+      - name: Build staging via central builder
         run: |
-          echo "Preparing web dashboard deployment package..."
+          # §2: reuse the single deployment builder. This guarantees
+          # the dashboard workflow ships exactly the same file bytes
+          # (with the same closure guarantees) as the full deploy
+          # workflow.
+          python -m scripts.prepare_deployment --output-dir deploy --verify
 
-          mkdir -p deploy/dashboard
-
-          if [ ! -f "web/dashboard.html" ]; then
-            echo "web/dashboard.html not found in repository"
-            exit 1
-          fi
-          cp web/dashboard.html deploy/dashboard.html
-
-          if [ ! -f "web/dashboard/.htaccess" ]; then
-            echo "web/dashboard/.htaccess not found in repository"
-            exit 1
-          fi
-          cp web/dashboard/.htaccess deploy/dashboard/.htaccess
-
-          if [ ! -f "web/health.json" ]; then
-            echo "web/health.json not found in repository"
-            exit 1
-          fi
-          cp web/health.json deploy/health.json
-
-          mkdir -p deploy/data/outputs/releases
-          if [ ! -f "data/outputs/releases.json" ]; then
-            echo "data/outputs/releases.json not found in repository"
-            exit 1
-          fi
-          cp data/outputs/releases.json deploy/data/outputs/releases.json
-
-          if [ ! -f "data/outputs/latest.json" ]; then
-            echo "data/outputs/latest.json not found in repository"
-            exit 1
-          fi
-          cp data/outputs/latest.json deploy/data/outputs/latest.json
-
-          if ! compgen -G "data/outputs/releases/*.html" > /dev/null; then
-            echo "No release-note HTML files found in repository"
-            exit 1
-          fi
-          cp data/outputs/releases/*.html deploy/data/outputs/releases/
-
-          echo "Dashboard deployment contents:"
-          find deploy -type f
-
-      - name: Guard against Core artifacts and Core references
+      - name: Guard against Core artifacts in staged tree
         run: |
-          # Defense-in-depth (Phase 5 requirement): fail if any Core artifact is
-          # staged in the deploy tree, OR if any staged manifest still advertises
-          # Core spec_urls. Core has been withdrawn (see
-          # docs/repair/CORE_WITHDRAWAL.md); any presence here is a regression.
           set +e
-          MATCHES=$(find deploy -type f \( -iname '*core*' -o -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
+          MATCHES=$(find deploy -type f \( -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
           set -e
           if [ -n "$MATCHES" ]; then
-            echo "❌ Core artifacts detected in deploy/ — refusing to deploy:"
+            echo "Core artifacts staged; refusing to deploy:"
             echo "$MATCHES"
             exit 1
           fi
 
+      - name: Guard against Core spec_urls in manifests
+        run: |
           python <<'PY'
           import json, sys
           from pathlib import Path
           failed = 0
           for name in ("releases.json", "latest.json"):
-              path = Path("deploy/data/outputs") / name
-              manifest = json.loads(path.read_text())
+              p = Path("deploy/data/outputs") / name
+              manifest = json.loads(p.read_text())
               for entry in manifest.get("releases", []):
                   if "core" in entry.get("spec_urls", {}):
-                      print(f"❌ {name}: release {entry.get('release_id')} still advertises Core spec_urls")
+                      print(f"{name}: release {entry.get('release_id')} still advertises Core spec_urls")
                       failed += 1
           sys.exit(1 if failed else 0)
           PY
 
-          echo "✅ No Core artifacts and no Core spec_urls in deploy package."
-
-      - name: Skip remote deployment (dry-run mode)
-        if: steps.mode.outputs.dry_run == 'true'
+      - name: Skip remote deployment (dry-run)
+        if: steps.mode.outputs.production != 'true'
         run: |
-          echo "🏜  Dry-run mode: skipping SSH key setup and rsync."
-          echo "    Deploy tree exists at ./deploy/ for local inspection."
+          echo "Dry-run: skipping SSH setup and rsync. Staging is at ./deploy/."
 
-      - name: Setup SSH key
-        if: steps.mode.outputs.dry_run != 'true'
+      - name: Setup SSH key (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+          IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.IFASTNET_SSH_KEY }}" > ~/.ssh/deploy_key
+          echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 1394 ${{ secrets.IFASTNET_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          # §3: ssh-keyscan MUST succeed. No `|| true`.
+          ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy dashboard to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
+      - name: Deploy dashboard shell to iFastNet (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+
+          rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/dashboard.html \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/dashboard.html
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/dashboard.html"
 
-      - name: Ensure deployment directories exist on iFastNet
-        if: steps.mode.outputs.dry_run != 'true'
-        run: |
-          ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }} \
+          $SSH_CMD "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST" \
             'mkdir -p /home/agiraces/dmianalysis/dashboard /home/agiraces/dmianalysis/data/outputs/releases'
 
-      - name: Deploy /dashboard/.htaccess redirect to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
-        run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+          rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/dashboard/.htaccess \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/dashboard/.htaccess
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/dashboard/.htaccess"
 
-      - name: Deploy health.json to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
-        run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+          rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/health.json \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/health.json
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/health.json"
 
-      - name: Deploy release manifests to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
-        run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+          rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/data/outputs/releases.json \
             ./deploy/data/outputs/latest.json \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/data/outputs/
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/data/outputs/"
 
-      - name: Deploy release notes to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
-        run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+          rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/data/outputs/releases/ \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/data/outputs/releases/
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/data/outputs/releases/"
 
       - name: Deployment summary
         run: |
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
-            echo "🏜 Dry-run summary (nothing deployed):"
-          else
+          if [ "${{ steps.mode.outputs.production }}" = "true" ]; then
             echo "Web dashboard deployment complete."
+          else
+            echo "Dry-run complete (nothing deployed)."
           fi
-          echo "  Files deployed:"
-          echo "    web/dashboard.html         -> /home/agiraces/dmianalysis/dashboard.html"
-          echo "    web/dashboard/.htaccess    -> /home/agiraces/dmianalysis/dashboard/.htaccess"
-          echo "    web/health.json            -> /home/agiraces/dmianalysis/health.json"
-          echo "    data/outputs/releases.json -> /home/agiraces/dmianalysis/data/outputs/releases.json"
-          echo "    data/outputs/latest.json   -> /home/agiraces/dmianalysis/data/outputs/latest.json"
-          echo "    data/outputs/releases/*.html -> /home/agiraces/dmianalysis/data/outputs/releases/"
-          echo "  Site:"
-          echo "    https://dmianalysis.org/dashboard.html (canonical)"
-          echo "    https://dmianalysis.org/dashboard/     (301 -> /dashboard.html)"
-          echo "    https://dmianalysis.org/health.json"
-          echo "    https://dmianalysis.org/data/outputs/releases.json"
-          echo "    https://dmianalysis.org/data/outputs/latest.json"
+          echo "  https://dmianalysis.org/dashboard.html"
+          echo "  https://dmianalysis.org/health.json"
+          echo "  https://dmianalysis.org/data/outputs/releases.json"
+          echo "  https://dmianalysis.org/data/outputs/latest.json"

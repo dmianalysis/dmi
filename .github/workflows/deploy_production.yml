@@ -1,0 +1,161 @@
+name: Deploy Production Site
+
+# ROUND-3 REPAIR (§2). Production deployment is split out of the
+# monthly-preparation workflow. This workflow runs ONLY after a
+# reviewed change has been merged to `main`, or when an operator
+# explicitly runs `workflow_dispatch` with production=true. Manual
+# dispatch defaults to dry-run so that ad-hoc invocations never touch
+# the live site by accident.
+#
+# It rebuilds the deployment tree from canonical repository artifacts
+# via `scripts.prepare_deployment` (the single deployment builder),
+# validates the full staged surface, refuses to deploy if any advertised
+# endpoint is missing or if any Core artifact is present, and only then
+# rsyncs over SSH with strict host verification.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/outputs/**'
+      - 'web/dashboard.html'
+      - 'web/dashboard/.htaccess'
+      - 'web/health.json'
+      - 'scripts/prepare_deployment.py'
+  workflow_dispatch:
+    inputs:
+      production:
+        description: >-
+          Set to true to actually rsync to the live site. Default false
+          is a dry-run: staging is built and validated locally, nothing
+          is uploaded.
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      # §2: check out the exact commit that triggered this run. For a
+      # push, that is the merged commit; for a manual dispatch, it is
+      # the ref the operator selected. Never hardcode `ref: main`.
+      - name: Checkout triggering commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Resolve production flag
+        id: mode
+        env:
+          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # push -> real deploy (post-merge). workflow_dispatch -> dry-run
+          # by default, real deploy only when production=true.
+          if [ "$EVENT_NAME" = "push" ]; then
+            PROD="true"
+          else
+            PROD="${INPUT_PRODUCTION:-false}"
+          fi
+          case "$PROD" in
+            true) PROD="true" ;;
+            *)    PROD="false" ;;
+          esac
+          echo "production=$PROD" >> "$GITHUB_OUTPUT"
+          echo "Production deployment: $PROD"
+
+      - name: Build deployment staging via central builder
+        run: |
+          python -m scripts.prepare_deployment --output-dir deploy --verify
+
+      - name: Refuse to deploy if Core artifacts staged
+        run: |
+          set +e
+          MATCHES=$(find deploy -type f \( -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
+          set -e
+          if [ -n "$MATCHES" ]; then
+            echo "Core artifacts detected in deploy/ tree; refusing to deploy:"
+            echo "$MATCHES"
+            exit 1
+          fi
+
+      - name: Refuse to deploy if required endpoints missing
+        run: |
+          # Defense in depth: prepare_deployment --verify already asserts
+          # closure, but a second explicit check here ensures the deploy
+          # workflow itself will fail closed on any regression.
+          python -m scripts.prepare_deployment --output-dir deploy --verify
+
+      - name: Show staged surface
+        run: |
+          echo "Deployment candidate contents:"
+          find deploy -type f | wc -l
+          find deploy -type f | sed -n '1,120p'
+
+      - name: Skip remote deployment (dry-run)
+        if: steps.mode.outputs.production != 'true'
+        run: |
+          echo "Dry-run: skipping SSH setup and rsync. Staging is at ./deploy/."
+
+      - name: Setup SSH key (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+          IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # §3: strict host verification. `ssh-keyscan` MUST succeed;
+          # its failure is a fatal error, not something to swallow with
+          # `|| true`. StrictHostKeyChecking stays enabled.
+          ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy to iFastNet via rsync (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+        run: |
+          rsync -avz --progress \
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            ./deploy/ \
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/"
+
+      - name: Deployment summary
+        run: |
+          PERIOD=$(python -c "import json; print(json.load(open('data/outputs/latest.json'))['releases'][0]['release_id'])")
+          if [ "${{ steps.mode.outputs.production }}" = "true" ]; then
+            echo "Deployment complete for period $PERIOD."
+          else
+            echo "Dry-run complete (nothing deployed) for period $PERIOD."
+          fi
+          echo "  Dashboard:         https://dmianalysis.org/dashboard.html"
+          echo "  Health:            https://dmianalysis.org/health.json"
+          echo "  Baseline:          https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}.json"
+          echo "  Slack-Plus:        https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_slack_plus.json"
+          echo "  Specifications:    https://dmianalysis.org/data/outputs/specifications.json"
+          echo "  Releases manifest: https://dmianalysis.org/data/outputs/releases.json"

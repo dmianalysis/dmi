@@ -1,11 +1,9 @@
 name: Deploy Custom WordPress Plugins
 
-# Sequencing constraint (Phase 5 / audit §7.3):
-# This workflow auto-fires on any push to `main` touching a plugin's source
-# tree. It must land in the same merge commit as the manifest changes that the
-# plugin renders, so the live site never shows a plugin that disagrees with
-# the deployed manifests. A dry-run path is provided for manual repair
-# validation via `workflow_dispatch`.
+# ROUND-3 REPAIR (§2/§3). Deploys the custom WP plugins only after a
+# reviewed change lands on `main`, from the triggering commit. Manual
+# dispatch defaults to dry-run. Strict SSH host verification is
+# required; ssh-keyscan failure is fatal.
 
 on:
   push:
@@ -15,10 +13,16 @@ on:
       - 'web/wp-plugins/dmi-release-data/**'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'When true, skip SSH/rsync. Use for repair validation.'
+      production:
+        description: >-
+          Set to true to actually rsync plugins to the live site.
+          Default false is a dry-run.
         required: false
         default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: read
@@ -28,31 +32,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # §2: use the triggering commit; never hardcode ref: main.
+      - name: Checkout triggering commit
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ github.sha }}
 
-      - name: Resolve dry-run flag
+      - name: Resolve production flag
         id: mode
+        env:
+          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          DRY_RUN='${{ github.event.inputs.dry_run }}'
-          if [ -z "$DRY_RUN" ]; then
-            DRY_RUN='false'
+          if [ "$EVENT_NAME" = "push" ]; then
+            PROD="true"
+          else
+            PROD="${INPUT_PRODUCTION:-false}"
           fi
-          case "$DRY_RUN" in
-            true|True|TRUE|1) DRY_RUN='true' ;;
-            *) DRY_RUN='false' ;;
+          case "$PROD" in
+            true) PROD="true" ;;
+            *)    PROD="false" ;;
           esac
-          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
-          echo "Dry-run mode: $DRY_RUN"
+          echo "production=$PROD" >> "$GITHUB_OUTPUT"
 
       - name: Prepare plugin deployment package
         run: |
-          echo "📦 Preparing WordPress custom plugin deployment package..."
-
           mkdir -p deploy/wp-content/plugins
-
           for plugin in dmi-latest-info dmi-release-data; do
             if [ -d "web/wp-plugins/$plugin" ]; then
               mkdir -p "deploy/wp-content/plugins/$plugin"
@@ -68,62 +73,59 @@ jobs:
                 "deploy/wp-content/plugins/$plugin/"
             fi
           done
-
           if ! find deploy/wp-content/plugins -type f | grep -q .; then
-            echo "❌ No plugin files were staged for deployment"
+            echo "No plugin files were staged for deployment"
             exit 1
           fi
-
-          echo "📁 Plugin deployment contents:"
           find deploy/wp-content/plugins -type f | sed -n '1,120p'
 
       - name: Guard against Core references in staged plugins
         run: |
-          # Defense-in-depth (Phase 5 requirement): fail if any staged plugin
-          # source still references the withdrawn Core specification. Detects
-          # references to a `core` spec key or `_core.json` artifact URL.
           set +e
           MATCHES=$(grep -RInE "['\"]core['\"]|_core\.json|-core\.(json|csv|parquet)" \
             deploy/wp-content/plugins 2>/dev/null)
           set -e
           if [ -n "$MATCHES" ]; then
-            echo "❌ Core references detected in staged plugin source — refusing to deploy:"
+            echo "Core references detected in staged plugin source; refusing to deploy:"
             echo "$MATCHES"
             exit 1
           fi
-          echo "✅ No Core references in staged plugin source."
 
-      - name: Skip remote deployment (dry-run mode)
-        if: steps.mode.outputs.dry_run == 'true'
+      - name: Skip remote deployment (dry-run)
+        if: steps.mode.outputs.production != 'true'
         run: |
-          echo "🏜  Dry-run mode: skipping SSH key setup and rsync."
-          echo "    Deploy tree exists at ./deploy/ for local inspection."
+          echo "Dry-run: skipping SSH setup and rsync. Staging is at ./deploy/."
 
-      - name: Setup SSH key
-        if: steps.mode.outputs.dry_run != 'true'
+      - name: Setup SSH key (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+          IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.IFASTNET_SSH_KEY }}" > ~/.ssh/deploy_key
+          echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 1394 ${{ secrets.IFASTNET_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          # §3: ssh-keyscan MUST succeed. No `|| true`.
+          ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy plugins to iFastNet via rsync
-        if: steps.mode.outputs.dry_run != 'true'
+      - name: Deploy plugins to iFastNet (strict host verification)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
           rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
             ./deploy/wp-content/plugins/ \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/wp-content/plugins/
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/wp-content/plugins/"
 
       - name: Deployment summary
         run: |
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
-            echo "🏜 Dry-run summary (nothing deployed):"
+          if [ "${{ steps.mode.outputs.production }}" = "true" ]; then
+            echo "WordPress plugin deployment complete."
           else
-            echo "🚀 WordPress plugin deployment complete!"
+            echo "Dry-run complete (nothing deployed)."
           fi
-          echo "   Plugins deployed:"
-          echo "   - dmi-latest-info"
-          echo "   - dmi-release-data"
-          echo "   Target: /home/agiraces/dmianalysis/wp-content/plugins/"
-          echo "   Site:   https://dmianalysis.org/"
+          echo "  Plugins: dmi-latest-info, dmi-release-data"
+          echo "  Target:  /home/agiraces/dmianalysis/wp-content/plugins/"
