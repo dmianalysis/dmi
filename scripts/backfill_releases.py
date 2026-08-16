@@ -11,6 +11,7 @@ from datetime import datetime
 
 # Reuse summary helpers from compute_dmi to avoid drift between two implementations.
 from scripts.compute_dmi import build_release_summary
+from scripts.schema_versions import RELEASES_SCHEMA_VERSION
 
 
 def parse_release_id(filename: str) -> tuple:
@@ -87,16 +88,19 @@ def backfill_releases(output_dir: str = "data/outputs"):
             computed_at = data['metadata']['computed_at']
             published_at = computed_at.split('T')[0]
 
-            # Only baseline gets a release_note link (see rebuild_release_manifests.py).
-            # Core has been withdrawn (see docs/repair/CORE_WITHDRAWAL.md); never
-            # advertise a Core spec_url. Slack-Plus is only advertised when the
-            # artifact actually exists on disk, so historical baseline-only
-            # releases (2025-12..2026-02) do not falsely claim Slack-Plus.
+            # Core has been withdrawn (see docs/repair/CORE_WITHDRAWAL.md).
+            # Slack-Plus is only advertised when its CSV actually exists.
+            # release_note lives at the top of the release entry per
+            # releases.schema.json 3.0.0.
+            #
+            # NOTE: §3 (historical URL repair) will further require every
+            # emitted spec_url to resolve to an existing file on disk;
+            # for now we preserve the pre-§2 baseline-block naming and
+            # only relocate release_note.
             spec_urls = {
                 "baseline": {
                     "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
                     "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
-                    "release_note": f"/data/outputs/releases/{release_id}.html",
                 },
             }
             slack_plus_json = output_path / f"dmi_release_{release_id}_slack_plus.json"
@@ -113,6 +117,7 @@ def backfill_releases(output_dir: str = "data/outputs"):
                 "status": "superseded",  # Updated to current for the latest
                 "methodology_version": "v0.1.12",
                 "summary": "Full release data available in the accompanying CSV and Parquet files.",
+                "release_note": f"/data/outputs/releases/{release_id}.html",
                 "spec_urls": spec_urls,
                 "metrics": {
                     "dmi_median": data['summary_metrics']['dmi_median'],
@@ -156,7 +161,7 @@ def backfill_releases(output_dir: str = "data/outputs"):
     
     # Build the releases.json structure
     releases_manifest = {
-        "schema_version": "3.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "current_release_id": current_release_id,
         "releases": releases
@@ -171,7 +176,7 @@ def backfill_releases(output_dir: str = "data/outputs"):
 
     # Build latest.json with only the current release
     latest_manifest = {
-        "schema_version": "3.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "current_release_id": current_release_id,
         "releases": [latest_release]

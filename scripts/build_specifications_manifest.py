@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from scripts.schema_versions import SPECIFICATIONS_SCHEMA_VERSION
+
 
 SPEC_ORDER = ["baseline", "slack_plus"]
 
@@ -137,7 +139,7 @@ def build_specifications_manifest(
     robustness_assessment, notes = build_notes(releases_by_spec)
 
     manifest = {
-        "schema_version": "0.3.0",
+        "schema_version": SPECIFICATIONS_SCHEMA_VERSION,
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "reference_period": reference_period,
         "headline_spec": "baseline",

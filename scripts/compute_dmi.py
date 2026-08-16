@@ -24,6 +24,7 @@ from dmi_calculator.core import (
     validate_contributions_sum_to_total
 )
 from dmi_pipeline.agents.qa_validator import generate_qa_report, print_qa_summary
+from scripts.schema_versions import RELEASES_SCHEMA_VERSION
 
 
 # Methodology version (also written to web/health.json without the leading 'v')
@@ -626,15 +627,14 @@ def update_releases_json(
     month_name = months[int(month) - 1]
     data_through_label = f"{month_name} {year}"
 
-    # Only baseline gets a release_note link. The released note is
-    # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus was misleading; the WP plugin
-    # gracefully skips the link when the field is absent.
+    # `release_note` is shared across specifications (the distributional
+    # summary is spec-agnostic) and lives at the top of the release entry
+    # per releases.schema.json 3.0.0. It must not be nested inside any
+    # spec_urls block.
     spec_urls = {
         "baseline": {
             "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
             "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-            "release_note": f"/data/outputs/releases/{reference_period}.html",
         },
         "slack_plus": {
             "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
@@ -658,6 +658,7 @@ def update_releases_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
+        "release_note": f"/data/outputs/releases/{reference_period}.html",
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],
@@ -681,7 +682,7 @@ def update_releases_json(
     releases.insert(0, new_release)
 
     releases_manifest = {
-        "schema_version": "2.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.now().isoformat() + "Z",
         "current_release_id": reference_period,
         "releases": releases
@@ -714,15 +715,12 @@ def update_latest_json(
     month_name = months[int(month) - 1]
     data_through_label = f"{month_name} {year}"
 
-    # Only baseline gets a release_note link. The released note is
-    # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus was misleading; the WP plugin
-    # gracefully skips the link when the field is absent.
+    # `release_note` is shared across specifications and lives at the top
+    # of the release entry per releases.schema.json 3.0.0.
     spec_urls = {
         "baseline": {
             "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
             "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-            "release_note": f"/data/outputs/releases/{reference_period}.html",
         },
         "slack_plus": {
             "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
@@ -745,6 +743,7 @@ def update_latest_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
+        "release_note": f"/data/outputs/releases/{reference_period}.html",
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],
@@ -760,7 +759,7 @@ def update_latest_json(
         latest_release["notes"] = notes
 
     latest_manifest = {
-        "schema_version": "2.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.now().isoformat() + "Z",
         "current_release_id": reference_period,
         "releases": [latest_release]

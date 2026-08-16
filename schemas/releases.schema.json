@@ -12,7 +12,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      "const": "3.0.0"
     },
     "generated_at": {
       "type": "string",
@@ -36,6 +36,7 @@
           "methodology_version",
           "summary",
           "summary_facts",
+          "release_note",
           "spec_urls",
           "metrics"
         ],
@@ -105,17 +106,22 @@
               }
             }
           },
+          "release_note": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "Shared release-note HTML for this release entry. Covers the shared distributional summary across all specifications published for the period."
+          },
           "spec_urls": {
             "type": "object",
             "additionalProperties": false,
             "required": ["baseline"],
-            "description": "URL block per published specification. `baseline` is always present and carries the release_note link. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published, and never carries its own release_note (the baseline note covers the shared distributional summary).",
+            "description": "URL block per published specification. `baseline` is always present. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published. Neither block carries a release_note; the shared top-level `release_note` field covers all specifications.",
             "properties": {
               "baseline": {
-                "$ref": "#/$defs/baseline_spec_url_block"
+                "$ref": "#/$defs/spec_url_block"
               },
               "slack_plus": {
-                "$ref": "#/$defs/slack_plus_spec_url_block"
+                "$ref": "#/$defs/spec_url_block"
               }
             }
           },
@@ -169,30 +175,11 @@
     }
   },
   "$defs": {
-    "baseline_spec_url_block": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["csv", "parquet", "release_note"],
-      "properties": {
-        "csv": {
-          "type": "string",
-          "format": "uri-reference"
-        },
-        "parquet": {
-          "type": "string",
-          "format": "uri-reference"
-        },
-        "release_note": {
-          "type": "string",
-          "format": "uri-reference"
-        }
-      }
-    },
-    "slack_plus_spec_url_block": {
+    "spec_url_block": {
       "type": "object",
       "additionalProperties": false,
       "required": ["csv", "parquet"],
-      "description": "Slack-Plus artifacts do not carry a spec-specific release_note; the baseline note covers the shared distributional summary.",
+      "description": "Per-specification artifact URLs. No release_note is nested here; the shared release_note lives at the top of the release entry.",
       "properties": {
         "csv": {
           "type": "string",

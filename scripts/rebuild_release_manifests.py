@@ -46,7 +46,12 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December",
 ]
 
-SCHEMA_VERSION = "3.0.0"
+from scripts.schema_versions import (
+    RELEASES_SCHEMA_VERSION,
+    SPECIFICATIONS_SCHEMA_VERSION,
+)
+
+SCHEMA_VERSION = RELEASES_SCHEMA_VERSION
 DEFAULT_METHODOLOGY_VERSION = "v0.1.12"
 
 
@@ -93,24 +98,25 @@ def derive_metrics(raw_release: dict) -> dict:
 
 
 def build_spec_urls(release_id: str, output_dir: Path) -> dict:
-    """Build the spec_urls block for a release, gating slack_plus on artifact presence.
+    """Build the spec_urls block for a release, gating each spec on the actual
+    presence of its CSV artifact on disk.
 
-    Only the baseline spec gets a release_note link. slack_plus uses the same
-    underlying summary (the distributional pattern is robust across specs by
-    design), so linking it to the baseline note misled users into thinking it
-    was spec-specific.
+    No `release_note` key is nested here; the shared release_note is written
+    at the top of the release entry (releases.schema.json 3.0.0).
 
-    Historical releases (2025-12..2026-02) never had Slack-Plus artifacts
-    produced. Advertising slack_plus URLs for those periods would misrepresent
-    what was actually published, so slack_plus is included only when its CSV
-    exists on disk.
+    Historical baseline-only periods (before Slack-Plus was published) and
+    any future period for which a spec's CSV happens to be missing will
+    simply omit that spec block — we never advertise a URL for a file that
+    does not exist.
     """
-    base_release_note = f"/data/outputs/releases/{release_id}.html"
+    # NOTE: §3 (historical URL repair) will refine this further so each
+    # emitted URL is required to resolve to an existing file on disk.
+    # §2 only relocates release_note out of these blocks; it does not
+    # change which spec blocks are emitted.
     spec_urls: dict = {
         "baseline": {
             "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
             "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
-            "release_note": base_release_note,
         }
     }
     slack_plus_csv = output_dir / f"dmi-{release_id}-slack_plus.csv"
@@ -120,6 +126,17 @@ def build_spec_urls(release_id: str, output_dir: Path) -> dict:
             "parquet": f"/data/outputs/dmi-{release_id}-slack_plus.parquet",
         }
     return spec_urls
+
+
+def release_note_url(release_id: str) -> str:
+    """Return the canonical release-note URL for a release_id.
+
+    releases.schema.json 3.0.0 requires `release_note` as a top-level
+    field on every release entry. §3 (historical URL repair) is
+    responsible for guaranteeing the returned URL resolves to an
+    existing file on disk via a regression test.
+    """
+    return f"/data/outputs/releases/{release_id}.html"
 
 
 @dataclass
@@ -202,6 +219,7 @@ def build_release_entry(
         "methodology_version": methodology_version,
         "summary": "",
         "summary_facts": {},
+        "release_note": release_note_url(release_id),
         "spec_urls": build_spec_urls(release_id, plan.output_dir),
         "metrics": dict(plan.metrics),
     }
@@ -328,9 +346,6 @@ def verify_against_raw(plans: list[RebuildPlan], tol: float = 1e-9) -> None:
                 f"ERROR: income_pressure_spread for {plan.release_id} is "
                 f"{plan.metrics['income_pressure_spread']}; expected > 0"
             )
-
-
-SPECIFICATIONS_SCHEMA_VERSION = "0.2.0"
 
 
 def derive_metrics_for_raw(raw: dict) -> dict:

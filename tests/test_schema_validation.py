@@ -47,6 +47,31 @@ def _format_errors(errors: list) -> str:
     return "\n".join(lines)
 
 
+class TestSchemasEnforceConstVersion(unittest.TestCase):
+    """The public schemas must pin schema_version with `const`, not `pattern`.
+
+    Regex acceptance would let a mispublished manifest advertising an
+    unsupported version (e.g. `2.0.0`) sneak through validation. `const`
+    fails closed.
+    """
+
+    def test_releases_schema_pins_version_with_const(self):
+        schema = _load(SCHEMAS_DIR / "releases.schema.json")
+        prop = schema["properties"]["schema_version"]
+        self.assertEqual(prop.get("const"), "3.0.0",
+            "releases.schema.json must pin schema_version with const=3.0.0")
+        self.assertNotIn("pattern", prop,
+            "releases.schema.json schema_version must not use pattern")
+
+    def test_specifications_schema_pins_version_with_const(self):
+        schema = _load(SCHEMAS_DIR / "specifications.schema.json")
+        prop = schema["properties"]["schema_version"]
+        self.assertEqual(prop.get("const"), "0.3.0",
+            "specifications.schema.json must pin schema_version with const=0.3.0")
+        self.assertNotIn("pattern", prop,
+            "specifications.schema.json schema_version must not use pattern")
+
+
 class TestReleasesManifestSchema(unittest.TestCase):
     def setUp(self):
         self.validator = _validator("releases.schema.json")
@@ -87,13 +112,48 @@ class TestReleasesManifestSchema(unittest.TestCase):
                     f"release must not advertise slack_plus",
                 )
 
-    def test_schema_version_is_3_x(self):
+    def test_schema_version_is_exactly_3_0_0(self):
+        """v0.1.12 pins the releases schema to 3.0.0 (const, not regex)."""
+        from scripts.schema_versions import RELEASES_SCHEMA_VERSION
+
+        self.assertEqual(RELEASES_SCHEMA_VERSION, "3.0.0",
+            "central RELEASES_SCHEMA_VERSION constant drifted from 3.0.0")
         for name in ("releases.json", "latest.json"):
             instance = _load(OUTPUTS_DIR / name)
-            self.assertTrue(
-                instance["schema_version"].startswith("3."),
-                f"{name}: schema_version {instance['schema_version']} is not 3.x",
+            self.assertEqual(
+                instance["schema_version"], "3.0.0",
+                f"{name}: schema_version must be exactly '3.0.0' "
+                f"(got {instance['schema_version']!r})",
             )
+
+    def test_release_note_is_top_level_field(self):
+        """release_note must be a top-level field of each release entry."""
+        for name in ("releases.json", "latest.json"):
+            instance = _load(OUTPUTS_DIR / name)
+            for release in instance["releases"]:
+                self.assertIn(
+                    "release_note", release,
+                    f"{name}: {release['release_id']} missing top-level "
+                    f"release_note",
+                )
+                self.assertTrue(
+                    release["release_note"].startswith("/data/outputs/releases/"),
+                    f"{name}: {release['release_id']} release_note "
+                    f"{release['release_note']!r} does not look like a "
+                    f"release-note URL",
+                )
+
+    def test_no_spec_urls_block_carries_release_note(self):
+        """Under schema 3.0.0 no spec_urls block may nest a release_note key."""
+        for name in ("releases.json", "latest.json"):
+            instance = _load(OUTPUTS_DIR / name)
+            for release in instance["releases"]:
+                for spec_id, block in release.get("spec_urls", {}).items():
+                    self.assertNotIn(
+                        "release_note", block,
+                        f"{name}: {release['release_id']}.{spec_id} still "
+                        f"nests a release_note key",
+                    )
 
 
 class TestDmiOutputSchema(unittest.TestCase):
@@ -154,12 +214,17 @@ class TestSpecificationsManifestSchema(unittest.TestCase):
         self.assertNotIn("core", spec_ids,
             "specifications.json still contains a Core entry")
 
-    def test_schema_version_bumped_for_core_removal(self):
+    def test_schema_version_is_exactly_0_3_0(self):
+        """v0.1.12 pins the specifications schema to 0.3.0 (const, not regex)."""
+        from scripts.schema_versions import SPECIFICATIONS_SCHEMA_VERSION
+
+        self.assertEqual(SPECIFICATIONS_SCHEMA_VERSION, "0.3.0",
+            "central SPECIFICATIONS_SCHEMA_VERSION constant drifted from 0.3.0")
         instance = _load(OUTPUTS_DIR / "specifications.json")
-        self.assertGreaterEqual(
-            tuple(int(x) for x in instance["schema_version"].split(".")),
-            (0, 3, 0),
-            "specifications.json schema_version must be >= 0.3.0 after Core removal",
+        self.assertEqual(
+            instance["schema_version"], "0.3.0",
+            f"specifications.json schema_version must be exactly '0.3.0' "
+            f"(got {instance['schema_version']!r})",
         )
 
 

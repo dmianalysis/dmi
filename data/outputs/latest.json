@@ -1,6 +1,6 @@
 {
   "schema_version": "3.0.0",
-  "generated_at": "2026-08-15T23:32:13.922121Z",
+  "generated_at": "2026-08-16T04:34:28.440203Z",
   "current_release_id": "2026-07",
   "releases": [
     {
@@ -24,11 +24,11 @@
         "overall_direction": "fell_modestly",
         "spread_direction": "spread_narrowed_slightly"
       },
+      "release_note": "/data/outputs/releases/2026-07.html",
       "spec_urls": {
         "baseline": {
           "csv": "/data/outputs/dmi-2026-07-baseline.csv",
-          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet",
-          "release_note": "/data/outputs/releases/2026-07.html"
+          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet"
         },
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
