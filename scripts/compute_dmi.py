@@ -826,12 +826,11 @@ def update_health_json(reference_period: str):
     health["endpoints"]["latest"] = f"/data/outputs/dmi_release_{reference_period}.json"
     health["endpoints"]["latest_slack_plus"] = f"/data/outputs/dmi_release_{reference_period}_slack_plus.json"
 
-    # Optional: only include latest_with_ci if current-period file exists
-    latest_with_ci_path = Path(f"data/outputs/dmi_release_{reference_period}_with_ci.json")
-    if latest_with_ci_path.exists():
-        health["endpoints"]["latest_with_ci"] = f"/data/outputs/dmi_release_{reference_period}_with_ci.json"
-    else:
-        health["endpoints"].pop("latest_with_ci", None)
+    # Round-3 §7: `latest_with_ci` was retired. The v0.1.12 published
+    # contract is Baseline + Slack-Plus only; a conditionally-emitted
+    # CI endpoint driven by on-disk file presence was itself the
+    # defect. `sanitize_health_endpoints` below strips it if a stale
+    # checkout carried it in.
 
     # Update observations count if we can determine it
     if "observations_count" not in health:

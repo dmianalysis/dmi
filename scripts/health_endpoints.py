@@ -37,15 +37,19 @@ from __future__ import annotations
 # Every endpoint key currently blessed for the public health manifest.
 # The values themselves are per-release paths, computed by the writers;
 # this set only governs which KEYS are legal.
+#
+# Round-3 §7: `latest_with_ci` has been moved to RETIRED. The v0.1.12
+# published contract is Baseline + Slack-Plus only; the confidence-
+# interval companion was never advertised in v0.1.12, and the writer
+# that conditionally emitted it based on an on-disk file's presence
+# was itself the defect (an unreviewed local artifact could flip the
+# public endpoint surface).
 ALLOWED_ENDPOINT_KEYS: frozenset[str] = frozenset({
     "dashboard",
     "latest",
     "latest_slack_plus",
     "releases",
     "specifications",
-    # Optional: only written when a `dmi_release_YYYY-MM_with_ci.json`
-    # exists for the current period; the writer pops it otherwise.
-    "latest_with_ci",
 })
 
 
@@ -66,6 +70,11 @@ RETIRED_ENDPOINT_KEYS: frozenset[str] = frozenset({
     # the alias avoids a two-URL contract for the same file.
     "timeseries",
     "dmi_timeseries",
+    # Round-3 §7: retired. v0.1.12 does not advertise a confidence-
+    # interval companion; any `dmi_release_YYYY-MM_with_ci.json` under
+    # data/outputs/ is a pre-v0.1.12 legacy artifact (see §8 quarantine)
+    # and must not be surfaced to consumers.
+    "latest_with_ci",
 })
 
 
