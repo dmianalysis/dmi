@@ -196,24 +196,38 @@ def backfill_releases(output_dir: str = "data/outputs"):
 
 
 def update_health_json(reference_period: str):
-    """Update web/health.json with current release information."""
+    """Update web/health.json with current release information.
+
+    §8: the endpoints block is passed through ``sanitize_health_endpoints``
+    just before writing, so any retired key present on disk
+    (``latest_core``, ``latest_u6``, ``timeseries``, ``dmi_timeseries``)
+    is stripped from the manifest. This defeats the round-trip
+    resurrection failure mode where an out-of-date checkout carried a
+    retired endpoint forward across releases.
+    """
+    from scripts.health_endpoints import sanitize_health_endpoints
+
     health_path = Path("web/health.json")
-    
+
     # Read current health.json
     with open(health_path, 'r') as f:
         health = json.load(f)
-    
+
     # Update fields
     health['latest_period'] = reference_period
     health['last_updated'] = datetime.utcnow().strftime('%Y-%m-%d')
     health['build_timestamp'] = datetime.utcnow().isoformat() + "Z"
     health['git_sha'] = "production"  # Will be updated by deployment
+    health.setdefault('endpoints', {})
     health['endpoints']['latest'] = f"/data/outputs/dmi_release_{reference_period}.json"
-    
+
     # Update observations count if we can determine it
     if 'observations_count' not in health:
         health['observations_count'] = 895  # Default based on recent data
-    
+
+    # §8: strip retired/unknown endpoint keys before writing.
+    sanitize_health_endpoints(health)
+
     with open(health_path, 'w') as f:
         json.dump(health, f, indent=2)
     

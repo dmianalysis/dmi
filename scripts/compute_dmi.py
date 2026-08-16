@@ -796,7 +796,16 @@ def update_latest_json(
 
 
 def update_health_json(reference_period: str):
-    """Update web/health.json with current release information."""
+    """Update web/health.json with current release information.
+
+    §8: after all updates, the endpoints block is passed through
+    ``sanitize_health_endpoints`` so any retired key present on disk
+    (e.g. ``latest_core``, ``latest_u6``) is stripped before the file
+    is written back. This defeats the round-trip resurrection failure
+    mode where a stale checkout re-blessed retired URLs.
+    """
+    from scripts.health_endpoints import sanitize_health_endpoints
+
     health_path = Path("web/health.json")
 
     # Read current health.json
@@ -816,8 +825,6 @@ def update_health_json(reference_period: str):
     # Update current release endpoints
     health["endpoints"]["latest"] = f"/data/outputs/dmi_release_{reference_period}.json"
     health["endpoints"]["latest_slack_plus"] = f"/data/outputs/dmi_release_{reference_period}_slack_plus.json"
-    health["endpoints"]["latest_u6"] = health["endpoints"]["latest_slack_plus"]
-    health["endpoints"].pop("latest_core", None)
 
     # Optional: only include latest_with_ci if current-period file exists
     latest_with_ci_path = Path(f"data/outputs/dmi_release_{reference_period}_with_ci.json")
@@ -829,6 +836,12 @@ def update_health_json(reference_period: str):
     # Update observations count if we can determine it
     if "observations_count" not in health:
         health["observations_count"] = 895  # Default based on recent data
+
+    # §8: strip any retired / unknown endpoint keys that the on-disk
+    # health.json may have brought in via a stale checkout. This is the
+    # single choke-point that prevents `latest_core` / `latest_u6` /
+    # `timeseries` from resurfacing after each release.
+    sanitize_health_endpoints(health)
 
     with open(health_path, "w") as f:
         json.dump(health, f, indent=2)
