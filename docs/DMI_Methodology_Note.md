@@ -86,7 +86,12 @@ The **Distributional Misery Index (DMI)** addresses these limitations by:
 - Computing **group-specific inflation** using income quintile expenditure patterns
 - Allowing **flexible weighting** of inflation vs unemployment
 - Providing **95% confidence intervals** to quantify statistical uncertainty
-- Supporting **alternative specifications** (U-6, Core CPI) for sensitivity analysis
+  *(v0.1.9 feature; not part of the v0.1.12 published contract — see
+  status banner)*
+- Supporting **alternative specifications** — under v0.1.12, **Baseline**
+  (U-3, headline CPI) and **Slack-Plus** (U-6, headline CPI). The Core-CPI
+  alternative described in §5.2 was **withdrawn** (see status banner and
+  [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md))
 
 ### 1.2 Research Context
 
@@ -425,6 +430,20 @@ User's should consider multiple specifications for robustness.
 
 ### 5.2 Core CPI Alternative
 
+> **v0.1.12 status: WITHDRAWN.** The Core alternative described in this
+> subsection was documented in v0.1.9 but never implemented as a bona fide
+> core-inflation calculation. The files that shipped as
+> `dmi_release_*_core.json` were computed from headline CPI and merely
+> stamped with Core-flavored metadata. They have been removed from every
+> v0.1.12 operational surface (manifests, health endpoints, dashboard,
+> WordPress plugin, tabular exports). Rationale:
+> [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md); deep
+> evidence:
+> [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md).
+> The v0.1.9 subsection body is preserved below for historical reference
+> only — the "Results (Nov 2024)" figures reflect the withdrawn
+> mislabeled computation and are **not** current v0.1.12 numbers.
+
 **Motivation**: Food and energy prices are volatile. Core inflation may better reflect persistent price pressures.
 
 **Modification**: Exclude `CPI_FOOD_BEVERAGES` from weights, renormalize remaining categories
@@ -445,14 +464,25 @@ User's should consider multiple specifications for robustness.
 
 ### 5.3 Specification Comparison
 
-| Specification | Q1 DMI (Nov 2024) | Use Case |
-|---------------|-------------------|----------|
-| **Baseline** (U-3, Headline) | 6.85 | General purpose |
-| **U-6** | 10.38 | Recessions, underemployment |
-| **Core CPI** | 7.03 | Underlying inflation |
-| **U-6 + Core** (possible) | 10.53 | Maximum conservatism |
+> **v0.1.12 status:** the v0.1.9 four-row comparison table below is
+> preserved for historical context. Under v0.1.12 only the first two
+> rows remain operational: **Baseline** (U-3, headline CPI) and
+> **Slack-Plus** (U-6, headline CPI, from period 2026-03 onward). The
+> "Core CPI" and "U-6 + Core" rows correspond to the withdrawn Core
+> specification (§5.2) and are **not** produced by the v0.1.12 pipeline.
+> Numeric values in the table are v0.1.9-era estimates, not current
+> v0.1.12 outputs.
 
-**Recommendation**: Report baseline prominently, note alternatives in footnotes.
+| Specification | Q1 DMI (Nov 2024) | Use Case | v0.1.12 status |
+|---------------|-------------------|----------|----------------|
+| **Baseline** (U-3, Headline) | 6.85 | General purpose | Operational |
+| **U-6** (a.k.a. **Slack-Plus** under v0.1.12) | 10.38 | Recessions, underemployment | Operational (renamed) |
+| **Core CPI** | 7.03 | Underlying inflation | **Withdrawn** (§5.2) |
+| **U-6 + Core** (possible) | 10.53 | Maximum conservatism | **Not produced** (depends on Core) |
+
+**Recommendation** *(v0.1.12):* Report **Baseline** prominently; publish
+**Slack-Plus** alongside as the U-6 companion. Do not cite Core figures
+from this note as current results.
 
 ---
 
@@ -508,18 +538,32 @@ jsonschema.validate(instance=dmi_release, schema=dmi_schema)
 - No missing values
 - No suspiciously large month-over-month changes (>3 DMI points)
 
-**CI Validity**: Confidence intervals are sensible
+**CI Validity** *(v0.1.9; not applicable under v0.1.12)*: Confidence
+intervals are sensible
 - Point estimate within CI bounds
 - CI width > 0
 - Lower bound < upper bound
+
+The v0.1.12 pipeline does not compute or publish confidence intervals;
+see the status banner at the top of this note.
 
 ---
 
 ## 7. Historical Trends (2011-2024)
 
+> **v0.1.12 status: NOT re-validated.** The 2011-2024 time series
+> summarized in §7 was produced by the v0.1.9 backfill pipeline
+> (`scripts.backfill_historical` → `dmi_timeseries_2010_2024.json`) and
+> has **not** been re-validated under v0.1.12. The current public
+> timeseries at `data/outputs/published/dmi_timeseries.json` is
+> Baseline-only and its coverage begins at the earliest re-validated
+> period (2025-12). All Q1/Q5/spread/percentile statistics quoted in
+> §7.1–§7.4 are v0.1.9 numbers, retained here for historical context
+> only. Do not cite them as v0.1.12 published values.
+
 ### 7.1 Overview
 
-**Period**: 167 months (2011-01 to 2024-11)  
+**Period**: 167 months (2011-01 to 2024-11)
 **Observations**: 835 (167 periods × 5 quintiles)
 
 **Key Statistics** (Q1 DMI):
@@ -623,6 +667,15 @@ jsonschema.validate(instance=dmi_release, schema=dmi_schema)
 **Future**: Demographic-specific DMI (e.g., by age group, family type)
 
 ### 8.2 Methodological Extensions (v0.2.0)
+
+> **v0.1.12 status:** items 2 and 3 below describe *proposed future
+> work*, not currently shipped features. Item 2 (Official Core CPI) is
+> the correct forward path to reintroducing a Core specification after
+> the v0.1.12 withdrawal (see reversal path in
+> [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md) §4).
+> Item 3 (Confidence Intervals) is not part of the v0.1.12 published
+> contract; the current v0.1.9 bootstrap CI machinery has not been
+> re-validated.
 
 **1. Dynamic Weights**
 - Allow weights to evolve over time (annual updates)
@@ -801,11 +854,19 @@ python3 -m http.server 8000
 
 ## Citation
 
-**Suggested Format**:
+> **v0.1.12 citation:** cite the software release (see
+> [`CITATION.cff`](../CITATION.cff)). The v0.1.9 methodology-note
+> citations below are preserved for historical reference to the
+> original methodology document; do not use them to cite v0.1.12
+> published values, which follow the operational contract described in
+> [`docs/API.md`](API.md) and
+> [`docs/Alternative_Specifications.md`](Alternative_Specifications.md).
+
+**Suggested Format** *(v0.1.9 methodology note)*:
 
 > Williams, T.C. (2024). Distributional Misery Index: Measuring Economic Pressure Across Income Groups. Methodology Note v0.1.9.
 
-**BibTeX**:
+**BibTeX** *(v0.1.9 methodology note)*:
 ```bibtex
 @techreport{williams2024dmi,
   title={Distributional Misery Index: Measuring Economic Pressure Across Income Groups},
@@ -821,4 +882,5 @@ python3 -m http.server 8000
 
 **Contact**: For questions, errors, or suggestions, please open an issue on GitHub or email [contact info].
 
-**Last Updated**: December 17, 2024
+**Last Updated (methodology note body):** December 17, 2024.
+**v0.1.12 status-banner and per-section markers last updated:** August 2026 (Round-3 §12).
