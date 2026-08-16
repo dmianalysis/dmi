@@ -1,26 +1,33 @@
 {
   "dataset_name": "Distributional Misery Index",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "license": "MIT",
-  "contact": "https://github.com/tcwilliams79/dmi",
+  "contact": "https://github.com/dmianalysis/dmi",
   "website": "https://dmianalysis.org",
-  "citation": "Williams, T.C. (2024). Distributional Misery Index v0.1.10",
+  "citation": "Williams, T.C. (2026). Distributional Misery Index v0.1.12",
   "data_vintage": "2023",
   "coverage": {
-    "start_period": "2011-01",
-    "end_period": "2025-12",
+    "start_period": "2025-12",
+    "end_period": "2026-07",
     "frequency": "monthly",
     "geographic_level": "national",
     "income_groups": 5
   },
+  "specifications": [
+    "baseline",
+    "slack_plus"
+  ],
   "files": {
-    "timeseries": "/data/outputs/published/dmi_timeseries.json",
-    "latest": "/data/outputs/dmi_release_2025-12.json",
-    "schema": "/schemas/dmi_output_schema.json",
+    "latest": "/data/outputs/latest.json",
+    "releases": "/data/outputs/releases.json",
+    "specifications": "/data/outputs/specifications.json",
+    "schema_releases": "/schemas/releases.schema.json",
+    "schema_dmi_output": "/schemas/dmi_output.schema.json",
+    "schema_specifications": "/schemas/specifications.schema.json",
     "health": "/health.json"
   },
   "build": {
-    "timestamp": "2026-03-23T00:06:26Z",
-    "git_sha": "7797a7f"
+    "timestamp": "1970-01-01T00:00:00Z",
+    "git_sha": "regenerated-at-deploy"
   }
 }

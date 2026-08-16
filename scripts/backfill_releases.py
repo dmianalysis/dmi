@@ -88,21 +88,23 @@ def backfill_releases(output_dir: str = "data/outputs"):
             published_at = computed_at.split('T')[0]
 
             # Only baseline gets a release_note link (see rebuild_release_manifests.py).
+            # Core has been withdrawn (see docs/repair/CORE_WITHDRAWAL.md); never
+            # advertise a Core spec_url. Slack-Plus is only advertised when the
+            # artifact actually exists on disk, so historical baseline-only
+            # releases (2025-12..2026-02) do not falsely claim Slack-Plus.
             spec_urls = {
                 "baseline": {
                     "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
                     "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
                     "release_note": f"/data/outputs/releases/{release_id}.html",
                 },
-                "slack_plus": {
+            }
+            slack_plus_json = output_path / f"dmi_release_{release_id}_slack_plus.json"
+            if slack_plus_json.exists():
+                spec_urls["slack_plus"] = {
                     "csv": f"/data/outputs/dmi-{release_id}-slack_plus.csv",
                     "parquet": f"/data/outputs/dmi-{release_id}-slack_plus.parquet",
-                },
-                "core": {
-                    "csv": f"/data/outputs/dmi-{release_id}-core.csv",
-                    "parquet": f"/data/outputs/dmi-{release_id}-core.parquet",
-                },
-            }
+                }
 
             release = {
                 "release_id": release_id,
@@ -154,8 +156,8 @@ def backfill_releases(output_dir: str = "data/outputs"):
     
     # Build the releases.json structure
     releases_manifest = {
-        "schema_version": "2.0.0",
-        "generated_at": datetime.now().isoformat() + "Z",
+        "schema_version": "3.0.0",
+        "generated_at": datetime.utcnow().isoformat() + "Z",
         "current_release_id": current_release_id,
         "releases": releases
     }
@@ -169,8 +171,8 @@ def backfill_releases(output_dir: str = "data/outputs"):
 
     # Build latest.json with only the current release
     latest_manifest = {
-        "schema_version": "2.0.0",
-        "generated_at": datetime.now().isoformat() + "Z",
+        "schema_version": "3.0.0",
+        "generated_at": datetime.utcnow().isoformat() + "Z",
         "current_release_id": current_release_id,
         "releases": [latest_release]
     }
@@ -198,8 +200,8 @@ def update_health_json(reference_period: str):
     
     # Update fields
     health['latest_period'] = reference_period
-    health['last_updated'] = datetime.now().strftime('%Y-%m-%d')
-    health['build_timestamp'] = datetime.now().isoformat() + "Z"
+    health['last_updated'] = datetime.utcnow().strftime('%Y-%m-%d')
+    health['build_timestamp'] = datetime.utcnow().isoformat() + "Z"
     health['git_sha'] = "production"  # Will be updated by deployment
     health['endpoints']['latest'] = f"/data/outputs/dmi_release_{reference_period}.json"
     
@@ -271,3 +273,4 @@ def update_timeseries_json(reference_period: str):
 
 
 if __name__ == "__main__":
+    backfill_releases()

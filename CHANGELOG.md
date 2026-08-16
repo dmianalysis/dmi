@@ -9,22 +9,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.12]
 
-### Changed - Metrics Rename (Breaking)
-- Replaced single signed `income_pressure_gap` with two distinct metrics:
-  - `income_pressure_spread` (always ≥ 0): max(DMI) − min(DMI) across groups, measures dispersion
-  - `income_pressure_tilt` (signed): Q1 DMI − Q5 DMI, measures regressivity (positive ⇒ bottom fifth more pressured)
-- Added `most_pressured_group` and `least_pressured_group` (group identifiers) to `summary_metrics`
-- Bumped schema versions: `releases.json` 1.2.0 → 2.0.0, `latest.json` 1.1.0 → 2.0.0, `specifications.json` 0.1.0 → 0.2.0
-- Bumped methodology version to v0.1.12
-- Dropped legacy `urls` block in releases/latest; only `spec_urls` going forward
-- Summary generator: `classify_gap_direction` → `classify_spread_direction`; `gap_delta_mom`/`gap_direction` → `spread_delta_mom`/`tilt_delta_mom`/`spread_direction`
+**Pre-1.0 exceptional breaking public-schema release.** v0.1.12 brings the
+repository back into agreement with the concept note. It withdraws the
+previously advertised Core specification, bumps public schemas, and closes
+several coherence gaps between manifests, workflows, and presentation
+surfaces. See
+[`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](docs/repair/V0.1.12_ALIGNMENT_AUDIT.md)
+for the full audit and
+[`docs/repair/CORE_WITHDRAWAL.md`](docs/repair/CORE_WITHDRAWAL.md) for the
+Core-withdrawal rationale.
 
-### Added - Phase 3 Sanity Check
-- Workflow step verifies `releases.json` and `latest.json` metrics match the raw release manifest within tolerance (guards against the silent-zero bug)
+### Removed - Core specification (Breaking)
+- Withdrew the "Core" (`core`) operational specification. The prior Core
+  outputs were derived from headline-CPI inputs and did not implement a
+  bona fide core-inflation calculation.
+- `data/outputs/specifications.json` no longer contains a `core` entry.
+- No `spec_urls.core` is advertised in `releases.json` or `latest.json` for
+  any release — including historical entries.
+- Public-presentation surfaces (dashboard, WordPress plugin
+  `dmi-release-data`, release-note HTML) no longer render a Core column.
+
+### Changed - Metrics Rename (Breaking, unchanged from prior 0.1.12 draft)
+- Replaced single signed `income_pressure_gap` with two distinct metrics:
+  - `income_pressure_spread` (always ≥ 0): max(DMI) − min(DMI) across
+    groups; measures dispersion
+  - `income_pressure_tilt` (signed): Q1 DMI − Q5 DMI; measures
+    regressivity (positive ⇒ bottom fifth more pressured)
+- Added `most_pressured_group` and `least_pressured_group` (group
+  identifiers) to `summary_metrics`.
+- Dropped legacy `urls` block in releases/latest; only `spec_urls` going
+  forward.
+- Summary generator: `classify_gap_direction` →
+  `classify_spread_direction`; `gap_delta_mom` / `gap_direction` →
+  `spread_delta_mom` / `tilt_delta_mom` / `spread_direction`.
+
+### Changed - Schema bumps (Breaking)
+- `releases.schema.json`: 2.0.0 → **3.0.0** (Core removal +
+  baseline-only historical entries)
+- `latest.json` embedded `schema_version`: 2.0.0 → **3.0.0**
+- `specifications.schema.json`: 0.2.0 → **0.3.0** (Core entry removed)
+- Bumped methodology version to v0.1.12 throughout.
+
+### Added - Baseline + Slack-Plus identity
+- Slack-Plus is now advertised as the sole operational companion to
+  Baseline. The test suite enforces the identity
+  `DMI_slackplus(g) − DMI_baseline(g) = U6 − U3` for every group.
+- Historical baseline-only releases (2025-12..2026-02) correctly
+  advertise only the Baseline artifact and never a Slack-Plus URL.
+
+### Added - Workflow guards
+- `monthly_dmi.yml`: hard-fails if `specifications.json.reference_period`
+  disagrees with the requested period; hard-fails on any Core artifact in
+  the deploy tree; runs full JSON-schema validation before opening a PR;
+  `dry_run` input for repair validation; corrected spread assertion
+  (`< 0` instead of `<= 0`); removed stale hard-coded default period.
+- `deploy_web_dashboard.yml`: hard-fails on staged Core artifacts and on
+  any manifest still advertising Core `spec_urls`; `dry_run` input.
+- `deploy_wp_plugins.yml`: hard-fails on Core references (`'core'`,
+  `_core.json`, `-core.*`) in staged plugin source; `dry_run` input.
+
+### Added - Coherence tests
+- `tests/test_specifications_manifest.py`: enforces that
+  `specifications.json` is coherent with `latest.json` and has no Core
+  entry.
+- `tests/test_baseline_slackplus_identity.py`: enforces the
+  Slack-Plus − Baseline = U6 − U3 identity.
+- `tests/test_schema_validation.py`: validates every published manifest
+  and every standard release JSON against its schema; asserts no Core
+  `spec_urls` and no Slack-Plus advertisement for baseline-only history.
 
 ### Fixed
-- WordPress `dmi-latest-info` plugin: "Most-Pressured Group" row previously rendered `dmi_stress` (numeric); now correctly shows `group_id`
-- Strict (subscript) access replaces silent `.get(key, default)` patterns for required metrics
+- `scripts/backfill_releases.py`: fixed `IndentationError` at the
+  module-guard block; removed hard-coded Core `spec_url` block; gated
+  Slack-Plus URLs on artifact existence; bumped emitted
+  `schema_version` to 3.0.0; switched `datetime.now()` →
+  `datetime.utcnow()` for consistency with the timezone suffix.
+- `web/wp-plugins/dmi-release-data/dmi_release_data.php`: removed Core
+  from `$labels`, `$notes`, and the render loop; plugin version bumped
+  to 0.3.0.
+- `web/dashboard.html`: removed the "DMI Core" narrative bullet and the
+  hard-coded Core references in comments.
+- WordPress `dmi-latest-info` plugin: "Most-Pressured Group" row
+  previously rendered `dmi_stress` (numeric); now correctly shows
+  `group_id`.
+- Strict (subscript) access replaces silent `.get(key, default)`
+  patterns for required metrics.
+
+### Changed - Identity / metadata
+- `LICENSE`: copyright holder corrected to `Thomas C. Williams`
+  (previously `tcwilliams79`), year range `2025-2026`.
+- `CITATION.cff`: abstract rewritten to remove unsupported claims
+  (bootstrap confidence intervals, 2011-2024 historical time series,
+  Core CPI specification, Okun 1970 citation). Only supported claims
+  remain.
+- `README.md`: rewritten around the current v0.1.12 state; removed
+  obsolete v0.1.9 feature section and stale `tcwilliams79` URLs.
 
 ## [0.1.11] - 2025-12-17
 
@@ -72,6 +151,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.1.9] - 2025-12-17
+
+> **Historical note (added in v0.1.12).** Several items listed here were
+> subsequently withdrawn or found to be unsupported: the "Core CPI"
+> alternative did not implement a bona fide core-inflation calculation
+> (withdrawn in v0.1.12); the bootstrap confidence intervals were not
+> carried forward into the published v0.1.12 contract; and the 2011-2024
+> historical time series has not been re-validated under v0.1.12. This
+> entry is preserved unchanged as the historical record of what shipped
+> at v0.1.9.
 
 ### Added - Feature Complete
 - Historical time series backfill (2011-2024, 835 observations)
@@ -143,6 +231,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Links
 
-- [GitHub Releases](https://github.com/tcwilliams79/dmi/releases)
+- [GitHub Releases](https://github.com/dmianalysis/dmi/releases)
 - [Methodology Note](docs/DMI_Methodology_Note.md)
 - [API Documentation](docs/API.md)

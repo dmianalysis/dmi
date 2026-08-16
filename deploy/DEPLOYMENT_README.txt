@@ -1,4 +1,4 @@
-DMI v0.1.10 - Deployment Instructions
+DMI v0.1.12 - Deployment Instructions
 ======================================
 
 UNIVERSAL DEPLOYMENT (Works on Any Web Host):
@@ -20,7 +20,7 @@ B) Via File Manager:
    - Log into your hosting control panel
    - Open File Manager
    - Navigate to web root
-   - Upload dmi-v0.1.10-deployment.zip
+   - Upload dmi-v0.1.12-deployment.zip (if you built a zip)
    - Extract the .zip file
    - Delete the .zip after extraction
 
@@ -55,11 +55,18 @@ Nginx:
 - Dashboard still works, just missing caching optimizations
 
 FILES INCLUDED:
-- index.html (dashboard)
+- dashboard.html (dashboard; served at /dashboard.html)
 - health.json (status endpoint)
 - metadata.json (dataset info)
-- data/ (all DMI data)
+- data/outputs/ (releases.json, latest.json, specifications.json,
+  per-release JSON/CSV/Parquet, releases/*.html)
 - .htaccess (Apache optimization)
+
+DEPLOYED SPECIFICATIONS (v0.1.12):
+- Baseline (U-3, headline CPI)
+- Slack-Plus (U-6, headline CPI)
+- The "Core" specification was withdrawn in v0.1.12 and MUST NOT be
+  present in the deploy tree. See docs/repair/CORE_WITHDRAWAL.md.
 
 REQUIREMENTS:
 - Static file serving only
@@ -70,4 +77,4 @@ REQUIREMENTS:
 For detailed instructions, see:
 docs/DEPLOYMENT_GUIDE.md in the repository
 
-Support: https://github.com/tcwilliams79/dmi
+Support: https://github.com/dmianalysis/dmi

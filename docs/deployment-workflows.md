@@ -142,25 +142,29 @@ Check in this order:
 1. `health.json`
 2. `latest.json`
 3. direct release files such as:
-   - `dmi_release_YYYY-MM.json`
-   - `dmi_release_YYYY-MM_slack_plus.json`
-   - `dmi_release_YYYY-MM_core.json`
+   - `dmi_release_YYYY-MM.json` (baseline)
+   - `dmi_release_YYYY-MM_slack_plus.json` (Slack-Plus companion)
 
 If the raw files are current but the page is stale, the issue is usually:
 - WordPress page caching
 - plugin rendering logic
 - browser cache
 
-### 2) Baseline updates, but Slack-Plus or Core is missing
+### 2) Baseline updates, but Slack-Plus is missing
 Start with:
 - `monthly_dmi.yml`
 
 Check:
-- whether the spec-specific compute step ran
+- whether the Slack-Plus compute step ran
 - whether the expected file was written:
   - `dmi_release_YYYY-MM_slack_plus.json`
-  - `dmi_release_YYYY-MM_core.json`
 - whether the corresponding QA report exists
+
+> Note (v0.1.12): a "Core" companion was previously advertised but has
+> been withdrawn — see `docs/repair/CORE_WITHDRAWAL.md`. No
+> `dmi_release_*_core.json` file is written by the current pipeline, and
+> the workflows include a guard that fails deployment if such a URL
+> appears in `releases.json`.
 
 ### 3) Slack-Plus fails for a new month
 Likely cause:

@@ -421,7 +421,7 @@ Dashboard is static (no server-side code), so attack surface is minimal.
 - Methodology: `docs/DMI_Methodology_Note.md`
 - Release Calendar: `docs/RELEASE_CALENDAR.md`
 
-**GitHub**: https://github.com/tcwilliams79/dmi
+**GitHub**: https://github.com/dmianalysis/dmi
 
 **Health Check**: Always test `https://yourdomain.com/path/health.json` first when troubleshooting
 

@@ -245,7 +245,7 @@ Future enhancement: Add computed `days_since_update` field
 
 **BLS CPI Questions**: cpi_info@bls.gov  
 **BLS CPS Questions**: lausinfo@bls.gov  
-**DMI Issues**: https://github.com/tcwilliams79/dmi/issues
+**DMI Issues**: https://github.com/dmianalysis/dmi/issues
 
 ---
 

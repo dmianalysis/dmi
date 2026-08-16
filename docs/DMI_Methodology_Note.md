@@ -1,9 +1,47 @@
 # Distributional Misery Index: Methodology Note
 
-**Version**: 0.1.9  
-**Date**: December 2024  
-**Author**: T.C. Williams  
-**Status**: Published
+**Original version:** 0.1.9 (December 2024). **Current release:** v0.1.12
+(August 2026). **Author:** Thomas C. Williams.
+
+> ## ⚠️ v0.1.12 STATUS BANNER — READ FIRST
+>
+> This document was drafted for **v0.1.9** and is preserved here as the
+> most detailed technical description of the DMI construction. Several of
+> its specific claims are **superseded or withdrawn** under **v0.1.12**,
+> which is a pre-1.0 exceptional breaking public-schema release.
+>
+> **Superseded / withdrawn under v0.1.12:**
+>
+> 1. **Core CPI alternative** — withdrawn. The code that produced
+>    `dmi_release_*_core.json` in earlier releases derived its inputs
+>    from headline CPI and did not implement a bona fide core-inflation
+>    calculation. See
+>    [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md).
+>    v0.1.12 publishes only **Baseline** (U-3, headline CPI) and
+>    **Slack-Plus** (U-6, headline CPI) as operational specifications.
+> 2. **Bootstrap confidence intervals** (§3.6, §5.4, elsewhere) — not
+>    part of the v0.1.12 published contract. `dmi_release_*_with_ci.json`
+>    files that predate v0.1.12 are historical artifacts.
+> 3. **2011-2024 historical time series** (§7) — not re-validated under
+>    v0.1.12. Baseline coverage in the v0.1.12 published manifest starts
+>    at 2025-12; Slack-Plus coverage starts at 2026-03. Any long-run
+>    time-series claim in §7 has not been carried forward.
+> 4. **Specific point estimates and CI widths for November 2024**
+>    (Executive Summary, §5, §7) — pre-v0.1.12 numbers, retained for
+>    historical context only.
+>
+> For the current v0.1.12 published contract, consult:
+>
+> - [`README.md`](../README.md) — top-level v0.1.12 statement
+> - [`docs/API.md`](API.md) — current data-access reference
+> - [`docs/Alternative_Specifications.md`](Alternative_Specifications.md) —
+>   current Baseline + Slack-Plus discussion
+> - [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](repair/V0.1.12_ALIGNMENT_AUDIT.md) —
+>   audit backing the v0.1.12 repair
+>
+> The formula, the group-weighted-inflation construction, the U-3 slack
+> integration, and the CE-weight methodology in the body of this note
+> are **still current** under v0.1.12.
 
 ---
 
@@ -692,8 +730,8 @@ Okun, A. M. (1970). *The Political Economy of Prosperity*. Brookings Institution
 
 **1. Clone Repository**
 ```bash
-git clone https://github.com/tcwilliams79/dmi-private.git
-cd dmi-private
+git clone https://github.com/dmianalysis/dmi.git
+cd dmi
 ```
 
 **2. Install Dependencies**
