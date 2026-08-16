@@ -382,17 +382,24 @@ def generate_release_note_html(
     reference_period: str,
     metrics: dict,
     summary: str = "",
-    spec: str="baseline",
-    slack_measure: str="U-3",
+    spec: str = "baseline",
+    slack_measure: str = "U-3",
     specifications: Optional[dict] = None,
     published_at: Optional[str] = None,
 ) -> str:
     """Generate HTML release note for the current release.
 
-    ``specifications`` is supplied only after both published
-    specifications have been computed.  Keeping it optional preserves the
-    legacy single-spec command while allowing the monthly release workflow to
-    defer the public note until the robustness assessment is complete.
+    Under §4 the release note is a *shared* per-period document — it is
+    linked from the top-level `release_note` field of each release
+    entry, not from any single spec. The generator therefore:
+
+    - Never synthesizes rows for specifications that are not present in
+      the supplied `specifications` manifest. Historical baseline-only
+      periods produce a single-row robustness table (or none, if no
+      manifest is supplied). Core is never rendered under any
+      circumstance.
+    - Titles the note by period only (`DMI Release: YYYY-MM`), not by a
+      per-spec label such as `YYYY-MM-baseline`.
     """
     # Parse reference period to human-readable format
     year, month = reference_period.split('-')
@@ -419,7 +426,13 @@ def generate_release_note_html(
             "slack_plus": "Slack+ (U-6, headline CPI)",
         }
         rows = []
+        # Only render rows for specs that are actually present in the
+        # manifest. Never fabricate a row for a spec (e.g. slack_plus for
+        # a historical baseline-only period, or the withdrawn Core spec)
+        # that was not actually computed for this reference period.
         for spec_id in ("baseline", "slack_plus"):
+            if spec_id not in specs_by_id:
+                continue
             spec_metrics = specs_by_id[spec_id]["metrics"]
             measure = str(spec_metrics["slack_measure"]).upper()
             measure = {"U3": "U-3", "U6": "U-6"}.get(measure, measure)
@@ -452,8 +465,18 @@ def generate_release_note_html(
     </p>
 """
 
-        robustness_html = f"""    <h2>Robustness across specifications</h2>
-{warning_html}
+        # If only baseline is present, the "robustness across specifications"
+        # framing is misleading (there is only one specification for this
+        # period). Label it accordingly and omit the robustness warning.
+        section_heading = (
+            "Robustness across specifications"
+            if len(rows) > 1
+            else "Specification"
+        )
+        section_warning = warning_html if len(rows) > 1 else ""
+
+        robustness_html = f"""    <h2>{section_heading}</h2>
+{section_warning}
     <div class="table-wrap">
         <table>
             <thead>
@@ -538,7 +561,7 @@ def generate_release_note_html(
     </style>
 </head>
 <body>
-    <h1>DMI Release: {reference_period}-{spec}</h1>
+    <h1>DMI Release: {reference_period}</h1>
     <p><strong>Data Through:</strong> {data_through}</p>
     <p><strong>Published:</strong> {published_at or datetime.now().strftime('%Y-%m-%d')}</p>
 
