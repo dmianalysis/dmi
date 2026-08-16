@@ -133,8 +133,17 @@ Snapshot the remote `data/outputs/` tree before any deletion.
 BACKUP_DIR="./backup-preremoval-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$BACKUP_DIR"
 
+# §3 (Round-3): strict host verification is mandatory. Pin the host
+# key up front; a failure to reach the host is fatal.
+KNOWN_HOSTS="$HOME/.ssh/known_hosts"
+mkdir -p "$(dirname "$KNOWN_HOSTS")" && touch "$KNOWN_HOSTS" && chmod 600 "$KNOWN_HOSTS"
+if ! ssh-keygen -F "[$DMI_REMOTE_HOST]:$DMI_REMOTE_PORT" -f "$KNOWN_HOSTS" >/dev/null 2>&1 \
+   && ! ssh-keygen -F "$DMI_REMOTE_HOST" -f "$KNOWN_HOSTS" >/dev/null 2>&1; then
+  ssh-keyscan -p "$DMI_REMOTE_PORT" "$DMI_REMOTE_HOST" >> "$KNOWN_HOSTS"
+fi
+
 rsync -avz \
-  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=no" \
+  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN_HOSTS" \
   "$DMI_REMOTE_USER@$DMI_REMOTE_HOST:$DMI_REMOTE_BASE/data/outputs/" \
   "$BACKUP_DIR/"
 
@@ -227,7 +236,7 @@ If any expectation fails, restore from the Step 1 backup:
 
 ```bash
 rsync -avz \
-  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=no" \
+  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
   "$BACKUP_DIR/" \
   "$DMI_REMOTE_USER@$DMI_REMOTE_HOST:$DMI_REMOTE_BASE/data/outputs/"
 ```

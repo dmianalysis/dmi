@@ -71,8 +71,22 @@ if [ ! -f "$DMI_REMOTE_KEY" ]; then
   exit 3
 fi
 
+# §3 (Round-3 repair): strict host verification is mandatory. If the
+# operator has not yet pinned the host key, populate a local
+# known_hosts via ssh-keyscan; a keyscan failure is fatal (no `|| true`).
+KNOWN_HOSTS="${DMI_KNOWN_HOSTS:-$HOME/.ssh/known_hosts}"
+mkdir -p "$(dirname "$KNOWN_HOSTS")"
+touch "$KNOWN_HOSTS"
+chmod 600 "$KNOWN_HOSTS"
+if ! ssh-keygen -F "[$DMI_REMOTE_HOST]:$DMI_REMOTE_PORT" -f "$KNOWN_HOSTS" >/dev/null 2>&1 \
+   && ! ssh-keygen -F "$DMI_REMOTE_HOST" -f "$KNOWN_HOSTS" >/dev/null 2>&1; then
+  echo "Host $DMI_REMOTE_HOST:$DMI_REMOTE_PORT not in $KNOWN_HOSTS; pinning via ssh-keyscan ..." >&2
+  ssh-keyscan -p "$DMI_REMOTE_PORT" "$DMI_REMOTE_HOST" >> "$KNOWN_HOSTS"
+fi
+
 SSH_CMD=(ssh -i "$DMI_REMOTE_KEY" -p "$DMI_REMOTE_PORT" \
-         -o StrictHostKeyChecking=no \
+         -o StrictHostKeyChecking=yes \
+         -o UserKnownHostsFile="$KNOWN_HOSTS" \
          "$DMI_REMOTE_USER@$DMI_REMOTE_HOST")
 
 # The find expression matches ONLY the withdrawn patterns. Baseline
