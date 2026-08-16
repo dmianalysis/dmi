@@ -22,10 +22,14 @@
 > 2. **Bootstrap confidence intervals** (§3.6, §5.4, elsewhere) — not
 >    part of the v0.1.12 published contract. `dmi_release_*_with_ci.json`
 >    files that predate v0.1.12 are historical artifacts.
-> 3. **2011-2024 historical time series** (§7) — not re-validated under
->    v0.1.12. Baseline coverage in the v0.1.12 published manifest starts
->    at 2025-12; Slack-Plus coverage starts at 2026-03. Any long-run
->    time-series claim in §7 has not been carried forward.
+> 3. **2011-2024 historical time series** (§7, Appendix B backfill
+>    recipes) — not re-validated under v0.1.12. Baseline coverage in
+>    the v0.1.12 published manifest starts at 2025-12; Slack-Plus
+>    coverage starts at 2026-03. Any long-run time-series claim in §7,
+>    and any command in Appendix B that emits
+>    `dmi_timeseries_2010_2024.json`, has NOT been carried forward.
+>    The current public timeseries lives at
+>    `data/outputs/published/dmi_timeseries.json` and is Baseline-only.
 > 4. **Specific point estimates and CI widths for November 2024**
 >    (Executive Summary, §5, §7) — pre-v0.1.12 numbers, retained for
 >    historical context only.
@@ -751,15 +755,22 @@ export BLS_API_KEY="your_key_here"
 ./venv/bin/python -m scripts.compute_dmi
 ```
 
-**5. Compute with Confidence Intervals**  
+**5. Compute with Confidence Intervals** *(v0.1.12: not part of the shipped contract)*
 ```bash
+# Bootstrap CI generation was part of the withdrawn v0.1.10 pipeline and is
+# NOT re-validated under v0.1.12. `latest_with_ci` is emitted only when a
+# `dmi_release_<period>_with_ci.json` happens to exist for the current
+# period; the v0.1.12 default pipeline does not produce that file.
 ./venv/bin/python -m scripts.compute_dmi_with_ci --period 2024-11 --bootstrap 1000
 ```
 
-**6. Run Alternative Specifications**
+**6. Run Alternative Specifications** *(v0.1.12: Baseline + Slack-Plus only)*
 ```bash
-./venv/bin/python -m scripts.compute_dmi_u6
-./venv/bin/python -m scripts.compute_dmi_core
+# `scripts.compute_dmi` produces BOTH Baseline and Slack-Plus in a single
+# run. The previously advertised `compute_dmi_u6` and `compute_dmi_core`
+# entry points are retired: the U-6 companion is now `_slack_plus`, and
+# Core was withdrawn (docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md).
+./venv/bin/python -m scripts.compute_dmi
 ```
 
 **7. View Results**
@@ -774,11 +785,16 @@ python3 -m http.server 8000
 # Open browser to http://localhost:8000
 ```
 
-### Historical Backfill
+### Historical Backfill *(v0.1.12: legacy tooling — not re-validated)*
 
 ```bash
+# The v0.1.10 backfill emitted a `dmi_timeseries_2010_2024.json` under
+# published/. In v0.1.12 the public timeseries is Baseline-only at
+# `data/outputs/published/dmi_timeseries.json` and its coverage begins at
+# the earliest re-validated period (2025-12). The 2011-2024 series has
+# NOT been re-validated under v0.1.12 — see §7 status banner at the top
+# of this document.
 ./venv/bin/python -m scripts.backfill_historical
-# Generates data/outputs/published/dmi_timeseries_2010_2024.json
 ```
 
 ---

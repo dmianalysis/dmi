@@ -67,18 +67,25 @@ The monthly release runs unattended via the [`monthly_dmi.yml`](../.github/workf
 
 **Day 2 (15th, 10:17 UTC)**: Scheduled run of `monthly_dmi.yml`
 - Cron: `17 10 15 * *` (workflow_dispatch also available with explicit period)
+- Default mode is **dry-run**; publishing requires an explicit `dry_run=false` on manual dispatch (§6)
 - Fetches latest CPI + slack data from the BLS API
-- Computes DMI for all three specifications: baseline, slack-plus, core
-- Builds `specifications.json`, updates `dmi_timeseries.json`
+- Computes DMI for the two operational specifications: baseline and slack-plus.
+  Core is withdrawn in v0.1.12 — no `*_core.*` artifact is produced
+  (see [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md)).
+- Builds `specifications.json`, updates the Baseline-only `dmi_timeseries.json`
 - Runs QA validation (`qa_report_<period>_*.json`); fails the job on QA error
 - Sanity-checks `releases.json`/`latest.json` metrics against the raw baseline release
-- Refreshes `web/health.json`
-- Rsyncs the thin monthly deploy bundle to iFastNet (`/home/agiraces/dmianalysis/`)
-- Opens an automated PR (`release/<period>`) and auto-merges it on success
+- Refreshes `web/health.json` (endpoints allow-list; retired keys are stripped, §8)
+- Assembles the deploy tree via `scripts.prepare_deployment --verify` (§5)
+- Rsyncs the deploy bundle to iFastNet (`/home/agiraces/dmianalysis/`) **only when
+  `dry_run=false`**; otherwise the workflow stops at the verify step
+- Opens an automated PR (`release/<period>`) for **manual review and merge**
+  (auto-merge was removed in §6; scheduled cron runs never deploy without an
+  operator explicitly opting in)
 
-**Post-run human review** (optional)
-- Inspect the merged PR for anomalies
-- Confirm `https://dmianalysis.org/health.json` reflects the new period
+**Post-run human review** (required)
+- Inspect the opened PR for anomalies before merging
+- After merge, confirm `https://dmianalysis.org/health.json` reflects the new period
 - Spot-check the dashboard cards
 
 **Out-of-cycle changes** are handled by dedicated workflows so they don't require a full recompute:
@@ -185,9 +192,14 @@ curl https://dmianalysis.org/health.json | jq '.latest_period'
 Implemented in [`monthly_dmi.yml`](../.github/workflows/monthly_dmi.yml).
 
 - **Trigger**: cron `17 10 15 * *` (15th of each month at 10:17 UTC) + `workflow_dispatch`
-- **Pipeline**: fetch BLS data → compute baseline / slack-plus / core → build manifests → QA validate → sanity-check → rsync deploy to iFastNet → open + auto-merge release PR
+- **Default mode**: dry-run (§6); `dry_run=false` must be set explicitly on manual
+  dispatch to actually publish. Scheduled cron runs never deploy without an operator
+  explicitly opting in.
+- **Pipeline**: fetch BLS data → compute baseline + slack-plus → build manifests →
+  QA validate → sanity-check → `scripts.prepare_deployment --verify` → rsync deploy
+  to iFastNet (only when not dry-run) → open release PR **for manual review**
 - **Gating**: QA failures and metrics-mismatch sanity checks fail the job before deploy
-- **Human effort**: ~0 minutes/month for routine releases; spot-check the merged PR
+- **Human effort**: PR review + merge for every release (auto-merge removed in §6)
 
 ### Future Enhancements
 

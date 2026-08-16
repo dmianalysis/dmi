@@ -1,7 +1,15 @@
 # DMI Deployment Guide
 
-**Version**: 0.1.10  
+**Version**: 0.1.12
 **Purpose**: Platform-agnostic deployment instructions for any web host
+
+> **v0.1.12 alignment note (§12):** endpoints listed below were re-verified
+> against the current shipped `web/health.json` and the two-spec (Baseline
+> + Slack-Plus) contract. The Core specification and the retired endpoint
+> keys (`latest_core`, `latest_u6`, `timeseries`, `dmi_timeseries`) do not
+> appear in v0.1.12 deployments — see
+> [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md)
+> and `scripts/health_endpoints.py` for the endpoint allow-list.
 
 ---
 
@@ -216,7 +224,9 @@ After deployment, systematically verify:
 ### Data Loading
 - [ ] **Health endpoint**: `https://yourdomain.com/path/health.json` returns JSON
 - [ ] **Latest period matches**: Check health.json shows correct period
-- [ ] **Time series accessible**: Test `/data/outputs/published/dmi_timeseries_2010_2024.json`
+- [ ] **Time series accessible**: Test `/data/outputs/published/dmi_timeseries.json`
+      (v0.1.12 Baseline-only path; the legacy `dmi_timeseries_2010_2024.json`
+      endpoint and the `timeseries` health-key alias were both retired — see §7/§8).
 
 ### Visualizations
 - [ ] **Bar charts render**: DMI and inflation bars visible
