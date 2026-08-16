@@ -1,6 +1,6 @@
 {
   "schema_version": "3.0.0",
-  "generated_at": "2026-08-16T04:34:28.440203Z",
+  "generated_at": "2026-08-16T04:37:51.285319Z",
   "current_release_id": "2026-07",
   "releases": [
     {
@@ -218,7 +218,7 @@
       "data_through_label": "February 2026",
       "published_at": "2026-03-22",
       "status": "superseded",
-      "methodology_version": "v0.1.12",
+      "methodology_version": "legacy/unknown",
       "summary": "Economic pressure rose modestly in February 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop also softened slightly, with unemployment edging up to 4.4%.",
       "summary_facts": {
         "lower_income_more_pressure": true,
@@ -237,8 +237,8 @@
       "release_note": "/data/outputs/releases/2026-02.html",
       "spec_urls": {
         "baseline": {
-          "csv": "/data/outputs/dmi-2026-02-baseline.csv",
-          "parquet": "/data/outputs/dmi-2026-02-baseline.parquet"
+          "csv": "/data/outputs/dmi-2026-02.csv",
+          "parquet": "/data/outputs/dmi-2026-02.parquet"
         }
       },
       "metrics": {
@@ -256,7 +256,7 @@
       "data_through_label": "January 2026",
       "published_at": "2026-02-15",
       "status": "superseded",
-      "methodology_version": "v0.1.12",
+      "methodology_version": "legacy/unknown",
       "summary": "Economic pressure fell sharply in January 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Spread widened slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.3%.",
       "summary_facts": {
         "lower_income_more_pressure": true,
@@ -275,8 +275,8 @@
       "release_note": "/data/outputs/releases/2026-01.html",
       "spec_urls": {
         "baseline": {
-          "csv": "/data/outputs/dmi-2026-01-baseline.csv",
-          "parquet": "/data/outputs/dmi-2026-01-baseline.parquet"
+          "csv": "/data/outputs/dmi-2026-01.csv",
+          "parquet": "/data/outputs/dmi-2026-01.parquet"
         }
       },
       "metrics": {
@@ -294,7 +294,7 @@
       "data_through_label": "December 2025",
       "published_at": "2026-01-16",
       "status": "superseded",
-      "methodology_version": "v0.1.12",
+      "methodology_version": "legacy/unknown",
       "summary": "The December 2025 release shows higher measured pressure for lower-income households than for higher-income households. The current dashboard reports a DMI Median of 7.06, a DMI Stress reading of 7.18, and an Income Pressure Spread of 0.22.",
       "summary_facts": {
         "lower_income_more_pressure": true,
@@ -307,8 +307,8 @@
       "release_note": "/data/outputs/releases/2025-12.html",
       "spec_urls": {
         "baseline": {
-          "csv": "/data/outputs/dmi-2025-12-baseline.csv",
-          "parquet": "/data/outputs/dmi-2025-12-baseline.parquet"
+          "csv": "/data/outputs/dmi-2025-12.csv",
+          "parquet": "/data/outputs/dmi-2025-12.parquet"
         }
       },
       "metrics": {

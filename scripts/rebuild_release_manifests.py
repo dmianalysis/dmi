@@ -97,28 +97,45 @@ def derive_metrics(raw_release: dict) -> dict:
     }
 
 
-def build_spec_urls(release_id: str, output_dir: Path) -> dict:
-    """Build the spec_urls block for a release, gating each spec on the actual
-    presence of its CSV artifact on disk.
+def _resolve_baseline_urls(release_id: str, output_dir: Path) -> Optional[dict]:
+    """Return {csv, parquet} URLs for the baseline spec, or None if no
+    baseline artifact exists on disk under either naming convention.
 
-    No `release_note` key is nested here; the shared release_note is written
-    at the top of the release entry (releases.schema.json 3.0.0).
-
-    Historical baseline-only periods (before Slack-Plus was published) and
-    any future period for which a spec's CSV happens to be missing will
-    simply omit that spec block — we never advertise a URL for a file that
-    does not exist.
+    Modern periods (2026-03+) publish `dmi-YYYY-MM-baseline.{csv,parquet}`.
+    Historical periods (2025-12..2026-02) predate the -baseline suffix and
+    publish `dmi-YYYY-MM.{csv,parquet}` instead. §3 (historical URL
+    repair) requires the advertised URL to name the file that actually
+    exists — never a hypothetical suffixed rename.
     """
-    # NOTE: §3 (historical URL repair) will refine this further so each
-    # emitted URL is required to resolve to an existing file on disk.
-    # §2 only relocates release_note out of these blocks; it does not
-    # change which spec blocks are emitted.
-    spec_urls: dict = {
-        "baseline": {
+    suffixed_csv = output_dir / f"dmi-{release_id}-baseline.csv"
+    if suffixed_csv.exists():
+        return {
             "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
             "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
         }
-    }
+    unsuffixed_csv = output_dir / f"dmi-{release_id}.csv"
+    if unsuffixed_csv.exists():
+        return {
+            "csv": f"/data/outputs/dmi-{release_id}.csv",
+            "parquet": f"/data/outputs/dmi-{release_id}.parquet",
+        }
+    return None
+
+
+def build_spec_urls(release_id: str, output_dir: Path) -> dict:
+    """Build the spec_urls block for a release.
+
+    Every URL emitted here must resolve to a file that actually exists in
+    `output_dir`. Historical baseline artifacts use the pre-suffix
+    `dmi-YYYY-MM.{csv,parquet}` naming; modern (2026-03+) baseline
+    artifacts use the `-baseline` suffix. Slack-Plus artifacts are
+    included only when their CSV is present. Under schema 3.0.0 no
+    `release_note` key is nested here.
+    """
+    spec_urls: dict = {}
+    baseline = _resolve_baseline_urls(release_id, output_dir)
+    if baseline is not None:
+        spec_urls["baseline"] = baseline
     slack_plus_csv = output_dir / f"dmi-{release_id}-slack_plus.csv"
     if slack_plus_csv.exists():
         spec_urls["slack_plus"] = {
@@ -148,11 +165,33 @@ class RebuildPlan:
     metrics: dict
     published_at: str
     output_dir: Path
+    methodology_version: str
+
+
+def derive_methodology_version(
+    raw: dict,
+    default_version: str,
+) -> str:
+    """Return the honest methodology_version label for a raw release.
+
+    Under §3, historical releases whose raw file does not record the
+    v0.1.12 spec metadata (`parameters.spec_id`, `parameters.slack_measure`,
+    `parameters.inflation_measure`) are labelled `legacy/unknown` rather
+    than being retroactively claimed as v0.1.12. Modern releases that do
+    record the full parameter block are labelled with ``default_version``
+    (typically `v0.1.12`).
+    """
+    params = raw.get("parameters", {})
+    required = ("spec_id", "slack_measure", "inflation_measure")
+    if all(k in params for k in required):
+        return default_version
+    return "legacy/unknown"
 
 
 def discover_releases(
     output_dir: Path,
     requested_periods: Optional[set[str]],
+    default_methodology_version: str = DEFAULT_METHODOLOGY_VERSION,
 ) -> list[RebuildPlan]:
     """Find raw release files to process and validate against ``requested_periods``."""
     plans: list[RebuildPlan] = []
@@ -178,6 +217,9 @@ def discover_releases(
             raw = json.load(f)
         metrics = derive_metrics(raw)
         published_at = raw["metadata"]["computed_at"].split("T")[0]
+        methodology_version = derive_methodology_version(
+            raw, default_methodology_version,
+        )
 
         plans.append(RebuildPlan(
             release_id=release_id,
@@ -187,6 +229,7 @@ def discover_releases(
             metrics=metrics,
             published_at=published_at,
             output_dir=output_dir,
+            methodology_version=methodology_version,
         ))
         seen.add(release_id)
 
@@ -204,10 +247,15 @@ def discover_releases(
 
 def build_release_entry(
     plan: RebuildPlan,
-    methodology_version: str,
     prior: Optional[dict],
 ) -> tuple[dict, dict]:
-    """Build a single release entry and its summary_facts."""
+    """Build a single release entry and its summary_facts.
+
+    Uses the plan's own `methodology_version` (derived from the raw file
+    per §3), not a caller-supplied default. This ensures historical
+    entries whose raw file lacks the v0.1.12 parameter block get
+    `legacy/unknown` and are not retroactively relabelled.
+    """
     release_id = plan.release_id
     label = data_through_label(plan.year, plan.month)
 
@@ -216,7 +264,7 @@ def build_release_entry(
         "data_through_label": label,
         "published_at": plan.published_at,
         "status": "superseded",
-        "methodology_version": methodology_version,
+        "methodology_version": plan.methodology_version,
         "summary": "",
         "summary_facts": {},
         "release_note": release_note_url(release_id),
@@ -288,9 +336,12 @@ def render_diff(old_path: Path, new_obj: dict) -> str:
 
 def assemble_manifests(
     plans: Iterable[RebuildPlan],
-    methodology_version: str,
 ) -> tuple[dict, dict]:
-    """Assemble releases.json and latest.json payloads from plans."""
+    """Assemble releases.json and latest.json payloads from plans.
+
+    Each plan carries its own honest methodology_version (per §3), so no
+    caller-supplied default is threaded through here.
+    """
     plan_list = list(plans)
     if not plan_list:
         raise SystemExit("ERROR: no releases to rebuild")
@@ -298,7 +349,7 @@ def assemble_manifests(
     entries: list[dict] = []
     prior_entry: Optional[dict] = None
     for plan in plan_list:
-        entry, _ = build_release_entry(plan, methodology_version, prior_entry)
+        entry, _ = build_release_entry(plan, prior_entry)
         entries.append(entry)
         prior_entry = entry
 
@@ -544,7 +595,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if not args.skip_manifests:
         print(f"Discovering releases in {output_dir}...")
-        plans = discover_releases(output_dir, requested)
+        plans = discover_releases(
+            output_dir, requested,
+            default_methodology_version=args.methodology_version,
+        )
         if not plans:
             print("No releases matched the requested filter.")
             return 1
@@ -553,7 +607,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         for plan in plans:
             m = plan.metrics
             print(
-                f"  {plan.release_id}: spread={m['income_pressure_spread']:.4f}, "
+                f"  {plan.release_id}: methodology={plan.methodology_version}, "
+                f"spread={m['income_pressure_spread']:.4f}, "
                 f"tilt={m['income_pressure_tilt']:+.4f}, "
                 f"most={m['most_pressured_group']}, least={m['least_pressured_group']}, "
                 f"unemployment={m['unemployment']}"
@@ -562,9 +617,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         verify_against_raw(plans)
         print("Sanity check passed: derived tilt matches raw dmi_income_pressure_gap; spread > 0.")
 
-        releases_manifest, latest_manifest = assemble_manifests(
-            plans, args.methodology_version
-        )
+        releases_manifest, latest_manifest = assemble_manifests(plans)
 
         releases_path = output_dir / "releases.json"
         latest_path = output_dir / "latest.json"
