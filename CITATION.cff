@@ -5,11 +5,13 @@ authors:
     given-names: Thomas C.
 title: "Distributional Misery Index: Measuring Economic Pressure Across Income Groups"
 version: 0.1.12
-# date-released is intentionally left as the repair-branch placeholder below.
-# It must be replaced with the actual v0.1.12 tag date when (and only when) the
-# repair PR is merged to main and the release is cut. Until then, no v0.1.12
-# tag exists.
-date-released: 2026-08-15
+# §11: `date-released` is deliberately omitted. Prior versions of this
+# file carried a placeholder date (`2026-08-15`) that predated any real
+# v0.1.12 tag; leaving it in place would misrepresent the release date
+# to CFF-aware citation tools (Zenodo, GitHub, DataCite). CFF 1.2.0
+# permits omitting the field until an actual release exists. Add the
+# real ISO-8601 tag date here — and only here — when the repair PR is
+# merged to main and the v0.1.12 tag is cut.
 url: "https://github.com/dmianalysis/dmi"
 repository-code: "https://github.com/dmianalysis/dmi"
 license: MIT
