@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Inventory-only companion to ``scripts/withdraw_core_artifacts.sh`` (§10).
+"""Inventory-only companion to ``scripts/withdraw_remote_artifacts.py``
+(Round-3 §10; supersedes the retired ``scripts/withdraw_core_artifacts.sh``
+this file previously named).
 
-The shell withdrawal tool operates against the remote iFastNet site over
-SSH and therefore cannot help an operator answer the offline question:
+The remote withdrawal tool operates against the iFastNet site over SSH
+and therefore cannot help an operator answer the offline question:
 "What withdrawn-Core artifacts are still present in my local working
 tree, and does the withdrawal record describe them accurately?"
 
@@ -15,7 +17,8 @@ requested). It exits ``0`` regardless of how many matches are found;
 callers that need to fail a CI job on non-empty inventories can gate on
 the JSON output themselves.
 
-Patterns matched (identical to the remote script's ``FIND_EXPR``):
+Patterns matched (aligned with
+``scripts.withdraw_remote_artifacts.WITHDRAWN_PATTERNS``):
 
 - ``dmi_release_*_core.json``
 - ``dmi_release_*_u6.json``

@@ -161,20 +161,77 @@ If the backup is missing files that Step 0 saw on the server, **stop**.
 
 ---
 
-## Step 2 — Withdrawal (destructive; requires authorization)
+## Step 2 — Withdrawal (two-phase; destructive phase requires authorization)
 
-Run the withdrawal script (see `scripts/withdraw_core_artifacts.sh`
-below). It only removes files matching the withdrawn patterns; it does
-not touch Baseline, Slack-Plus, manifests, published/historical, or
-the dashboard tree.
+The withdrawal is performed by
+[`scripts/withdraw_remote_artifacts.py`](../../scripts/withdraw_remote_artifacts.py)
+(Round-3 §10). The tool has two subcommands and refuses to delete
+anything unless three independent conditions hold:
+
+1. The `execute` subcommand was invoked with `--confirm`.
+2. The inventory JSON's `remote_base` matches the current environment
+   variable `DMI_REMOTE_BASE`.
+3. Each file's on-remote SHA-256 at execution time matches the hash
+   recorded in the inventory (protects against races between the two
+   phases).
+
+Files matching the protected patterns (Baseline `dmi_release_YYYY-MM.json`,
+Slack-Plus `dmi_release_YYYY-MM_slack_plus.json`, and the corresponding
+`dmi-YYYY-MM-{baseline,slack_plus}.{csv,parquet}` plus legacy
+`dmi-YYYY-MM.{csv,parquet}`) are refused up front — the tool exits
+non-zero rather than deleting a mislabeled operational artifact.
+
+### Step 2a — Inventory (read-only)
 
 ```bash
-# Sanity: script should refuse to run without an explicit CONFIRM flag.
-./scripts/withdraw_core_artifacts.sh   # will print a usage banner and exit 1
+INVENTORY=/tmp/dmi-remote-withdraw-inventory-$(date -u +%Y%m%dT%H%M%SZ).json
+
+python -m scripts.withdraw_remote_artifacts inventory \
+  --output "$INVENTORY"
+
+# The inventory command runs ssh over the pinned known_hosts, walks
+# $DMI_REMOTE_BASE/data/outputs/ for the withdrawn-artifact patterns,
+# computes SHA-256 for each match, and writes a JSON file with:
+#   {
+#     "schema_version": "1.0.0",
+#     "remote_base": "/home/agiraces/dmianalysis",
+#     "generated_at": "<UTC ISO8601>",
+#     "files": [
+#       {"path": "<remote_base>/data/outputs/dmi_release_2024-11_core.json",
+#        "size": <bytes>, "sha256": "<hex>"},
+#       ...
+#     ]
+#   }
+```
+
+Review the inventory before proceeding. Every listed path should end in
+one of the withdrawn suffixes (`_core.json`, `_u6.json`, `_with_ci.json`,
+`-core.csv`, `-core.parquet`). If anything else appears, stop and open a
+bug; the tool should have refused at inventory time.
+
+### Step 2b — Execute (destructive; requires --confirm)
+
+```bash
+# Sanity: without --confirm, execute exits fail-fast before any SSH I/O.
+python -m scripts.withdraw_remote_artifacts execute \
+  --inventory "$INVENTORY"
+# Expected: "ERROR: execute requires --confirm" and exit 1.
 
 # Actual removal (only after explicit authorization):
-./scripts/withdraw_core_artifacts.sh --confirm
+python -m scripts.withdraw_remote_artifacts execute \
+  --inventory "$INVENTORY" \
+  --confirm
 ```
+
+For each file in the inventory the execute phase:
+
+1. Re-hashes the remote file over SSH.
+2. Refuses to delete if the current hash differs from the inventory
+   hash (raced file); exits non-zero and reports the mismatched paths.
+3. Otherwise runs `ssh … "rm -f <path>"` and records the deletion.
+
+The tool writes a completion summary to stdout. Capture it into
+`docs/repair/REMOTE_WITHDRAWAL_LOG_<date>.md` per Step 4.
 
 ---
 
@@ -268,19 +325,20 @@ should fully reverse the change.
 
 - Withdrawal tool (two-phase, §10):
   [`scripts/withdraw_remote_artifacts.py`](../../scripts/withdraw_remote_artifacts.py)
-  — replaces the retired ``scripts/withdraw_core_artifacts.sh``. The
-  full runbook body above is being repaired in §13 to describe the
-  ``inventory`` → review → ``execute --confirm`` two-phase workflow.
-- **Read-only local inventory helper (§10, added in Round 2):**
+  — the ``inventory`` → review → ``execute --confirm`` workflow
+  documented in Step 2. Replaces the retired
+  ``scripts/withdraw_core_artifacts.sh``.
+- **Read-only local inventory helper:**
   [`scripts/inventory_withdrawn_artifacts.py`](../../scripts/inventory_withdrawn_artifacts.py).
   This script only *lists* withdrawn artifacts under the local working
   tree and never touches the remote. Use it before running Step 0 to
   confirm the local repository state you are about to compare against.
 - Withdrawal-tool safety-posture regression:
   [`tests/test_withdrawal_tooling.py`](../../tests/test_withdrawal_tooling.py).
-  Locks the shell script's `--confirm`-gated posture and the Python
-  inventory tool's read-only surface so this runbook cannot silently
-  regress.
+  Locks the two-phase Python tool's structural guarantees (SHA-256
+  re-verification gate, ``--confirm`` fail-fast before SSH I/O,
+  protected-pattern refusal) and the local inventory tool's read-only
+  surface so this runbook cannot silently regress.
 - Rationale: [`docs/repair/CORE_WITHDRAWAL.md`](CORE_WITHDRAWAL.md)
 - Consumer impact:
   [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](../known-issues/CORE_OUTPUT_WITHDRAWAL.md)

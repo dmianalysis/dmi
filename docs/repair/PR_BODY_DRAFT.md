@@ -139,7 +139,8 @@ actually implement.
 
 - Audit + dispositions:
   [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](../repair/V0.1.12_ALIGNMENT_AUDIT.md)
-  (§13 for Round 1, §14 for Round 2 §1-§15 dispositions).
+  (§13 for Round 1, §14 for Round 2 §1-§15 dispositions, §15 for
+  Round 3 §1-§15 dispositions).
 - Release note: [`docs/releases/v0.1.12_RELEASE.md`](../releases/v0.1.12_RELEASE.md).
 - Core withdrawal (rationale):
   [`docs/repair/CORE_WITHDRAWAL.md`](../repair/CORE_WITHDRAWAL.md).
@@ -202,6 +203,93 @@ Round-2 verification gates (§14) all pass:
   is deferred to a follow-up.
 - `qa_validator.py` `schema_version` hardcode refactor still deferred
   as noted in the Round-1 "Not included in this PR" list.
+
+---
+
+## Round 3 addendum — §1-§15 repair-prompt dispositions
+
+Round 2 closed on tip `3324fab`. The reviewer's Round-3 audit
+([`docs/DMI_v0.1.12_Repository_Repair_Prompt-2026-08-15.md`](../DMI_v0.1.12_Repository_Repair_Prompt-2026-08-15.md))
+found several Round-2 fixes to be incomplete or incorrectly wired.
+Round 3 replaces those fixes with correct implementations. Full
+dispositions are recorded in
+[`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](../repair/V0.1.12_ALIGNMENT_AUDIT.md)
+§15. Round-3 authorization boundary is unchanged: **local only, no
+push, no merge, no tag, no release, no deploy, no remote withdrawal.**
+
+### Round 3 commits (chronological)
+
+- `e24a54a` refactor(repair): scope monthly workflow to release preparation (§1)
+- `370d564` feat(repair): post-merge deployment workflows on the single builder (§2/§3)
+- `c4ab8a4` fix(repair): strict SSH host verification in withdrawal tool + runbook (§3)
+- `410840b` feat(repair): full endpoint closure + fail-closed staging (§4/§5)
+- `6db8937` fix(repair): retire latest_with_ci health endpoint (§7)
+- `66fb4eb` refactor(repair): quarantine pre-v0.1.12 legacy artifacts (§8)
+- `11b387a` refactor(repair): delegate manifest assembly to central helpers (§9)
+- `998b56f` build(repair): regenerate deploy/ tree via full endpoint closure (§6)
+- `034af85` feat(repair): two-phase remote withdrawal tool (§10)
+- `cc900ee` docs(repair): add CORE_WITHDRAWAL rationale + link checker (§11)
+- `851733a` docs: add v0.1.12 per-section markers to Methodology Note body (§12)
+- (this commit) docs(repair): audit + PR draft + REMOTE_WITHDRAWAL Round-3 rewrite (§13)
+
+### What Round 3 replaced
+
+- **§1 monthly workflow**: Round-2's `8a3744e` kept a deployment step
+  wired inside `monthly_dmi.yml` and left a `ref: main` input path
+  usable from a non-main branch. Round-3 `e24a54a` scopes the workflow
+  to release preparation only and adds a `mode` input.
+- **§2/§3 deployment workflows**: `deploy_web_dashboard.yml` and
+  `deploy_wp_plugins.yml` did not go through `scripts.prepare_deployment`.
+  Round-3 `370d564` + `c4ab8a4` route them through the single builder
+  and restore strict SSH verification.
+- **§4/§5 deployment builder**: Round-2's `86d586d` did not walk every
+  advertised URL source. Round-3 `410840b` closes the enumeration
+  (releases, latest, specifications, health, dashboard fetches) and
+  adds a sentinel-based fail-closed staging deletion.
+- **§6 deploy tree**: not regenerated in Round 2. Round-3 `998b56f`
+  regenerates via the fixed builder and proves byte-identical rebuild.
+- **§7 health endpoint**: Round-2 `d9e5dfc` sanitized `latest_u6` and
+  `timeseries` but left `latest_with_ci` on the allow-list. Round-3
+  `6db8937` moves it to `RETIRED_ENDPOINT_KEYS`.
+- **§8 legacy quarantine**: 2024-11 `_u6` and `_with_ci` files sat in
+  `data/outputs/` in Round 2. Round-3 `66fb4eb` relocates them under
+  `data/quarantine/pre_v0.1.12/`.
+- **§9 backfill writer**: Round 2 fixed the crash but left two
+  independent manifest writers that could drift. Round-3 `11b387a`
+  makes `backfill_releases` delegate to
+  `rebuild_release_manifests.discover_releases` / `assemble_manifests`.
+- **§10 withdrawal tool**: Round-2 kept the shell script. Round-3
+  `034af85` replaces it with a two-phase Python tool that verifies each
+  file's SHA-256 between inventory and execute.
+- **§11 Core withdrawal doc**: `docs/repair/CORE_WITHDRAWAL.md` was
+  referenced 30+ times but never created. Round-3 `cc900ee` writes it
+  and adds a documentation link checker
+  (`tests/test_repo_doc_links.py`).
+- **§12 methodology note**: Round-2 added the top-level status banner
+  but did not tag body sections. Round-3 `851733a` adds per-section
+  markers to §1.3, §5.2, §5.3, §6.3, §7, §8.2, and the citation block.
+
+### Round 3 verification snapshot (interim, at §13 commit)
+
+- `pytest tests/ --ignore=tests/test_monthly_workflow_safety.py`
+  → **131 passed / 5 skipped**. Zero regressions from Round-3 §6-§12.
+- `pytest tests/test_monthly_workflow_safety.py` currently carries
+  **4 pre-existing failures** whose cause is that its assertions
+  reference the pre-Round-3 monthly-workflow job structure. These are
+  targeted by Round-3 §14 (next commit).
+- `python -m scripts.prepare_deployment --output-dir /tmp/gate --verify`
+  → clean; two consecutive runs byte-identical modulo the sentinel
+  timestamp.
+- `python -m scripts.withdraw_remote_artifacts execute --inventory
+  /tmp/x.json` (no `--confirm`) → fails fast with "ERROR: execute
+  requires --confirm" and zero SSH I/O.
+
+### Round 3 still to land
+
+- §14 — rewrite `test_monthly_workflow_safety.py` against the §1
+  refactored workflow structure.
+- §15 — full verification gauntlet (all tests, deployment rebuild,
+  schema validation, workflow parse) and push of the branch.
 
 ---
 
