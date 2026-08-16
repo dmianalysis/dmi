@@ -266,8 +266,11 @@ should fully reverse the change.
 
 ## See also
 
-- Withdrawal script:
-  [`scripts/withdraw_core_artifacts.sh`](../../scripts/withdraw_core_artifacts.sh)
+- Withdrawal tool (two-phase, §10):
+  [`scripts/withdraw_remote_artifacts.py`](../../scripts/withdraw_remote_artifacts.py)
+  — replaces the retired ``scripts/withdraw_core_artifacts.sh``. The
+  full runbook body above is being repaired in §13 to describe the
+  ``inventory`` → review → ``execute --confirm`` two-phase workflow.
 - **Read-only local inventory helper (§10, added in Round 2):**
   [`scripts/inventory_withdrawn_artifacts.py`](../../scripts/inventory_withdrawn_artifacts.py).
   This script only *lists* withdrawn artifacts under the local working

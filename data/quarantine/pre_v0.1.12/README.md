@@ -25,9 +25,10 @@ part of the current release surface. They MUST NOT be:
 
 These files are NOT `_core.json` and are NOT part of the withdrawn
 Core spec. The Core withdrawal is documented separately in
-`docs/repair/CORE_WITHDRAWAL.md` and covered by
-`scripts/withdraw_core_artifacts.sh`. The pre-v0.1.12 quarantine
-covers only the U-6 / with_ci legacy naming.
+`docs/repair/CORE_WITHDRAWAL.md` and covered by the two-phase
+withdrawal tool `scripts/withdraw_remote_artifacts.py` (inventory
+then execute --confirm). The pre-v0.1.12 quarantine covers only
+the U-6 / with_ci legacy naming.
 
 ## Do not delete
 
