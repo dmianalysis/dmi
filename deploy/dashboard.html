@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distributional Misery Index (DMI) v0.1.11</title>
+    <title>Distributional Misery Index (DMI) v0.1.12</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -34,6 +34,28 @@
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-link {
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .footer .back-link {
+            color: white;
+            text-decoration: underline;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .footer .back-link:hover {
+            opacity: 0.8;
         }
 
         h1 {
@@ -296,6 +318,7 @@
 <body>
     <div class="container">
         <header>
+            <a href="https://dmianalysis.org/" class="back-link">&larr; dmianalysis.org</a>
             <h1>Distributional Misery Index</h1>
             <p class="subtitle">Measuring Economic Pressure Across Income Groups</p>
             <div class="period-info" id="period">Loading...</div>
@@ -328,10 +351,20 @@
             <ul style="list-style: none; padding: 0; margin: 0;">
                 <li style="margin-bottom: 0.75rem;"><strong>DMI Median</strong> shows the typical level of pressure.</li>
                 <li style="margin-bottom: 0.75rem;"><strong>DMI Stress</strong> shows the highest level of pressure.</li>
-                <li><strong>Income Pressure Gap</strong> shows how much more pressure the bottom fifth faces than the top fifth.</li>
+                <li style="margin-bottom: 0.75rem;><strong>Income Pressure Spread</strong> shows the gap between the highest- and lowest-pressure income fifths (max DMI − min DMI). Higher values mean pressure is more uneven across the distribution.</li>
+                <li style="margin-bottom: 0.75rem;><strong>Income Pressure Tilt</strong> (Q1 DMI − Q5 DMI). Positive = more pressure in lower-income households (Q1); negative = more pressure in higher-income households (Q5).</li>
+                <li style="margin-bottom: 0.75rem;><strong>DMI Baseline</strong> Headline specification using current inflation inputs and U-3 unemployment.</li>
+                <li><strong>DMI Slack+</strong> Companion specification using broader labor-market slack (U-6 instead of U-3, headline CPI).</li>
             </ul>
         </div>
 
+        <!-- Alternative Specifications (slack-plus) Panel — Core withdrawn in v0.1.12 -->
+        <div class="chart-container" id="specifications-container" style="display:none;">
+          <h2 class="chart-title">Alternative Specifications</h2>
+          <div class="grid" id="specifications-grid"></div>
+          <p style="margin-top: 1rem; color: #666;" id="specifications-note"></p>
+        </div>
+        
         <!-- Top Contributors Panel -->
         <div class="contributors-section" style="display:none;" id="contributors-section">
             <h2>What's Driving Inflation? (Top 5 Contributors)</h2>
@@ -431,8 +464,9 @@
         </div>
 
         <div class="footer">
+            <a href="https://dmianalysis.org/" class="back-link">&larr; dmianalysis.org</a>
             <p>
-                Distributional Misery Index (DMI) — v0.1.11<br>
+                Distributional Misery Index (DMI) — v0.1.12<br>
                 Data through: <span id="footer-period">Loading...</span> • Published: <span
                     id="footer-published">Loading...</span>
             </p>
@@ -591,6 +625,27 @@
             });
         }
 
+        function renderSpecifications(specsData) {
+            const container = document.getElementById('specifications-container');
+            const grid = document.getElementById('specifications-grid');
+            const note = document.getElementById('specifications-note');
+        
+            const cards = specsData.specifications.map(spec => `
+                <div class="card">
+                    <div class="card-title">${spec.label}</div>
+                    <div class="card-value">${spec.metrics.dmi_median.toFixed(2)}</div>
+                    <div class="card-detail">
+                        Median DMI • Stress ${spec.metrics.dmi_stress.toFixed(2)} • Spread ${spec.metrics.income_pressure_spread.toFixed(2)} • Tilt ${spec.metrics.income_pressure_tilt >= 0 ? '+' : ''}${spec.metrics.income_pressure_tilt.toFixed(2)}
+                        <p style="margin-top: 0.5rem;">${spec.summary}</p>
+                    </div>
+                </div>
+            `).join('');
+        
+            grid.innerHTML = cards;
+            note.textContent = specsData.robustness_assessment.notes.join(' ');
+            container.style.display = 'block';
+        }
+        
         // Load DMI data (latest + time series)
         async function loadData() {
             try {
@@ -603,6 +658,10 @@
                 const latestResponse = await fetch(`./data/outputs/dmi_release_${latestPeriod}.json`);
                 const latestData = await latestResponse.json();
 
+                // Load DMI specifications (slack-plus only; Core withdrawn in v0.1.12) from specifications.json
+                const specsResponse = await fetch('./data/outputs/specifications.json');
+                const specsData = await specsResponse.json();
+
                 // Load historical time series
                 const timeseriesResponse = await fetch('./data/outputs/published/dmi_timeseries.json');
                 const timeseriesData = await timeseriesResponse.json();
@@ -612,11 +671,18 @@
 
                 displayData(latestData, timeseriesData);
 
-                // Show and render contributors panel
+                // Show and render specifications panel
+                if (specsData) {
+                    document.getElementById('specifications-container').style.display = 'block';
+                    renderSpecifications(specsData);
+                }
+
+                // Show and render specifications
                 if (latestData.inflation_contributions) {
                     document.getElementById('contributors-section').style.display = 'block';
                     renderContributorsChart(latestData, 'Q1');
                 }
+
             } catch (error) {
                 console.error('Error loading DMI data:', error);
                 document.getElementById('period').textContent = 'Error loading data';
@@ -637,12 +703,17 @@
                 <div class="card" title="The highest DMI value among the published income fifths. It shows where economic pressure is currently most intense.">
                     <div class="card-title">DMI Stress</div>
                     <div class="card-value">${data.summary_metrics.dmi_stress.toFixed(2)}</div>
-                    <div class="card-detail">Highest pressure across income fifths<p style="font-size: 0.8rem; margin: 0.25rem 0;">Peak published DMI value</p><p>Shows the highest level of economic pressure recorded among the published income groups in the current release.</p></div>
+                    <div class="card-detail">Highest pressure across income fifths<p style="font-size: 0.8rem; margin: 0.25rem 0;">Highest published DMI value</p><p>Shows the highest level of economic pressure recorded among the published income groups in the current release.</p></div>
                 </div>
-                <div class="card" title="Difference between the lowest- and highest-income fifths on DMI. A higher value means current inflation and labor-market conditions are falling more heavily on lower-income households.">
-                    <div class="card-title">Income Pressure Gap</div>
-                    <div class="card-value">${data.summary_metrics.dmi_income_pressure_gap.toFixed(2)}</div>
-                    <div class="card-detail">Bottom fifth vs top fifth<p style="font-size: 0.8rem; margin: 0.25rem 0;">Q1 DMI - Q5 DMI</p><p>Higher values mean lower-income households are facing more economic pressure than higher-income households.</p></div>
+                <div class="card" title="Gap between the highest- and lowest-pressure income fifths on DMI (max minus min). Higher values mean pressure is more unevenly distributed.">
+                    <div class="card-title">Income Pressure Spread</div>
+                    <div class="card-value">${data.summary_metrics.income_pressure_spread.toFixed(2)}</div>
+                    <div class="card-detail">Dispersion across income fifths<p style="font-size: 0.8rem; margin: 0.25rem 0;">max DMI − min DMI (most pressured: ${data.summary_metrics.most_pressured_group}, least: ${data.summary_metrics.least_pressured_group})</p><p>Higher values mean economic pressure is more unevenly distributed across income groups.</p></div>
+                </div>
+                <div class="card" title="Signed difference between the lowest- and highest-income fifths on DMI (Q1 minus Q5). Positive values mean lower-income households face more pressure; negative values mean higher-income households do.">
+                    <div class="card-title">Income Pressure Tilt</div>
+                    <div class="card-value">${data.summary_metrics.income_pressure_tilt >= 0 ? '+' : ''}${data.summary_metrics.income_pressure_tilt.toFixed(2)}</div>
+                    <div class="card-detail">Bottom fifth vs top fifth<p style="font-size: 0.8rem; margin: 0.25rem 0;">Q1 DMI − Q5 DMI (signed)</p><p>Positive values mean lower-income households face more pressure than higher-income households; negative values mean the opposite.</p></div>
                 </div>
                 <div class="card">
                     <div class="card-title">Unemployment</div>
