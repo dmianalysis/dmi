@@ -4,11 +4,17 @@
 # Two-spec pipeline (v0.1.12): Baseline (U-3, headline CPI) + Slack-Plus (U-6,
 # headline CPI). Core has been withdrawn; see docs/repair/CORE_WITHDRAWAL.md.
 #
-# The workflow exposes a `dry_run` input for local/repair validation that
-# exercises computation, QA, manifest, note, and package assembly WITHOUT
-# SSH, rsync, PR creation, or auto-merge. `dry_run` defaults to `false` for
-# the scheduled path so production behavior is unchanged, but the repair
-# procedure must set it to `true` before running.
+# Safety posture (§6): the workflow is DRY-RUN BY DEFAULT.
+#   - Scheduled runs (cron) always run as dry-run: they compute, QA, build the
+#     manifest, generate the release note, assemble the deploy tree via
+#     scripts/prepare_deployment.py, and then STOP. No SSH key setup, no
+#     rsync, no PR creation.
+#   - Manual runs (workflow_dispatch) also default to dry-run. To actually
+#     publish, an operator must trigger the workflow manually and set
+#     `dry_run=false` explicitly. There is no auto-merge; the PR that opens
+#     is intentionally left for human review.
+# This defeats the "accidental deploy on schedule" and "auto-merge without
+# review" failure modes documented in the repair spec.
 
 name: Monthly DMI Computation
 
@@ -20,12 +26,13 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'When true, skip SSH/rsync/PR creation/auto-merge. Use for repair validation.'
+        description: 'DRY-RUN BY DEFAULT. Leave true to compute + stage + open PR without deploying. Set false explicitly to publish (rsync + PR, no auto-merge).'
         required: false
-        default: 'false'
+        default: 'true'
 
   schedule:
     # Run on the 15th after CPI release, but avoid top-of-hour GitHub Actions congestion.
+    # Scheduled runs always run as dry-run; see the safety posture note above.
     - cron: '17 10 15 * *'
 
 env:
@@ -83,13 +90,16 @@ jobs:
         id: mode
         run: |
           DRY_RUN='${{ github.event.inputs.dry_run }}'
-          # Scheduled runs never provide inputs; treat unset as production mode.
+          # Safety default (§6): if no input is provided (scheduled runs, or a
+          # manual dispatch that left the field unset), fall through to
+          # dry-run. Publishing requires an explicit `dry_run=false` on a
+          # workflow_dispatch trigger.
           if [ -z "$DRY_RUN" ]; then
-            DRY_RUN='false'
+            DRY_RUN='true'
           fi
           case "$DRY_RUN" in
-            true|True|TRUE|1) DRY_RUN='true' ;;
-            *) DRY_RUN='false' ;;
+            false|False|FALSE|0) DRY_RUN='false' ;;
+            *)                    DRY_RUN='true'  ;;
           esac
           echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
           echo "Dry-run mode: $DRY_RUN"
@@ -313,63 +323,19 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          echo "📦 Preparing deployment package (thin monthly deploy)..."
-          PERIOD="${{ steps.period.outputs.period }}"
+          echo "📦 Preparing deployment package via scripts/prepare_deployment.py..."
+          # §5/§6: the deploy tree is assembled by a single deterministic
+          # Python script that (a) mirrors every URL advertised by the shipped
+          # manifests, (b) copies the dashboard shell + health endpoint,
+          # (c) excludes the historical archive (uploaded separately by the
+          # optional delta step below), (d) refuses to stage any Core-named
+          # artifact, and (e) verifies byte-identical parity against the
+          # source files. Any drift fails the workflow here, before the
+          # rsync step ever sees the tree.
+          python -m scripts.prepare_deployment --output-dir deploy --verify
 
-          # Create deploy directory structure
-          mkdir -p deploy/data/outputs/published
-          mkdir -p deploy/data/outputs/releases
-
-          # The monthly workflow deploys /deploy.
-          # Keep the deployed dashboard shell aligned with the canonical source located in the 'web' directory
-          cp web/dashboard.html deploy/dashboard.html
-
-          # Refresh the health endpoint from the just-generated workspace copy
-          cp web/health.json deploy/health.json
-
-          # Refresh release manifests used by the site and by manual deployments
-          cp data/outputs/latest.json deploy/data/outputs/
-          cp data/outputs/releases.json deploy/data/outputs/
-          cp data/outputs/specifications.json deploy/data/outputs/
-
-          # Copy release data files for THIS PERIOD only.
-          # Baseline JSON is required; explicit copy (no glob suppression) so a
-          # missing artifact fails the step.
-          cp "data/outputs/dmi_release_${PERIOD}.json" deploy/data/outputs/
-          cp "data/outputs/dmi_release_${PERIOD}_slack_plus.json" deploy/data/outputs/
-          cp "data/outputs/qa_report_${PERIOD}_baseline.json" deploy/data/outputs/
-          cp "data/outputs/qa_report_${PERIOD}_slack_plus.json" deploy/data/outputs/
-
-          # CSV / Parquet flat files may or may not be produced by every writer
-          # version; copy when present.
-          cp data/outputs/dmi-"$PERIOD"*.csv deploy/data/outputs/ 2>/dev/null || true
-          cp data/outputs/dmi-"$PERIOD"*.parquet deploy/data/outputs/ 2>/dev/null || true
-
-          # Release note is REQUIRED (no || true).
-          cp "data/outputs/releases/${PERIOD}.html" deploy/data/outputs/releases/
-
-          # Copy published timeseries / lightweight published assets
-          # IMPORTANT: exclude historical from routine monthly deploys
-          rsync -a --exclude 'historical/' data/outputs/published/ deploy/data/outputs/published/
-
-          # List deployment contents
           echo "📁 Deployment package contents:"
           find deploy -type f | sed -n '1,80p'
-
-      - name: Guard against Core artifacts in deploy package
-        run: |
-          # Defense-in-depth: fail the run if any Core artifact was staged. Core
-          # has been withdrawn (see docs/repair/CORE_WITHDRAWAL.md); any staged
-          # Core file is a regression and must not be deployed.
-          set +e
-          MATCHES=$(find deploy -type f \( -iname '*core*' -o -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
-          set -e
-          if [ -n "$MATCHES" ]; then
-            echo "❌ Core artifacts detected in deploy/ — refusing to deploy:"
-            echo "$MATCHES"
-            exit 1
-          fi
-          echo "✅ No Core artifacts in deploy package."
 
       - name: Skip remote deployment (dry-run mode)
         if: steps.mode.outputs.dry_run == 'true'
@@ -468,15 +434,23 @@ jobs:
             - `data/outputs/latest.json`
             - `data/outputs/releases/${{ steps.period.outputs.period }}.html`
 
-            ### Next Steps
+            ### Next Steps (manual review required)
             1. Review baseline vs slack_plus for reasonableness
             2. Check QA warnings (especially weights vintage)
-            3. Approve and merge to update repository
+            3. Verify the deploy tree (workflow logs) shows the expected
+               URL set and byte-identical parity
+            4. Approve and merge manually — **this PR is not auto-merged**
+               (see repair spec §6)
 
-            > ✅ **Website automatically updated**: dmianalysis.org now shows data for ${{ steps.period.outputs.period }}
+            > **Site was updated by this run's rsync step**: dmianalysis.org
+            > now serves data for ${{ steps.period.outputs.period }}. Merging
+            > this PR promotes the same artifacts into `main` so the next
+            > run has an identical starting point.
 
             ---
-            *This PR was automatically created by the Monthly DMI workflow*
+            *This PR was automatically created by the Monthly DMI workflow. It
+            is intentionally NOT auto-merged; a human reviewer must approve
+            and merge it.*
 
           labels: |
             automated
@@ -486,8 +460,6 @@ jobs:
             data/outputs/published/
             web/health.json
 
-      - name: Auto-merge release PR
-        if: steps.mode.outputs.dry_run != 'true' && steps.create-pr.outputs.pull-request-number
-        run: gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --merge --delete-branch
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # §6: No auto-merge step. The PR opened above is intentionally left
+      # open for a human reviewer to inspect the diff, verify the deploy
+      # logs, and merge (or close) manually.
