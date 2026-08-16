@@ -1,0 +1,128 @@
+{
+  "artifact_id": "detailed_inflation_taxonomy_v0_1",
+  "version": "0.1.0",
+  "status": "RESEARCH_ONLY",
+  "milestone": "Detailed Inflation Substrate v0.1, Milestone 1",
+  "description": "Candidate detailed computation taxonomy for a future finer-grained inflation substrate. This artifact is research metadata only. It is NOT wired into the operational DMI calculator, the Baseline specification, the Slack-Plus specification, or any release manifest. Core DMI remains withdrawn and unimplemented.",
+  "classification_rule": {
+    "FOOD": ["FOOD"],
+    "ENERGY": ["HOUSEHOLD_ENERGY", "MOTOR_FUEL"],
+    "OTHER": "all remaining nodes"
+  },
+  "cpi_series_note": "candidate_cpi_series_id values are CANDIDATES for a future milestone. Milestone 1 validates their structural form and uniqueness only; it does not acquire CPI data.",
+  "attribution": "CPI series identifiers are published by the U.S. Bureau of Labor Statistics. DMI did not originate BLS classification or index methodology.",
+  "nodes": [
+    {
+      "category_id": "FOOD",
+      "label": "Food",
+      "reporting_parent": "FOOD",
+      "classification": "FOOD",
+      "candidate_cpi_series_id": "CUUR0000SAF1",
+      "notes": "Food at home and food away from home combined, matching CPI SAF1."
+    },
+    {
+      "category_id": "ALCOHOLIC_BEVERAGES",
+      "label": "Alcoholic beverages",
+      "reporting_parent": "FOOD",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAF116",
+      "notes": "Alcohol is excluded from the CPI Food aggregate but rolls up under the DMI FOOD reporting parent."
+    },
+    {
+      "category_id": "SHELTER",
+      "label": "Shelter",
+      "reporting_parent": "HOUSING",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAH1",
+      "notes": "Includes rent of primary residence, lodging away from home, owners' equivalent rent, and tenants'/household insurance. Owner-equivalent-rent transformation is deferred to a later milestone."
+    },
+    {
+      "category_id": "HOUSEHOLD_ENERGY",
+      "label": "Household energy",
+      "reporting_parent": "HOUSING",
+      "classification": "ENERGY",
+      "candidate_cpi_series_id": "CUUR0000SAH21",
+      "notes": "Electricity, utility (piped) gas, fuel oil, and other household fuels."
+    },
+    {
+      "category_id": "WATER_SEWER_TRASH",
+      "label": "Water, sewer, and trash collection services",
+      "reporting_parent": "HOUSING",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SEHG",
+      "notes": "Separated from household energy because it is a non-energy utility."
+    },
+    {
+      "category_id": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+      "label": "Household furnishings and operations",
+      "reporting_parent": "HOUSING",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAH3",
+      "notes": "Furniture, appliances, housewares, tools, household supplies, and household services."
+    },
+    {
+      "category_id": "APPAREL",
+      "label": "Apparel",
+      "reporting_parent": "APPAREL",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAA",
+      "notes": "Not populated by Milestone 1: apparel UCCs fall outside the four audited CE domains (Food, Alcoholic beverages, Housing, Transportation). Retained so the taxonomy is complete for later milestones."
+    },
+    {
+      "category_id": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+      "label": "Transportation commodities less motor fuel",
+      "reporting_parent": "TRANSPORTATION",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SATCLTB",
+      "notes": "New and used vehicles, motorcycles, tires, vehicle parts and equipment, motor oil and fluids."
+    },
+    {
+      "category_id": "MOTOR_FUEL",
+      "label": "Motor fuel",
+      "reporting_parent": "TRANSPORTATION",
+      "classification": "ENERGY",
+      "candidate_cpi_series_id": "CUUR0000SETB",
+      "notes": "Gasoline (all grades), diesel, and alternative motor fuels."
+    },
+    {
+      "category_id": "TRANSPORT_SERVICES",
+      "label": "Transportation services",
+      "reporting_parent": "TRANSPORTATION",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAS4",
+      "notes": "Vehicle leasing and rental, maintenance and repair, motor vehicle insurance, motor vehicle fees, and public transportation."
+    },
+    {
+      "category_id": "MEDICAL_CARE",
+      "label": "Medical care",
+      "reporting_parent": "MEDICAL_CARE",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAM",
+      "notes": "Reachable from the audited domains only via a small number of household-operations UCCs that concord to home health care and adult day care ELIs."
+    },
+    {
+      "category_id": "RECREATION",
+      "label": "Recreation",
+      "reporting_parent": "RECREATION",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAR",
+      "notes": "Largely outside the four audited CE domains in Milestone 1."
+    },
+    {
+      "category_id": "EDUCATION_COMMUNICATION",
+      "label": "Education and communication",
+      "reporting_parent": "EDUCATION_COMMUNICATION",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAE",
+      "notes": "Reached from the Housing domain through CE telephone, internet, and information-processing UCCs."
+    },
+    {
+      "category_id": "OTHER_GOODS_SERVICES",
+      "label": "Other goods and services",
+      "reporting_parent": "OTHER_GOODS_SERVICES",
+      "classification": "OTHER",
+      "candidate_cpi_series_id": "CUUR0000SAG",
+      "notes": "Tobacco, personal care goods and services, miscellaneous personal services and goods."
+    }
+  ]
+}

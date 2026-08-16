@@ -1,0 +1,625 @@
+ucc	eli	ucc_title	eli_title	ce_source	multi_eli_footnote
+010119	FA011	Flour And Prepared Flour Mixes	Flour And Prepared Flour Mixes	D	false
+010210	FA021	Cereal, Breakfast, & Granola Bars	Breakfast Cereal & Cereal Bars	D	false
+010310	FA031	Rice	Rice, Pasta, Cornmeal	D	false
+010320	FA031	Pasta Cornmeal Oth Cereal Prods	Rice, Pasta, Cornmeal	D	false
+020219	FB011	Bread	Bread	D	false
+020310	FB021	Fresh Biscuits, Rolls, Muffins	Fresh Biscuits, Rolls, And Muffins	D	false
+020410	FB031	Cakes And Cupcakes	Cakes And Cupcakes (Excluding Frozen)	D	false
+020510	FB032	Cookies	Cookies	D	false
+020610	FB041	Crackers	Crackers And Bread & Cracker Products	D	false
+020620	FB041	Bread And Cracker Products	Crackers And Bread & Cracker Products	D	false
+020710	FB042	Doughnuts,Sweetrolls,Coffecake	Sweet Rolls, Coffee Cake And Doughnuts(Excluding Frozen)	D	false
+020810	FB043	Frozen & Refrig. Bakery Prod.	Frozen Bakery Products And Frozen/Refrig Doughs And Batters	D	false
+020820	FB044	Fresh Pies, Tarts, Turnovers	Pies, Tarts, Turnovers (Excluding Frozen)	D	false
+030110	FC011	Ground Beef Exclude Canned	Uncooked Ground Beef	D	false
+030219	FC021	Uncooked Beef Roasts	Uncooked Beef Roasts	D	false
+030519	FC031	Uncooked Beef Steaks	Uncooked Beef Steaks	D	false
+030810	FC041	Other Beef (Exclude Canned)	Uncooked Other Beef And Veal	D	false
+040119	FD011	Bacon, Breakfast Sausage And Rela	Bacon, Breakfast Sausage And Related Products	D	false
+040210	FD031	Pork Chops	Pork Chops	D	false
+040319	FD021	Ham	Ham	D	false
+040410	FD041	Other Pork	Other Pork Including Roasts, Steaks, And Ribs	D	false
+050110	FE011	Frankfurters	Frankfurters	D	false
+050319	FE012	Lunchmeats	Lunchmeats	D	false
+050419	FE013	Lamb, Organ Meats, And Game	Lamb, Organ Meats, And Game	D	false
+060119	FF011	Chicken	Chicken	D	false
+060310	FF021	Other Poultry	Turkey and other poultry	D	false
+070119	FG021	Processed Fish And Seafood	Processed Fish And Seafood	D	false
+070230	FG011	Fresh Fish & Shellfish	Fresh Fish And Seafood	D	false
+080110	FH011	Eggs	Eggs	D	false
+090110	FJ011	Fresh Milk All Types	Milk	D	false
+100119	FS011	Butter And Margarine	Butter And Margarine	D	false
+100210	FJ021	Cheese	Cheese And Cheese Products	D	false
+100410	FJ031	Ice Cream And Related Products	Ice Cream And Related Products	D	false
+100519	FJ041	Other Dairy And Related Products	Other Dairy And Related Products	D	false
+110110	FK011	Apples	Apples	D	false
+110210	FK021	Bananas	Bananas	D	false
+110319	FK031	Citrus Fruits	Citrus Fruits	D	false
+110410	FK041	Other Fresh Fruits	Other Fresh Fruits	D	false
+120110	FL011	Potatoes	Potatoes	D	false
+120210	FL021	Lettuce	Lettuce	D	false
+120310	FL031	Tomatoes	Tomatoes	D	false
+120410	FL041	Other Fresh Vegetables	Other Fresh Vegetables Including Fresh Herbs	D	false
+130119	FN021	Frozen Noncarbonated Juices And Drinks	Frozen Noncarbonated Juices And Drinks	D	false
+130129	FM021	Frozen Fruits And Vegetables	Frozen Fruits And Vegetables	D	false
+140219	FM011	Canned Fruits And Vegetables	Canned Fruits And Vegetables	D	false
+140349	FM031	Dried Fruits And Vegetables	Dried Fruits And Vegetables	D	false
+150110	FR021	Candy And Chewing Gum	Candy And Chewing Gum	D	false
+150219	FR011	Sugar And Artificial Sweeteners	Sugar And Artificial Sweeteners	D	false
+150310	FR031	Other Sweets	Other Sweets	D	false
+160211	FS032	Fats & Oils	Other Fats And Oils	D	false
+160212	FS021	Salad Dressings	Mayonnaise, Salad Dressing, And Sandwich Spreads	D	false
+160320	FS031	Peanut Butter	Peanut Butter And Other Nut Butters	D	false
+170110	FN011	Cola Drinks	Carbonated Drinks	D	false
+170210	FN011	Other Carbonated Drinks	Carbonated Drinks	D	false
+170319	FP011	Coffee	Coffee	D	false
+170520	FP021	Tea	Tea	D	false
+170531	FP022	Other Noncarb. Beverages/Ice	Other Beverage Materials	D	false
+170539	FN031	Nonfrozen Noncarbonated Juices An	Nonfrozen Noncarbonated Juices And Drinks	D	false
+180110	FT011	Soup	Soups And Soup Bases	D	false
+180210	FT021	Frozen Meals	Frozen Prepared Foods	D	false
+180220	FT021	Froz/Prep. Food Oth Than Meals	Frozen Prepared Foods	D	false
+180310	FT031	Potato Chips And Other Snacks	Snacks	D	false
+180320	FT031	Nuts	Snacks	D	false
+180410	FT041	Salt/Other Seasonings & Spices	Salt And Other Seasonings And Spices	D	false
+180420	FT042	Olives, Pickles, Relishes	Olives, Pickles, Relishes	D	false
+180510	FT043	Sauces And Gravies	Sauces And Gravies	D	false
+180520	FT044	Other Condiments	Other Condiments(Excluding Olives, Pickles, Relishes)	D	false
+180611	FT061	Prepared Salads	Prepared Salads	D	false
+180612	FT062	Prepared Desserts	Other Miscellaneous Foods	D	false
+180620	FT051	Baby Food	Baby Food	D	false
+180710	FT062	Misc. Prepared Foods	Other Miscellaneous Foods	D	false
+190400	FV021	Food/Nonalc Bev - Fast Food	Limited Service Meals And Snacks	D	false
+190500	FV011	Food/Nonalc Bev - Full Service	Full Service Meals And Snacks	D	false
+190600	FV041	Food/Nonalc Bev - Vending	Food From Vending Machines And Mobile Vendors	D	false
+190700	FV031	Food/Nonalc Bev - Employer	Food At Employee Sites And Schools	D	false
+190902	FV051	Food And Bev For Catered Affairs	Board, Catered Events, And Other Food Away From Home	I	false
+190905	FV051	School Meals And Board	Board, Catered Events, And Other Food Away From Home	I	false
+200119	FW011	Beer, Ale, And Other Malt Beverag	Beer, Ale, And Other Malt Beverages At Home	D	false
+200219	FW021	Distilled Spirits At Home	Distilled Spirits At Home	D	false
+200310	FW031	Wine At Home	Wine At Home	D	false
+210110	HA011	Rent Of Dwelling	Rent Of Primary Residence	I	false
+210210	HB021	Lodging Away From Home	Rental Of Lodging Away From Home	I	false
+210310	HB011	Housing For Someone At School	Lodging While At School	I	false
+220121	HD011	Homeowners Insurance Ownd	Tenants' And Household Insurance	I	false
+230112	HP043	Painting/Papering Labor/Mat Ownd	Inside Home Maintenance And Repair Services	I	false
+230117	HP043	Repl Dishwash/Disp/Hood Rntr	Inside Home Maintenance And Repair Services	I	false
+230118	HP043	Repl Dishwash/Disp/Hood Ownd	Inside Home Maintenance And Repair Services	I	false
+230141	HP041	Repair-Displ/Dwshr/Rang Hd Rntr	Appliance Repair	I	false
+230142	HP041	Repair-Displ/Dwshr/Rang Hd Ownd	Appliance Repair	D	false
+230150	HP043	Rep/Maint Labor/Mat Rntr	Inside Home Maintenance And Repair Services	I	false
+240111	HM011	Paint/Wallpaper And Supp Rntr	Paint, Wallpaper Tools And Supplies	I	false
+240112	HM011	Paint/Wallpaper And Supp Ownd	Paint, Wallpaper Tools And Supplies	I	false
+240121	HM011	Equip For Paint/Wpaper Rntr	Paint, Wallpaper Tools And Supplies	I	false
+240122	HM011	Equip For Paint/Wpaper Ownd	Paint, Wallpaper Tools And Supplies	I	false
+240211	HM090	Mat For Panl/Roof/Siding,Etc Rntr	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240212	HM090	Mat For Panel/Siding, Etc Ownd	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240221	HM090	Mat For Patio,Masonry,Etc Rntr	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240222	HM090	Mat For Patio,Masonry,Etc Ownd	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240311	HM090	Plumbing Supp/Equip Rntr	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240312	HM090	Plumbing Supp/Equip Ownd	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240321	HM090	Elec Supp, Heat/Cool Equip Rntr	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+240322	HM090	Elec Supp,Heat/Cool Equip Ownd	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+250111	HE011	Fuel Oil Rntr	Fuel Oil	I	false
+250112	HE011	Fuel Oil Ownd	Fuel Oil	I	false
+250113	HE011	Fuel Oil Ownv	Fuel Oil	I	false
+250114	HE011	Fuel Oil Rntv	Fuel Oil	I	false
+250211	HE021	Gas, Bottled Or Tank Rntr	Other Household Fuels	I	false
+250212	HE021	Gas, Bottled Or Tank Ownd	Other Household Fuels	I	false
+250213	HE021	Gas,Bottled Or Tank - Ownv & Rvs	Other Household Fuels	I	false
+250214	HE021	Gas, Bottled Or Tank Rntv	Other Household Fuels	I	false
+250911	HE021	Other Fuels Rntr	Other Household Fuels	I	false
+250912	HE021	Other Fuels Ownd	Other Household Fuels	I	false
+250913	HE021	Other Fuels Ownv	Other Household Fuels	I	false
+250914	HE021	Other Fuels Rntv	Other Household Fuels	I	false
+260111	HF011	Electricity Rntr	Electricity	I	false
+260112	HF011	Electricity Ownd	Electricity	I	false
+260113	HF011	Electricity Ownv	Electricity	I	false
+260114	HF011	Electricity Rntv	Electricity	I	false
+260211	HF021	Utility--Natural Gas Rntr	Utility (Piped) Gas Service	I	false
+260212	HF021	Utility--Natural Gas Ownd	Utility (Piped) Gas Service	I	false
+260213	HF021	Utility--Natural Gas Ownv	Utility (Piped) Gas Service	I	false
+260214	HF021	Utility--Natural Gas Rntv	Utility (Piped) Gas Service	I	false
+270102	ED031	Cellular Phone Service	Wireless Phone Service	I	true
+270102	EE041	Cellular Phone Service	Phones, Accessories, And Smartwatches	I	true
+270106	ED041	Residential Telephone Incl Voip	Residential telephone services	I	false
+270211	HG011	Water And Sewerage Maint Rntr	Residential Water And Sewerage Service	I	false
+270212	HG011	Water And Sewerage Maint Ownd	Residential Water And Sewerage Service	I	false
+270213	HG011	Water And Sewerage Maint Ownv	Residential Water And Sewerage Service	I	false
+270214	HG011	Water And Sewerage Maint Rntv	Residential Water And Sewerage Service	I	false
+270310	RA021	Cable/Satellite/Com Antenna Serv	Cable And Satellite Television Service	I	false
+270311	RA061	Satellite Radio Service	Music media and audio content	I	false
+270411	HG021	Trash/Garbage Collect Rntr	Garbage And Trash Collection	I	false
+270412	HG021	Trash/Garbage Collect Ownd	Garbage And Trash Collection	I	false
+270413	HG021	Trash/Garbage Collect Ownv	Garbage And Trash Collection	I	false
+270414	HG021	Trash/Garbage Collect Rntv	Garbage And Trash Collection	I	false
+270901	HP090	Septic Tank Cleaning Rntr	Unsampled Household Operations	I	false
+270902	HP090	Septic Tank Cleaning Ownd	Unsampled Household Operations	I	false
+270905	HP090	Steam Heat	Unsampled Household Operations	I	false
+270907	HP090	Septic Tank Cleaning Ownr	Unsampled Household Operations	I	false
+280110	HH031	Bathroom Linens	Bathroom Linens	D	false
+280120	HH032	Bedroom Linens	Bedroom Linens	D	false
+280140	HH033	Kitchen/Dining Room/Othr Linens	Kitchen And Dining Room Linens	D	false
+280210	HH021	Curtains And Drapes	Curtains And Drapes	I	false
+280220	HJ021	Slipcovers/Decorative Pillows	Sofas, Sofa Sleepers, Furniture Covers And Decorative Pillows	I	false
+290110	HJ011	Mattress And Springs	Mattresses And Foundations	I	false
+290120	HJ012	Other Bedroom Furniture	Bedroom Furniture Other Than Mattresses or Foundations	I	false
+290210	HJ021	Sofas	Sofas, Sofa Sleepers, Furniture Covers And Decorative Pillows	I	false
+290310	HJ022	Living Room Chairs	Living Room Chairs	I	false
+290320	HJ023	Living Room Tables	Living Room Tables	I	false
+290410	HJ024	Kitchen/Dining Room Furniture	Kitchen And Dining Room Furniture	I	false
+290420	HJ031	Infants Furniture	Infants Furniture	I	false
+290430	HJ032	Outdoor Furniture	Outdoor Furniture	I	false
+290440	HJ033	Wall Units, Cabinets, Occas Furn	Occasional Furniture	I	false
+300111	HK011	Purch/Inst Refrig/Freezer Rntr	Refrigerators And Freezers	I	false
+300112	HK011	Purch/Inst Refrig/Freezer Ownd	Refrigerators And Freezers	I	false
+300216	HK012	Purch/Inst Clths Washr/Dryr Rntr	Washers And Dryers	I	false
+300217	HK012	Purch/Inst Clths Washr/Dryr Ownd	Washers And Dryers	I	false
+300311	HK013	Stoves, Ovens Rntr	Ranges And Cooktops	I	false
+300312	HK013	Stoves, Ovens Ownd	Ranges And Cooktops	I	false
+300321	HK014	Microwave Ovens Rntr	Microwave Ovens	I	false
+300322	HK014	Microwave Ovens Ownd	Microwave Ovens	I	false
+300331	HK090	Purch/Inst Port Dishwasher Rntr	Unsampled Appliances	I	false
+300332	HK090	Purch/Inst Port Dishwasher Ownd	Unsampled Appliances	I	false
+300411	HK023	Purch/Inst Window A/C Rntr	Other Electric Appliances	I	false
+300412	HK023	Purch/Inst Window A/C Ownd	Other Electric Appliances	I	false
+310140	RA011	Televisions	Televisions	I	false
+310210	RA031	Vcrs/Video Disc Players	Other Video Equipment	I	false
+310220	RA041	Video Cassettes/Tapes/Discs	Prerecorded Video Discs/Digital Files/Downloads And Other Media	D	false
+310231	RE012	Video Game Software	Video Game Consoles, Software, And Accessories	I	false
+310232	RE012	Video Game Hardware/ Accessories	Video Game Consoles, Software, And Accessories	I	false
+310241	RA042	Streaming Video Files	Rental Of Video Discs And Other Media	D	false
+310242	RA041	Downloading Video Files	Prerecorded Video Discs/Digital Files/Downloads And Other Media	D	false
+310312	RA051	Phonographs	Audio Media Players, Recorders, Systems, And Other Equipment	D	false
+310314	RA051	Digital Audio Players	Audio Media Players, Recorders, Systems, And Other Equipment	I	false
+310315	RA031	Digital Media Players & Recorders	Other Video Equipment	D	false
+310316	RA051	Radios/Speakers/Sound Comp Systms	Audio Media Players, Recorders, Systems, And Other Equipment	I	false
+310331	RA051	Misc Sound Equipment	Audio Media Players, Recorders, Systems, And Other Equipment	D	false
+310332	RA051	Sound Equip Accessories	Audio Media Players, Recorders, Systems, And Other Equipment	D	false
+310334	RA031	Satellite Dishes	Other Video Equipment	I	false
+310335	RA031	Misc Video Equipment	Other Video Equipment	D	false
+310340	RA061	Records,Cds,Audio Tapes	Music media and audio content	I	false
+310350	RA061	Streaming/Downloading Audio	Music media and audio content	I	false
+310400	EE021	Apps/Games/Ringtones For Devices	Computer Software And Blank Media	I	false
+310900	RA090	Access. For Electronic Equip.	Unsampled Video And Audio	D	false
+320111	HH011	Floor Coverings (Non-Perm.)	Floor Coverings	I	false
+320120	HH022	Window Coverings	Shades and Blinds	I	false
+320130	GE013	Infants Equipment	Infants' Equipment	D	false
+320140	HN012	Laundry And Cleaning Equip.	Laundry And Cleaning Equipment	D	false
+320150	HM021	Barbeque Grills And Outdoor Equip	Lawn And Garden And Outdoor Equipment And Grills	D	false
+320221	HL011	Lamps/Light Fixtures/Ceiling Fans	Lamps And Lighting Fixtures	D	false
+320232	EE041	Telephones And Accessories	Phones, Accessories, And Smartwatches	I	false
+320233	HL012	Clocks And Other Hh Decor Items	Household Decorative Items And Clocks	D	false
+320330	HL032	Flatware	Flatware	D	false
+320345	HL031	Dishes/Cups/Glasses/Serving Piecs	Dishes	D	false
+320370	HL041	Nonelectric Cookware	Nonelectric Cookingware	D	false
+320380	HL042	Tableware/Non-Elec. Kitware	Nonelectric Kitchenware	D	false
+320410	HM021	Lawn And Garden Equipment	Lawn And Garden And Outdoor Equipment And Grills	D	false
+320420	HM012	Power Tools	Power Tools	I	false
+320430	HM013	Other Hardware	Miscellaneous Hardware, Supplies And Equipment	D	false
+320511	HK021	Electric Floor Cleaning Equip	Floor Cleaning Equipment	I	false
+320512	RE021	Sewing Machines	Sewing Items	I	false
+320521	HK022	Small Electric Kitchen Appliances	Small Electric Kitchen Appliances	I	false
+320522	HK023	Portable Heating/Cooling Equip	Other Electric Appliances	I	false
+320611	HM013	Constrct Mat-Rntr/Udr Cn/Sec Hm	Miscellaneous Hardware, Supplies And Equipment	I	false
+320612	HM013	Construction Mat Ownd	Miscellaneous Hardware, Supplies And Equipment	I	false
+320624	HH011	Flooring Inst/Rep/Repl Rntr	Floor Coverings	I	false
+320625	HH011	Flooring Inst/Rep/Repl Ownd	Floor Coverings	I	false
+320631	HM090	Lndscping Mat-Rntr/Udr Cn/Sc Hm	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+320632	HM090	Landscaping Materials Ownd	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+320901	HM090	Office Furniture Home Use	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+320902	HM014	Hand Tools	Nonpowered Hand Tools	D	false
+320903	HL021	Indoor Plants, Fresh Flowers	Indoor Plants And Fresh Cut Flowers	I	false
+320904	HM090	Closet And Storage Items	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	D	false
+320905	HM090	Misc. Household Equip/Parts	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	D	false
+330119	HN011	Laundry And Cleaning Products	Laundry And Cleaning Products	D	false
+330310	HN021	Paper Towels/Napkins/Toilet Tissu	Household Paper Products	D	false
+330410	GE011	Stationery, Giftwrap, Etc.	Stationery, Stationery Supplies, Gift Wrap	D	false
+330510	HN031	Misc Household Products	Miscellaneous Household Products	D	false
+330511	HM022	Mat For Termte/Pst Cntrl Maintce	Lawn & Garden Materials, Other Decorative Items & Pesticides	I	false
+330610	HM022	Lawn And Garden Supplies	Lawn & Garden Materials, Other Decorative Items & Pesticides	D	false
+340110	EC011	Postage	Postage	D	false
+340120	EC021	Delivery Services	Delivery Services	D	false
+340310	HP011	Domestic Service	Domestic Services	I	false
+340410	HP021	Gardening/Lawn Care Service	Gardening And Lawncare Services	I	false
+340420	HP090	Water Softening Service	Unsampled Household Operations	I	false
+340421	HP090	Water Softening Service Ownd	Unsampled Household Operations	I	false
+340422	HP090	Water Softening Service Rntr	Unsampled Household Operations	I	false
+340510	HP031	Moving, Storage,Freight	Moving, Freight, And Storage Expenses	I	false
+340520	GD031	Hshld Lndry,Drycln Not Coin-Op	Laundry And Dry Cleaning Services	D	false
+340530	GD031	Coin-Op Hshld Lndry, Dry Cln	Laundry And Dry Cleaning Services	D	false
+340610	RA090	Repair Of Tv/Radio/Sound Equip	Unsampled Video And Audio	I	false
+340620	HP041	Repair Of Household Appliances	Appliance Repair	D	false
+340630	HP042	Reupholstery Of Furniture	Reupholstery Of Furniture	I	false
+340901	HM090	Rental/Repair-Tools,Lawn/Garden	Unsampled Tools, Hardware, Outdoor Equipment, And Supplies	I	false
+340902	RA090	Rental Of Televisions	Unsampled Video And Audio	I	false
+340903	HP090	Misc. Home Services	Unsampled Household Operations	I	false
+340904	HJ090	Rental Of Furniture	Unsampled Furniture	I	false
+340905	RA090	Rental Of Vcr/Radio/Sound Equip	Unsampled Video And Audio	I	false
+340906	MD031	Care Of Invalids, Elderly, Etc	Home Health Care	I	false
+340907	HK090	Rental Of Household Equipment	Unsampled Appliances	I	false
+340908	EE090	Rntl Off Equip Non-Bus Use	Unsampled Information And Information Processing	I	false
+340910	MD022	Adult Day Care Centers	Adult Day Care	I	false
+340911	HP090	Mngmt/Spec Ser/Security Ownd	Unsampled Household Operations	I	false
+340914	HP090	Serv For Termt/Pst Cntrl	Unsampled Household Operations	I	false
+350110	HD011	Renters Insurance	Tenants' And Household Insurance	I	false
+360110	AA011	Mens Suits	Men's Suits	I	false
+360120	AA012	Mens Sportcoats/Tailored Jackets	Men's Sport Coats And Tailored Jackets	D	false
+360210	AA013	Mens Coats And Jackets	Men's Outerwear	D	false
+360319	AA021	Mens Underwear, Hosiery, Nightwea	Men's Underwear, Hosiery, Nightwear, And Swimwear	D	false
+360330	AA022	Mens Accessories	Men's Accessories	D	false
+360420	AA033	Mens Sweaters/Shirts/Vests	Men’s tops	D	false
+360513	AA041	Mens Pants And Shorts	Men's Pants And Shorts	D	false
+360901	AA090	Mens Uniforms	Unsampled Men's Apparel	D	false
+360902	AA090	Mens Costumes	Unsampled Men's Apparel	D	false
+370110	AB011	Boys Coats And Jackets	Boys' Outerwear	D	false
+370125	AB012	Boys Sweaters/Shirts/Vests	Boys' Shirts And Sweaters	D	false
+370219	AB013	Boys Underwear, Nightwear, Hosier	Boys' Underwear, Nightwear, Hosiery, Accessories, & Swimwear	D	false
+370220	AB013	Boys Accessories	Boys' Underwear, Nightwear, Hosiery, Accessories, & Swimwear	D	false
+370319	AB014	Boys Suits, Sport Coats, Pants, A	Boys' Suits, Sport Coats, And Pants	D	false
+370902	AB090	Boys Costumes	Unsampled Boys' Apparel	D	false
+370903	AB090	Boys Uniforms	Unsampled Boys' Apparel	D	false
+380110	AC011	Womens Coats And Jackets	Women's Outerwear	D	false
+380210	AC021	Womens Dresses	Women's Dresses	D	false
+380319	AC031	Womens Tops	Women's Tops	D	false
+380339	AC032	Womens Skirts, Pants, And Shorts	Women's Skirts, Pants, And Shorts	D	false
+380429	AC041	Womens Undergarments, Nightwear,	Women's Undergarments, Nightwear, Shapewear, And Swimwear	D	false
+380430	AC042	Womens Hosiery	Women's Hosiery And Accessories	D	false
+380510	AC033	Womens Suits	Women's Suits And Suit Coordinates	D	false
+380901	AC042	Womens Accessories	Women's Hosiery And Accessories	D	false
+380909	AC090	Womens Costumes And Uniforms	Unsampled Women's Apparel	D	false
+390110	AD011	Girls Coats And Jackets	Girls' Outerwear	D	false
+390120	AD012	Girls Dresses, Suits	Girls' Dresses	D	false
+390210	AD013	Girls Shirts/Blouses/Sweaters	Girls' Tops	D	false
+390223	AD014	Girls Skirts, Pants, And Shorts	Girls' Skirts, Pants, And Shorts	D	false
+390319	AD016	Girls Underwear, Nightwear, Hosie	Girls' Underwear, Nightwear, Hosiery, Accessories, & Swimwear	D	false
+390322	AD016	Girls Accessories	Girls' Underwear, Nightwear, Hosiery, Accessories, & Swimwear	D	false
+390901	AD090	Girls Uniforms	Unsampled Girls' Apparel	D	false
+390902	AD090	Girls Costumes	Unsampled Girls' Apparel	D	false
+400110	AE011	Mens Footwear	Men's Footwear	D	false
+400210	AE021	Boys Footwear	Boys' Footwear	D	false
+400220	AE022	Girls Footwear	Girls' Footwear	D	false
+400310	AE031	Womens Footwear	Women's Footwear	D	false
+410119	AF011	Infants & Toddlers Outer/Play/Dre	Infants' & Toddlers' Outer/Play/Dress/Sleep Wear & Accessories	D	false
+410130	AF012	Infant Undergarments	Infants' & Toddlers' Underwear & Diapers	D	false
+420115	RE021	Sewing/Ndlwrk/Quilt Matrls/Items	Sewing Items	I	false
+430110	AG011	Watches	Watches	I	false
+430120	AG021	Jewelry	Jewelry	I	false
+430130	GE012	Luggage	Luggage	D	false
+440110	GD041	Shoe Repair, Oth Shoe Service	Shoe Repair And Other Shoe Services	I	false
+440120	GD031	Coin-Op Apparel Ldry/Dry Clng	Laundry And Dry Cleaning Services	I	false
+440130	GD042	Alter/Repair Of Apparel, Access	Clothing, Alterations, Rentals And Repairs	I	false
+440140	GD042	Clothing Rental	Clothing, Alterations, Rentals And Repairs	I	false
+440150	GD043	Watch And Jewelry Repair	Jewelry and watch repairs	I	false
+440210	GD031	Apparel Lndry/Dry Clng N/Coin-Op	Laundry And Dry Cleaning Services	I	false
+440900	GD031	Clothing Storage Outside The Home	Laundry And Dry Cleaning Services	I	false
+450110	TA011	New Cars	New Car And Truck Purchase	I	false
+450116	TA011	Trade-In Allowance/New Cars	New Car And Truck Purchase	I	true
+450210	TA011	New Trucks	New Car And Truck Purchase	I	false
+450216	TA011	Trade-In Allow/New Trucks	New Car And Truck Purchase	I	true
+450220	TA012	New Motorcycles	New Motorcycles	I	false
+450350	TA031	Car/Truck Lease Payments	Vehicle Leasing	I	false
+450352	TA031	Tradein Allow For Car/Truck Lease	Vehicle Leasing	I	false
+450353	TA031	Cash Dwnpymnt For Car/Truck Lease	Vehicle Leasing	I	false
+450354	TA031	Termntion Fee For Car/Truck Lease	Vehicle Leasing	I	false
+450900	TA090	Aircraft	Unsampled New And Used Motor Vehicles	I	false
+460110	TA021	Used Cars	Used Cars And Trucks	I	false
+460901	TA021	Used Trucks	Used Cars And Trucks	I	false
+460902	TA090	Used Motorcycles	Unsampled New And Used Motor Vehicles	I	false
+460903	TA090	Used Aircraft	Unsampled New And Used Motor Vehicles	I	false
+470111	TB011	Gasoline	Regular Unleaded Gasoline	I	true
+470111	TB012	Gasoline	Mid-Grade Unleaded Gasoline	I	true
+470111	TB013	Gasoline	Premium Unleaded Gasoline	I	true
+470111	TB021	Gasoline	Automotive Diesel Fuel	I	true
+470111	TB022	Gasoline	Alternative Motor Fuels	I	true
+470112	TB021	Diesel Fuel	Automotive Diesel Fuel	I	false
+470113	TB011	Gasoline On Out Of Town Trips	Regular Unleaded Gasoline	I	true
+470113	TB012	Gasoline On Out Of Town Trips	Mid-Grade Unleaded Gasoline	I	true
+470113	TB013	Gasoline On Out Of Town Trips	Premium Unleaded Gasoline	I	true
+470113	TB021	Gasoline On Out Of Town Trips	Automotive Diesel Fuel	I	true
+470113	TB022	Gasoline On Out Of Town Trips	Alternative Motor Fuels	I	true
+470211	TC022	Motoroil	Motor Oil, Coolant And Fluids	I	false
+470212	TC022	Motor Oil On Out Of Town Trips	Motor Oil, Coolant And Fluids	I	false
+470220	TC022	Coolant/Additives/Brk/Trns Fld	Motor Oil, Coolant And Fluids	I	false
+480100	TC021	Veh Parts/Acc/Fluids Excl Tires	Vehicle Parts And Equipment Other Than Tires	I	true
+480100	TC022	Veh Parts/Acc/Fluids Excl Tires	Motor Oil, Coolant And Fluids	I	true
+480110	TC011	Tires Purchased/Replaced/Install	Tires	I	false
+480213	TC021	Parts/Equip/Accessories	Vehicle Parts And Equipment Other Than Tires	I	false
+490100	TD011	Vehicle Maint/Rep Excl Tire Purch	Motor Vehicle Body Work	I	true
+490100	TD021	Vehicle Maint/Rep Excl Tire Purch	Motor Vehicle Maintenance And Servicing	I	true
+490100	TD031	Vehicle Maint/Rep Excl Tire Purch	Motor Vehicle Repair	I	true
+490900	TD090	Auto Repair Service Policy	Unsampled Vehicle Maintenance And Repair	I	false
+500110	TE011	Vehicle Insurance	Motor Vehicle Insurance	I	false
+510115	TF011	Veh Registration Incl Prop Tax	State Vehicle Registration And Driver's License	I	false
+520310	TF011	Drivers License	State Vehicle Registration And Driver's License	I	false
+520410	TD021	Vehicle Inspection	Motor Vehicle Maintenance And Servicing	I	false
+520516	TA041	Auto/Truck Rental	Automobile And Truck Rental	I	false
+520517	TA041	Auto/Truck Rental Out-Of-Town Trp	Automobile And Truck Rental	I	false
+520531	TF031	Prkng Fee In Hme City Excl Rsdnc	Parking fees, tolls, and other fees	I	false
+520532	TF031	Parking Fees, Out-Of-Town Trip	Parking fees, tolls, and other fees	I	false
+520541	TF031	Tolls Or Electronic Toll Passes	Parking fees, tolls, and other fees	I	false
+520542	TF031	Tolls On Out-Of-Town Trips	Parking fees, tolls, and other fees	I	false
+520550	TD021	Towing Charges	Motor Vehicle Maintenance And Servicing	I	false
+520901	TF090	Docking/Landing Fees	Unsampled Motor Vehicle Fees	I	false
+520902	TA090	Motorcycle Rental	Unsampled New And Used Motor Vehicles	I	false
+520903	TA090	Aircraft Rental	Unsampled New And Used Motor Vehicles	I	false
+520904	TA090	Rental Non-Camper Trailer	Unsampled New And Used Motor Vehicles	I	false
+520905	TA090	Motorcycle Rental Out-Of-Town	Unsampled New And Used Motor Vehicles	I	false
+520906	TA090	Aircraft Rental/Out-Of-Town Tr	Unsampled New And Used Motor Vehicles	I	false
+520907	RC090	Boat/Trailer Rent Out Of Town	Unsampled Sporting Goods	I	false
+530110	TG011	Airline Fares	Airline Fares	I	false
+530210	TG021	Intercity Bus Fares	Intercity Bus Fares	I	false
+530311	TG031	Intracity Mass Transit Fares	Intracity Mass Transit	I	false
+530312	TG031	Local Trans. Out Of Town Trips	Intracity Mass Transit	I	false
+530411	TG032	Taxi Fares On Trips	Vehicle for hire	I	false
+530412	TG032	Taxi Fares And Limousine Service	Vehicle for hire	I	false
+530510	TG022	Intercity Train Fares	Intercity Train Fares	I	false
+530901	TG023	Ship Fares	Cruise fares	I	false
+530902	TG090	School Bus	Unsampled Public Transportation	I	false
+540000	MF011	Prescription Drugs	Prescription Drugs	I	false
+550110	MC031	Eyeglasses And Contact Lenses	Eyeglasses And Eyecare	I	false
+550210	MF021	Over-The-Counter Drugs	Nonprescription Drugs	D	false
+550219	MF021	Vitamins And Supplements	Nonprescription Drugs	D	false
+550310	MF021	Topicals And Dressings	Nonprescription Drugs	D	true
+550310	MG011	Topicals And Dressings	Dressings And First Aid Kits	D	true
+550340	MC041	Hearing Aids	Services By Other Medical Professionals	I	false
+550350	MG012	Purch/Rental Support Med Equip	Medical Equipment For General Use	I	true
+550350	MG013	Purch/Rental Support Med Equip	Supportive And Convalescent Medical Equipment	I	true
+550350	MG090	Purch/Rental Support Med Equip	Unsampled Rent Or Repair Of Medical Equipment	I	true
+560110	MC011	Physicians Services	Physicians' Services	I	false
+560210	MC021	Dental Services	Dental Services	I	false
+560310	MC031	Eyecare Services	Eyeglasses And Eyecare	I	false
+560330	MC041	Lab Tests, X-Rays	Services By Other Medical Professionals	I	false
+560410	MD031	Non Physcns Servc Inside Home	Home Health Care	I	false
+560420	MC041	Non Physcns Servc Outside Home	Services By Other Medical Professionals	I	false
+570111	MD011	Hospital Rooms & Services	Hospital Services	I	false
+570220	MD021	Care In Convl Or Nursing Home	Nursing And Convalescent Home Care	I	false
+570230	MD011	Other Medical Care Service	Hospital Services	D	false
+570901	MG090	Rental Of Medical/Surgical Equip	Unsampled Rent Or Repair Of Medical Equipment	I	false
+570902	MG090	Repair Of Medical Equipment	Unsampled Rent Or Repair Of Medical Equipment	D	false
+570903	MG090	Rental Of Suportive/Conval Equip	Unsampled Rent Or Repair Of Medical Equipment	I	false
+580115	MC011	Fee For Serv Hlth Pln (No Bcbs)	Physicians' Services	I	true
+580115	MC021	Fee For Serv Hlth Pln (No Bcbs)	Dental Services	I	true
+580115	MC031	Fee For Serv Hlth Pln (No Bcbs)	Eyeglasses And Eyecare	I	true
+580115	MC041	Fee For Serv Hlth Pln (No Bcbs)	Services By Other Medical Professionals	I	true
+580115	MD011	Fee For Serv Hlth Pln (No Bcbs)	Hospital Services	I	true
+580115	MD021	Fee For Serv Hlth Pln (No Bcbs)	Nursing And Convalescent Home Care	I	true
+580115	MD031	Fee For Serv Hlth Pln (No Bcbs)	Home Health Care	I	true
+580115	ME011	Fee For Serv Hlth Pln (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580115	MF011	Fee For Serv Hlth Pln (No Bcbs)	Prescription Drugs	I	true
+580115	MG013	Fee For Serv Hlth Pln (No Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580116	MC011	Fee For Serv Hlth Pln (Bcbs)	Physicians' Services	I	true
+580116	MC021	Fee For Serv Hlth Pln (Bcbs)	Dental Services	I	true
+580116	MC031	Fee For Serv Hlth Pln (Bcbs)	Eyeglasses And Eyecare	I	true
+580116	MC041	Fee For Serv Hlth Pln (Bcbs)	Services By Other Medical Professionals	I	true
+580116	MD011	Fee For Serv Hlth Pln (Bcbs)	Hospital Services	I	true
+580116	MD021	Fee For Serv Hlth Pln (Bcbs)	Nursing And Convalescent Home Care	I	true
+580116	MD031	Fee For Serv Hlth Pln (Bcbs)	Home Health Care	I	true
+580116	ME011	Fee For Serv Hlth Pln (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580116	MF011	Fee For Serv Hlth Pln (Bcbs)	Prescription Drugs	I	true
+580116	MG013	Fee For Serv Hlth Pln (Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580311	MC011	Hlth Maint. Org (No Bcbs)	Physicians' Services	I	true
+580311	MC021	Hlth Maint. Org (No Bcbs)	Dental Services	I	true
+580311	MC031	Hlth Maint. Org (No Bcbs)	Eyeglasses And Eyecare	I	true
+580311	MC041	Hlth Maint. Org (No Bcbs)	Services By Other Medical Professionals	I	true
+580311	MD011	Hlth Maint. Org (No Bcbs)	Hospital Services	I	true
+580311	MD021	Hlth Maint. Org (No Bcbs)	Nursing And Convalescent Home Care	I	true
+580311	MD031	Hlth Maint. Org (No Bcbs)	Home Health Care	I	true
+580311	ME011	Hlth Maint. Org (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580311	MF011	Hlth Maint. Org (No Bcbs)	Prescription Drugs	I	true
+580311	MG013	Hlth Maint. Org (No Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580312	MC011	Hlth Maint. Org (Bcbs)	Physicians' Services	I	true
+580312	MC021	Hlth Maint. Org (Bcbs)	Dental Services	I	true
+580312	MC031	Hlth Maint. Org (Bcbs)	Eyeglasses And Eyecare	I	true
+580312	MC041	Hlth Maint. Org (Bcbs)	Services By Other Medical Professionals	I	true
+580312	MD011	Hlth Maint. Org (Bcbs)	Hospital Services	I	true
+580312	MD021	Hlth Maint. Org (Bcbs)	Nursing And Convalescent Home Care	I	true
+580312	MD031	Hlth Maint. Org (Bcbs)	Home Health Care	I	true
+580312	ME011	Hlth Maint. Org (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580312	MF011	Hlth Maint. Org (Bcbs)	Prescription Drugs	I	true
+580312	MG013	Hlth Maint. Org (Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580401	MC041	Long Term Care Ins (No Bcbs)	Services By Other Medical Professionals	I	true
+580401	MD021	Long Term Care Ins (No Bcbs)	Nursing And Convalescent Home Care	I	true
+580401	MD022	Long Term Care Ins (No Bcbs)	Adult Day Care	I	true
+580401	MD031	Long Term Care Ins (No Bcbs)	Home Health Care	I	true
+580401	ME041	Long Term Care Ins (No Bcbs)	Medicare And Commercial Medicare Supplements, Retained Earnings	I	true
+580402	MC041	Long Term Care Ins (Bcbs)	Services By Other Medical Professionals	I	true
+580402	MD021	Long Term Care Ins (Bcbs)	Nursing And Convalescent Home Care	I	true
+580402	MD022	Long Term Care Ins (Bcbs)	Adult Day Care	I	true
+580402	MD031	Long Term Care Ins (Bcbs)	Home Health Care	I	true
+580402	ME041	Long Term Care Ins (Bcbs)	Medicare And Commercial Medicare Supplements, Retained Earnings	I	true
+580411	MC021	Long Term Care Ins (Bcbs)	Dental Services	I	true
+580411	ME011	Long Term Care Ins (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580412	MC021	Dental Care Ins (Bcbs)	Dental Services	I	true
+580412	ME011	Dental Care Ins (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580421	ME011	Prescript Drug Ins (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580421	MF011	Prescript Drug Ins (No Bcbs)	Prescription Drugs	I	true
+580422	ME011	Prescript Drug Ins (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580422	MF011	Prescript Drug Ins (Bcbs)	Prescription Drugs	I	true
+580431	MC031	Vision Care Ins (No Bcbs)	Eyeglasses And Eyecare	I	true
+580431	ME011	Vision Care Ins (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580432	MC031	Vision Care Ins (Bcbs)	Eyeglasses And Eyecare	I	true
+580432	ME011	Vision Care Ins (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580441	MC011	Oth Sngle Srvc Ins (No Bcbs)	Physicians' Services	I	true
+580441	MC021	Oth Sngle Srvc Ins (No Bcbs)	Dental Services	I	true
+580441	MC031	Oth Sngle Srvc Ins (No Bcbs)	Eyeglasses And Eyecare	I	true
+580441	MC041	Oth Sngle Srvc Ins (No Bcbs)	Services By Other Medical Professionals	I	true
+580441	MD011	Oth Sngle Srvc Ins (No Bcbs)	Hospital Services	I	true
+580441	MD021	Oth Sngle Srvc Ins (No Bcbs)	Nursing And Convalescent Home Care	I	true
+580441	MD031	Oth Sngle Srvc Ins (No Bcbs)	Home Health Care	I	true
+580441	ME011	Oth Sngle Srvc Ins (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580441	MF011	Oth Sngle Srvc Ins (No Bcbs)	Prescription Drugs	I	true
+580441	MG013	Oth Sngle Srvc Ins (No Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580442	MC011	Oth Sngle Srvc Ins (Bcbs)	Physicians' Services	I	true
+580442	MC021	Oth Sngle Srvc Ins (Bcbs)	Dental Services	I	true
+580442	MC031	Oth Sngle Srvc Ins (Bcbs)	Eyeglasses And Eyecare	I	true
+580442	MC041	Oth Sngle Srvc Ins (Bcbs)	Services By Other Medical Professionals	I	true
+580442	MD011	Oth Sngle Srvc Ins (Bcbs)	Hospital Services	I	true
+580442	MD021	Oth Sngle Srvc Ins (Bcbs)	Nursing And Convalescent Home Care	I	true
+580442	MD031	Oth Sngle Srvc Ins (Bcbs)	Home Health Care	I	true
+580442	ME011	Oth Sngle Srvc Ins (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580442	MF011	Oth Sngle Srvc Ins (Bcbs)	Prescription Drugs	I	true
+580442	MG013	Oth Sngle Srvc Ins (Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580901	MC011	Medicare Payments	Physicians' Services	I	true
+580901	MC021	Medicare Payments	Dental Services	I	true
+580901	MC031	Medicare Payments	Eyeglasses And Eyecare	I	true
+580901	MC041	Medicare Payments	Services By Other Medical Professionals	I	true
+580901	MD011	Medicare Payments	Hospital Services	I	true
+580901	MD021	Medicare Payments	Nursing And Convalescent Home Care	I	true
+580901	MD031	Medicare Payments	Home Health Care	I	true
+580901	ME011	Medicare Payments	Commercial Health Insurance, Retained Earnings	I	true
+580901	MF011	Medicare Payments	Prescription Drugs	I	true
+580901	MG013	Medicare Payments	Supportive And Convalescent Medical Equipment	I	true
+580903	MC011	Coml Medicare Supplemnt (No Bcbs)	Physicians' Services	I	true
+580903	MC021	Coml Medicare Supplemnt (No Bcbs)	Dental Services	I	true
+580903	MC031	Coml Medicare Supplemnt (No Bcbs)	Eyeglasses And Eyecare	I	true
+580903	MC041	Coml Medicare Supplemnt (No Bcbs)	Services By Other Medical Professionals	I	true
+580903	MD011	Coml Medicare Supplemnt (No Bcbs)	Hospital Services	I	true
+580903	MD021	Coml Medicare Supplemnt (No Bcbs)	Nursing And Convalescent Home Care	I	true
+580903	MD031	Coml Medicare Supplemnt (No Bcbs)	Home Health Care	I	true
+580903	ME011	Coml Medicare Supplemnt (No Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580903	MF011	Coml Medicare Supplemnt (No Bcbs)	Prescription Drugs	I	true
+580903	MG013	Coml Medicare Supplemnt (No Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580904	MC011	Coml Medicare Supplement (Bcbs)	Physicians' Services	I	true
+580904	MC021	Coml Medicare Supplement (Bcbs)	Dental Services	I	true
+580904	MC031	Coml Medicare Supplement (Bcbs)	Eyeglasses And Eyecare	I	true
+580904	MC041	Coml Medicare Supplement (Bcbs)	Services By Other Medical Professionals	I	true
+580904	MD011	Coml Medicare Supplement (Bcbs)	Hospital Services	I	true
+580904	MD021	Coml Medicare Supplement (Bcbs)	Nursing And Convalescent Home Care	I	true
+580904	MD031	Coml Medicare Supplement (Bcbs)	Home Health Care	I	true
+580904	ME011	Coml Medicare Supplement (Bcbs)	Commercial Health Insurance, Retained Earnings	I	true
+580904	MF011	Coml Medicare Supplement (Bcbs)	Prescription Drugs	I	true
+580904	MG013	Coml Medicare Supplement (Bcbs)	Supportive And Convalescent Medical Equipment	I	true
+580907	ME041	Medicare Pres. Drug Premiums	Medicare And Commercial Medicare Supplements, Retained Earnings	I	true
+580907	MF011	Medicare Pres. Drug Premiums	Prescription Drugs	I	true
+590230	RG022	Books, Digital Books, Book Subscr	Books Purchased At Retail Outlets Other Than Book Clubs	I	false
+590310	RG012	Magazine/Newspaper Subscription	Subscriptions To Newspapers And Magazines	I	false
+590410	RG011	Magazine/Newspaper Single Copy	Single Copy Newspapers And Magazines	I	false
+590900	RG090	Newsletters	Unsampled Recreational Reading Materials	D	false
+600110	RC011	Outboard Motor	Outboard Motors And Powered Sports Vehicles	I	false
+600121	RC012	Boat W/O Motor/Boat Trailers	Unpowered Boats And Trailers	I	false
+600122	RC012	Trail/Oth Attachable Campers	Unpowered Boats And Trailers	I	false
+600132	RC011	Purchase Of Boat With Motor	Outboard Motors And Powered Sports Vehicles	I	false
+600133	RC011	Purchase of Boats/Trailers	Outboard Motors And Powered Sports Vehicles	I	true
+600133	RC012	Purchase of Boats/Trailers	Unpowered Boats And Trailers	I	true
+600141	TA090	Purchase Of Motor Home	Unsampled New And Used Motor Vehicles	I	false
+600142	RC011	Purchase Of Other Vehicle	Outboard Motors And Powered Sports Vehicles	I	false
+600151	RC012	Purch Motor Home/Camper, fin.	Unpowered Boats And Trailers	I	true
+600151	TA090	Purch Motor Home/Camper, fin.	Unsampled New And Used Motor Vehicles	I	true
+600153	TA090	Trade Allow Motor Home/Camper	Unsampled New And Used Motor Vehicles	I	false
+600210	RC021	General Sport/Excercise Equip	General Sports Equipment Excluding Water	I	false
+600310	RC013	Bicycles	Bicycles And Accessories	I	false
+600311	TG031	Bike-Sharing/E-Scooters	Intracity Mass Transit	I	false
+600410	RC023	Camping Equipment	Hunting, Fishing And Camping Gear	D	false
+600420	RC023	Hunting, Fishing Equipment	Hunting, Fishing And Camping Gear	D	false
+600430	RC021	Winter Sport Equipment	General Sports Equipment Excluding Water	I	false
+600901	RC022	Water Sport Equipment	Water Sports Equipment	I	false
+600902	RC021	Other Sport Equipment	General Sports Equipment Excluding Water	I	false
+600903	EE042	Global Positioning System Device	Calculators,Typewriters,& Other Information Processing Equipment	D	false
+610110	RE011	Toys Games Arts Crafts Tricycles	Toys, Games, Hobbies, And Playground Equipment	D	false
+610120	RE011	Playground Equipment	Toys, Games, Hobbies, And Playground Equipment	I	false
+610130	RE031	Music Instruments/Accessories	Music Instruments And Accessories	I	false
+610210	RD011	Film	Film And Photographic Supplies	I	false
+610220	RD011	Other Photographic Supplies	Film And Photographic Supplies	D	false
+610230	RD012	Photographic Equipment	Photographic Equipment	I	false
+610310	RB011	Pet Food	Pet Food	D	false
+610320	RB012	Pet-Purchase/Supplies/Medicine	Purchase Of Pets, Pet Supplies, Accessories	I	false
+610901	RE090	Fireworks	Unsampled Recreational Goods	D	false
+610902	RE090	Souvenirs	Unsampled Recreational Goods	D	false
+610903	RE090	Visual Goods	Unsampled Recreational Goods	D	false
+620111	RF011	Social/Recre/Civic Club Membrshp	Club Dues And Fees For Participant Sports/Group Exercises	I	false
+620112	GD051	Credit Card Memberships	Checking Account And Other Bank Services	I	false
+620114	TF032	Auto Service Clubs/Gps Services	Automobile Service Clubs	I	false
+620115	RF011	Shopping Club Memb Fees	Club Dues And Fees For Participant Sports/Group Exercises	I	false
+620121	RF011	Fees For Participant Sports	Club Dues And Fees For Participant Sports/Group Exercises	D	false
+620122	RF011	Partic. Sports Out-Of-Town Tri	Club Dues And Fees For Participant Sports/Group Exercises	I	false
+620212	RF021	Movie, Oth Adm. Out-Of-Town	Admission To Movies, Theaters, Concerts & Other Recurring Events	I	false
+620213	RF021	Tkts To Play/Theatr/Opera/Concert	Admission To Movies, Theaters, Concerts & Other Recurring Events	I	false
+620215	RF021	Tickets To Movies	Admission To Movies, Theaters, Concerts & Other Recurring Events	I	false
+620216	RF021	Tkts To Parks Or Museums	Admission To Movies, Theaters, Concerts & Other Recurring Events	I	false
+620221	RF022	Admission To Sporting Events	Admission To Sporting Events	I	false
+620222	RF022	Adm To Sprts Events Out-Of-Tow	Admission To Sporting Events	I	false
+620310	RF031	Fees For Recreational Lessons	Fees For Lessons Or Instructions	I	false
+620320	RD021	Photographer Fees	Photographer's Fees	I	false
+620330	RD022	Film Processing	Photo Processing and Printing Services	I	false
+620410	RB021	Pet Services	Pet Services	I	false
+620420	RB022	Vet Services	Veterinarian Services	D	false
+620510	RF021	Admissions Misc	Admission To Movies, Theaters, Concerts & Other Recurring Events	D	false
+620610	RF090	Misc. Entertainment Services	Unsampled Recreation Services	D	false
+620710	RF090	Camp Fees	Unsampled Recreation Services	D	false
+620810	RF090	Ren/Rep Sp/Phot/Equp/Passp	Unsampled Recreation Services	D	false
+620903	RF090	Oth Ent Serv, Out-Of-Town Trip	Unsampled Recreation Services	I	false
+620904	RE090	Rent/Rep Music Instruments	Unsampled Recreational Goods	I	false
+620905	RD090	Rent/Rep Photo Equip	Unsampled Photography	I	false
+620906	RC090	Rental Of Boat	Unsampled Sporting Goods	I	false
+620908	RC090	Rent/Repair Of Misc Sports Equ	Unsampled Sporting Goods	I	false
+620909	TA090	Rental Camper On Trips	Unsampled New And Used Motor Vehicles	I	false
+620910	RC090	Rental of Boats and Trailers	Unsampled Sporting Goods	I	true
+620910	TA090	Rental of Boats and Trailers	Unsampled New And Used Motor Vehicles	I	true
+620912	RA042	Rntl Video Cass/Tapes/Discs/Films	Rental Of Video Discs And Other Media	D	false
+620913	RF090	Pinball/Electronic Video Games	Unsampled Recreation Services	D	false
+620915	RF090	Sport Veh Rental	Unsampled Recreation Services	D	false
+620917	RE090	Rental Of Video Hardwr/Accessor	Unsampled Recreational Goods	I	false
+620918	RA042	Rental Of Video Software	Rental Of Video Discs And Other Media	I	false
+620919	TA090	Rental Other Vehicles On Trips	Unsampled New And Used Motor Vehicles	I	false
+620921	TA090	Rental Of Motor Home	Unsampled New And Used Motor Vehicles	I	false
+620922	TA090	Rental Of Other Rvs	Unsampled New And Used Motor Vehicles	I	false
+620924	TA090	Rental RVs, Camper, Other Vehicle	Unsampled New And Used Motor Vehicles	I	false
+620930	RF011	Online Gaming Services	Club Dues And Fees For Participant Sports/Group Exercises	D	false
+630110	GA011	Cigarettes	Cigarettes	I	false
+630210	GA021	Other Tobacco Products	Tobacco Products Other Than Cigarettes	I	false
+630220	GA090	Smoking Accessories	Unsampled Tobacco And Smoking Products	D	false
+640119	GB011	Products For The Hair	Products For The Hair	D	false
+640130	GB090	Wigs And Hairpieces	Unsampled Personal Care Products	I	false
+640219	GB012	Nonelectric Dental And Shaving Pr	Nonelectric Dental And Shaving Products	D	false
+640310	GB021	Cosmetics, Perfume, Bath Prep	Cosmetics/Perfume/Bath/Nail Preparations And Implements	D	false
+640410	GB013	Deod,Fem Hyg, Misc. Pers. Care	Deodorant, Suntan, Sanitary & Footcare Products	D	false
+640420	GB014	Electric Personal Care Appliances	Electric Personal Care Appliances	I	false
+640430	GB013	Adult Diapers	Deodorant, Suntan, Sanitary & Footcare Products	D	false
+650310	GC011	Pers. Care Serv.	Haircuts And Other Personal Care Services	I	false
+650900	GB090	Repair Of Pers. Care App.	Unsampled Personal Care Products	D	false
+660001	EA011	Educational Books/Supl/Oth Exp	Educational Books	I	true
+660001	EA012	Educational Books/Supl/Oth Exp	Elementary And High School Books And Supplies	I	true
+660001	EA090	Educational Books/Supl/Oth Exp	Unsampled Educational Books And Supplies	I	true
+660001	EB090	Educational Books/Supl/Oth Exp	Unsampled Tuition, Other School Fees, And Childcare	I	true
+670110	EB011	College Tuition	College Tuition And Fixed Fees	I	false
+670210	EB021	Elem./H.S. Tuition	Elementary And High School Tuition And Fixed Fees	I	false
+670320	EB031	Babysit/Chldcare/Daycare/Prsch	Day Care And Preschool	I	false
+670410	EB041	Voc/ Tech School Tuition	Technical and vocational school tuition and fixed fees	I	false
+670903	EB090	Test Prep/Tutoring Services	Unsampled Tuition, Other School Fees, And Childcare	I	false
+680110	GD011	Legal Fees	Legal Services	I	false
+680140	GD021	Funeral Expense	Funeral and burial services	I	false
+680210	GD051	Safe Deposit Box Rental	Checking Account And Other Bank Services	I	false
+680220	GD051	Check Accts / Oth Bank Serv Chgs	Checking Account And Other Bank Services	I	false
+680320	FV051	Rental Of Party Supp Cat Affairs	Board, Catered Events, And Other Food Away From Home	I	false
+680901	GD021	Cemetery Lots,Vaults,Maint Fees	Funeral and burial services	I	false
+680902	GD052	Accounting Fees	Tax Return Preparation And Other Accounting Fees	I	false
+680903	GD090	Misc. Pers. Services	Unsampled Items	D	false
+680904	GD090	Dating Services	Unsampled Items	I	false
+680905	RF011	Vacation Clubs	Club Dues And Fees For Participant Sports/Group Exercises	I	false
+690111	EE011	Compter/Compter Hrdwar N-Bus Use	Personal Computers And Peripheral Equipment	I	false
+690113	EE090	Repair-Cmptr,Cmptr Sys N-B	Unsampled Information And Information Processing	I	false
+690114	EE031	Computer Information Services	Internet Access And Other Information Services	I	false
+690116	EE031	Internet Services Away From Home	Internet Access And Other Information Services	I	false
+690117	EE021	Portable Memory	Computer Software And Blank Media	I	false
+690118	EE011	Digital Book Readers	Personal Computers And Peripheral Equipment	I	false
+690119	EE021	Computer Software	Computer Software And Blank Media	I	false
+690120	EE011	Computer Accessories	Personal Computers And Peripheral Equipment	D	false
+690230	EE042	Typwrits/Oth Off Mach Non-Bus Use	Calculators,Typewriters,& Other Information Processing Equipment	I	false
+690244	HK023	Oth Hh Appl Rntr	Other Electric Appliances	I	false
+690245	HK023	Oth Hh Appl Ownd	Other Electric Appliances	I	false
+690310	EE011	Installation For Computers	Personal Computers And Peripheral Equipment	I	false
+690320	RA011	Installation For Tvs	Televisions	I	false
+690330	RA031	Installation Satellite Tv Equip	Other Video Equipment	I	false
+690340	RA051	Installation Of Sound Systems	Audio Media Players, Recorders, Systems, And Other Equipment	I	false
+690350	RA031	Install Of Other Video/Sound Syst	Other Video Equipment	I	false
+790420	FX011	Alcohol At Restaurants Etc	Alcoholic Beverages Away From Home	D	false
+800700	FV051	Meals As Pay	Board, Catered Events, And Other Food Away From Home	I	false
+800710	HA011	Rent As Pay	Rent Of Primary Residence	I	false
+860405	TA090	Disp Camp/Motor Home/RV	Unsampled New And Used Motor Vehicles	I	false
+860701	RC011	Disp Rrailer/Boat	Outboard Motors And Powered Sports Vehicles	I	false
+910104	HC011	Rental Equivalence Of Owned Home	Owners' Equivalent Rent Of Primary Residence	I	false
+910105	HC090	Rent Equiv Vac Home Not Avail Rnt	Unsampled Owners' Equivalent Rent Of Secondary Residence	I	false
+910106	HC090	Rent Equiv Vac Home Avail For Rnt	Unsampled Owners' Equivalent Rent Of Secondary Residence	I	false
+910107	HC090	Rental Equivalence For Timeshares	Unsampled Owners' Equivalent Rent Of Secondary Residence	I	false

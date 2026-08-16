@@ -1,0 +1,261 @@
+{
+  "active_ucc_count": 337,
+  "artifact_id": "detailed_inflation_audit_2024",
+  "baseline_deltas": {
+    "active_ucc_count": 0,
+    "expenditure_share_pct": {
+      "CROSS_NODE_MULTI_MAP": 0.0,
+      "DIRECT": 0.0044,
+      "MULTI_SAME_NODE": 0.0004,
+      "NO_CONCORDANCE": -0.0048
+    },
+    "high_rse_expenditure_share_pct": {
+      "All Consumer Units": -0.0031,
+      "Q1": -0.0028,
+      "Q2": -0.0023,
+      "Q3": -0.0001,
+      "Q4": -0.0018,
+      "Q5": 0.0046
+    }
+  },
+  "concordance_provenance": {
+    "artifact_id": "ucc_eli_concordance_2024_v0_1",
+    "bls_trailer_lines": [
+      "(1) - These CE expenditures are allocated to multiple ELIs in the CPI using special adjustment factors.",
+      "Note: This UCC-ELI concordance changes periodically. This mapping reflects the CPI item structure that was introduced for 2024 annual expenditure weights used in the calculation of indexes starting in January 2026. Additionally, items SEME02 and SEME03 are not reflected in this concordance. Weights are created for these series via imputation to fully populate to the required 7776 item area cell structure for index estimation.",
+      "Source: U.S. Bureau of Labor Statistics"
+    ],
+    "distinct_eli_count": 294,
+    "distinct_ucc_count": 507,
+    "multi_eli_ucc_count": 29,
+    "normalized_artifact": "ucc_eli_concordance_2024_v0_1.tsv",
+    "pinning_note": "This is the August-2026 concordance, aligned to the CPI item structure introduced for 2024 annual expenditure weights used in indexes starting January 2026. It must not be substituted with the archived January-2025 or January-2024 concordances, which describe a different CPI item structure.",
+    "publication": "Appendix 5. Consumer Expenditure survey item name (universal classification codes-UCC) to Consumer Price Index item titles (entry level item-ELI) concordance",
+    "publisher": "U.S. Bureau of Labor Statistics",
+    "row_count": 624,
+    "source_bytes": 40804,
+    "source_file_name": "ce-cpi-concordance-August-2026.xlsx",
+    "source_sha256": "769d578cd7964cbbe24330cc4cac1e068a6fc68f426615d41ae533d8cd13f430",
+    "source_sheet": "UTEM_2024",
+    "status": "RESEARCH_ONLY",
+    "version": "0.1.0"
+  },
+  "core_dmi": "WITHDRAWN \u2014 not implemented, not computed by this audit",
+  "cross_node_multi_map_found": false,
+  "exception_ledger_size": 58,
+  "exceptions_by_reason": {
+    "CROSS_NODE_MULTI_MAP": {
+      "aggregate_expenditure": 0,
+      "expenditure_share_pct": 0.0,
+      "ucc_count": 0,
+      "uccs": []
+    },
+    "NO_CONCORDANCE": {
+      "aggregate_expenditure": 1326642.0,
+      "expenditure_share_pct": 19.405223710308753,
+      "ucc_count": 58,
+      "uccs": [
+        "190903",
+        "190904",
+        "200900",
+        "210901",
+        "210902",
+        "220122",
+        "220211",
+        "220212",
+        "220311",
+        "220312",
+        "220313",
+        "220314",
+        "220901",
+        "220902",
+        "230113",
+        "230114",
+        "230115",
+        "230143",
+        "230144",
+        "230151",
+        "230152",
+        "230901",
+        "230902",
+        "240113",
+        "240123",
+        "240213",
+        "240214",
+        "240223",
+        "240313",
+        "240323",
+        "270104",
+        "270903",
+        "270904",
+        "270906",
+        "300900",
+        "320613",
+        "320626",
+        "320633",
+        "340912",
+        "340913",
+        "340915",
+        "450351",
+        "470311",
+        "510110",
+        "510901",
+        "510902",
+        "520110",
+        "790690",
+        "830111",
+        "830112",
+        "850300",
+        "880110",
+        "880310",
+        "950024",
+        "990900",
+        "990920",
+        "990930",
+        "990940"
+      ]
+    }
+  },
+  "expected_baselines": {
+    "active_ucc_count": 337,
+    "expenditure_share_pct": {
+      "CROSS_NODE_MULTI_MAP": 0.0,
+      "DIRECT": 71.39,
+      "MULTI_SAME_NODE": 9.2,
+      "NO_CONCORDANCE": 19.41
+    },
+    "high_rse_expenditure_share_pct": {
+      "All Consumer Units": 0.98,
+      "Q1": 11.47,
+      "Q2": 9.81,
+      "Q3": 7.93,
+      "Q4": 6.52,
+      "Q5": 2.79
+    }
+  },
+  "generated_utc": "2026-08-16T16:27:44Z",
+  "high_rse_expenditure_share_pct": {
+    "All Consumer Units": 0.9769151556639928,
+    "Q1": 11.467152097922401,
+    "Q2": 9.807688100746809,
+    "Q3": 7.929901280687391,
+    "Q4": 6.518212034209074,
+    "Q5": 2.794622807270695
+  },
+  "mapping_expenditure_share_pct": {
+    "CROSS_NODE_MULTI_MAP": 0.0,
+    "DIRECT": 71.39436438421887,
+    "MULTI_SAME_NODE": 9.200411905472375,
+    "NO_CONCORDANCE": 19.405223710308753
+  },
+  "mapping_status_counts": {
+    "DIRECT": 274,
+    "MULTI_SAME_NODE": 5,
+    "UNRESOLVED": 58
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, Milestone 1",
+  "missing_data": {
+    "missing_aggregate_by_population": {
+      "All Consumer Units": 19,
+      "Q1": 38,
+      "Q2": 31,
+      "Q3": 33,
+      "Q4": 30,
+      "Q5": 25
+    },
+    "missing_rse_by_population": {
+      "All Consumer Units": 19,
+      "Q1": 38,
+      "Q2": 31,
+      "Q3": 33,
+      "Q4": 30,
+      "Q5": 25
+    },
+    "note": "BLS suppresses estimates that do not meet publication standards. Suppressed values are reported as missing and are never coerced to zero."
+  },
+  "multi_same_node_cases": [
+    {
+      "elis": [
+        "ED031",
+        "EE041"
+      ],
+      "node": "EDUCATION_COMMUNICATION",
+      "ucc": "270102",
+      "ucc_title": "Cellular Phone Service"
+    },
+    {
+      "elis": [
+        "TB011",
+        "TB012",
+        "TB013",
+        "TB021",
+        "TB022"
+      ],
+      "node": "MOTOR_FUEL",
+      "ucc": "470111",
+      "ucc_title": "Gasoline"
+    },
+    {
+      "elis": [
+        "TB011",
+        "TB012",
+        "TB013",
+        "TB021",
+        "TB022"
+      ],
+      "node": "MOTOR_FUEL",
+      "ucc": "470113",
+      "ucc_title": "Gasoline On Out Of Town Trips"
+    },
+    {
+      "elis": [
+        "TC021",
+        "TC022"
+      ],
+      "node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+      "ucc": "480100",
+      "ucc_title": "Veh Parts/Acc/Fluids Excl Tires"
+    },
+    {
+      "elis": [
+        "TD011",
+        "TD021",
+        "TD031"
+      ],
+      "node": "TRANSPORT_SERVICES",
+      "ucc": "490100",
+      "ucc_title": "Vehicle Maint/Rep Excl Tire Purch"
+    }
+  ],
+  "parameters": {
+    "bls_aggregate_rounding_unit": 1.0,
+    "high_rse_threshold": 25.0,
+    "reconciliation_rule": "|sum(active leaves) - published parent| <= 0.5 * rounding_unit * (published_leaf_count + 1), the exact worst case of publication rounding.",
+    "reference_population_for_shares": "All Consumer Units"
+  },
+  "populations": [
+    "All Consumer Units",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "Q5"
+  ],
+  "reconciliation": {
+    "checks": 24,
+    "failures": [],
+    "max_abs_difference": 5.0,
+    "max_abs_percent_difference": 0.015144631228229592,
+    "min_rounding_bound": 3.0,
+    "passed": true
+  },
+  "sources": {
+    "aspects": "../dmi-data/cx.aspect_2024_dmi_target.tsv",
+    "concordance": "registry/research/ucc_eli_concordance_2024_v0_1.tsv",
+    "data": "../dmi-data/cx.data.1.AllData",
+    "items": "../dmi-data/cx.item",
+    "series": "../dmi-data/cx.series_2024_dmi_target.tsv"
+  },
+  "status": "RESEARCH_ONLY",
+  "year": 2024
+}

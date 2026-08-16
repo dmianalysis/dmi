@@ -1,0 +1,105 @@
+{
+  "artifact_id": "eli_to_node_map_v0_1",
+  "version": "0.1.0",
+  "status": "RESEARCH_ONLY",
+  "milestone": "Detailed Inflation Substrate v0.1, Milestone 1",
+  "description": "Maps every BLS CPI Entry Level Item (ELI) reachable from the pinned UCC->ELI concordance onto exactly one candidate DMI computation node from detailed_inflation_taxonomy_v0_1.json.",
+  "resolution_algorithm": [
+    "1. Exact lookup of the full 5-character ELI in `eli_overrides`.",
+    "2. Otherwise exact lookup of the leading 2 characters of the ELI in `eli_prefix_to_node`.",
+    "3. Otherwise raise. There is no fallback, no fuzzy match, and no default node."
+  ],
+  "why_prefix_keys": "The first two characters of a BLS ELI code are a structural component of the identifier that denotes the CPI item grouping (e.g. `TB` = motor fuel, `HF` = electricity and utility gas). Prefix lookup is therefore an exact join on a documented identifier substring, not a label heuristic. Every prefix below was verified to be node-homogeneous across all ELIs in the pinned concordance; the single heterogeneous prefix (`TA`) is handled by explicit overrides.",
+  "attribution": "ELI codes and titles are published by the U.S. Bureau of Labor Statistics. The assignment of ELIs to DMI computation nodes is DMI research metadata and is not a BLS product.",
+  "eli_prefix_to_node": {
+    "AA": "APPAREL",
+    "AB": "APPAREL",
+    "AC": "APPAREL",
+    "AD": "APPAREL",
+    "AE": "APPAREL",
+    "AF": "APPAREL",
+    "AG": "APPAREL",
+
+    "EA": "EDUCATION_COMMUNICATION",
+    "EB": "EDUCATION_COMMUNICATION",
+    "EC": "EDUCATION_COMMUNICATION",
+    "ED": "EDUCATION_COMMUNICATION",
+    "EE": "EDUCATION_COMMUNICATION",
+
+    "FA": "FOOD",
+    "FB": "FOOD",
+    "FC": "FOOD",
+    "FD": "FOOD",
+    "FE": "FOOD",
+    "FF": "FOOD",
+    "FG": "FOOD",
+    "FH": "FOOD",
+    "FJ": "FOOD",
+    "FK": "FOOD",
+    "FL": "FOOD",
+    "FM": "FOOD",
+    "FN": "FOOD",
+    "FP": "FOOD",
+    "FR": "FOOD",
+    "FS": "FOOD",
+    "FT": "FOOD",
+    "FV": "FOOD",
+    "FW": "ALCOHOLIC_BEVERAGES",
+    "FX": "ALCOHOLIC_BEVERAGES",
+
+    "GA": "OTHER_GOODS_SERVICES",
+    "GB": "OTHER_GOODS_SERVICES",
+    "GC": "OTHER_GOODS_SERVICES",
+    "GD": "OTHER_GOODS_SERVICES",
+    "GE": "OTHER_GOODS_SERVICES",
+
+    "HA": "SHELTER",
+    "HB": "SHELTER",
+    "HC": "SHELTER",
+    "HD": "SHELTER",
+    "HE": "HOUSEHOLD_ENERGY",
+    "HF": "HOUSEHOLD_ENERGY",
+    "HG": "WATER_SEWER_TRASH",
+    "HH": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HJ": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HK": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HL": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HM": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HN": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+    "HP": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+
+    "MC": "MEDICAL_CARE",
+    "MD": "MEDICAL_CARE",
+    "ME": "MEDICAL_CARE",
+    "MF": "MEDICAL_CARE",
+    "MG": "MEDICAL_CARE",
+
+    "RA": "RECREATION",
+    "RB": "RECREATION",
+    "RC": "RECREATION",
+    "RD": "RECREATION",
+    "RE": "RECREATION",
+    "RF": "RECREATION",
+    "RG": "RECREATION",
+
+    "TA": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+    "TB": "MOTOR_FUEL",
+    "TC": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+    "TD": "TRANSPORT_SERVICES",
+    "TE": "TRANSPORT_SERVICES",
+    "TF": "TRANSPORT_SERVICES",
+    "TG": "TRANSPORT_SERVICES"
+  },
+  "eli_overrides": {
+    "TA031": {
+      "node": "TRANSPORT_SERVICES",
+      "eli_title": "Vehicle Leasing",
+      "reason": "CPI classifies leased cars and trucks as a transportation service, not a transportation commodity, even though the ELI shares the TA (new and used motor vehicles) prefix."
+    },
+    "TA041": {
+      "node": "TRANSPORT_SERVICES",
+      "eli_title": "Automobile And Truck Rental",
+      "reason": "CPI classifies car and truck rental as a transportation service, not a transportation commodity, even though the ELI shares the TA prefix."
+    }
+  }
+}
