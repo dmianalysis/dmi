@@ -3,9 +3,11 @@
 
 The withdrawal tooling has two components:
 
-1. ``scripts/withdraw_core_artifacts.sh`` — the mutating tool that,
-   when explicitly authorised, removes withdrawn Core / U-6 / with_ci
-   artifacts from the live remote site over SSH.
+1. ``scripts/withdraw_remote_artifacts.py`` — the two-phase mutating
+   tool. Phase 1 (``inventory``) is read-only SSH enumeration + hashing
+   into a local reviewed JSON file. Phase 2 (``execute``) re-verifies
+   sha256 digests on the remote before deleting, and refuses to delete
+   anything not present in the reviewed inventory.
 
 2. ``scripts/inventory_withdrawn_artifacts.py`` — the read-only local
    companion that lists what withdrawn artifacts still sit in the
@@ -13,26 +15,31 @@ The withdrawal tooling has two components:
 
 §10 demands both components stay "inventory-first, no execution":
 
-- The shell tool MUST refuse to run when invoked without an explicit
-  flag; MUST support ``--dry-run`` as a listing mode; MUST require
-  ``--confirm`` for any mutation; and MUST keep the Baseline /
-  Slack-Plus safety guard around the delete step.
+- The mutating tool MUST expose two subcommands (``inventory`` and
+  ``execute``); the ``inventory`` subcommand MUST NOT accept a
+  ``--confirm`` flag; the ``execute`` subcommand MUST require
+  ``--confirm`` and MUST refuse to delete unless every inventory entry's
+  sha256 re-verifies on the remote; the delete step MUST be preceded
+  by a protected-pattern refusal that rejects Baseline / Slack-Plus /
+  legacy-unsuffixed names; SSH invocation MUST use
+  ``StrictHostKeyChecking=yes`` and a scoped ``UserKnownHostsFile``.
 
-- The Python tool MUST NOT contain any mutating verb (``rm``, ``rename``,
-  ``unlink``, ``rmtree``, ``open(..., 'w')``, ``os.remove``, ``shutil``
-  mutation calls); its argparse surface MUST NOT expose a ``--confirm``
-  or ``--execute`` style flag; running it against an empty temporary
-  directory MUST succeed and produce a zero-match report.
+- The read-only Python tool MUST NOT contain any mutating verb
+  (``rm``, ``rename``, ``unlink``, ``rmtree``, ``open(..., 'w')``,
+  ``os.remove``, ``shutil`` mutation calls); its argparse surface
+  MUST NOT expose a ``--confirm`` or ``--execute`` style flag;
+  running it against an empty temporary directory MUST succeed and
+  produce a zero-match report.
 
 Together the tests prevent a future refactor from silently turning the
-inventory helper into a mutator or removing the shell tool's safety
-gates.
+inventory helper into a mutator, from collapsing the two phases into
+one, or from removing the hash-verification gate on execute.
 """
 
 from __future__ import annotations
 
+import ast
 import json
-import os
 import re
 import subprocess
 import sys
@@ -41,111 +48,216 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SHELL_TOOL = REPO_ROOT / "scripts" / "withdraw_core_artifacts.sh"
-PY_TOOL = REPO_ROOT / "scripts" / "inventory_withdrawn_artifacts.py"
+REMOTE_TOOL = REPO_ROOT / "scripts" / "withdraw_remote_artifacts.py"
+LOCAL_INVENTORY_TOOL = REPO_ROOT / "scripts" / "inventory_withdrawn_artifacts.py"
 
 
-class TestShellWithdrawalToolSafetyPosture(unittest.TestCase):
+class TestRemoteWithdrawalToolIsTwoPhase(unittest.TestCase):
 
     def setUp(self):
-        self.assertTrue(SHELL_TOOL.exists(), f"{SHELL_TOOL} missing")
-        self.src = SHELL_TOOL.read_text()
+        self.assertTrue(REMOTE_TOOL.exists(), f"{REMOTE_TOOL} missing")
+        self.src = REMOTE_TOOL.read_text()
 
-    def test_tool_is_executable(self):
-        self.assertTrue(
-            os.access(SHELL_TOOL, os.X_OK),
-            "§10: withdrawal tool must be executable so the documented "
-            "runbook works without a chmod step.",
-        )
-
-    def test_refuses_to_run_without_a_flag(self):
-        # Structural check on the source so we don't need the SSH env
-        # variables set (which the tool checks after flag parsing).
-        self.assertRegex(
-            self.src,
-            r'if\s*\[\s*"\$CONFIRM"\s*!=\s*"yes"\s*\]\s*&&'
-            r'\s*\[\s*"\$DRY_RUN"\s*!=\s*"yes"\s*\]\s*;\s*then',
-            "§10: tool must refuse to run when neither --dry-run nor "
-            "--confirm is supplied.",
-        )
-        self.assertIn(
-            "exit 1", self.src,
-            "§10: the no-flag branch must exit non-zero.",
-        )
-
-    def test_supports_dry_run_and_confirm_flags(self):
-        for flag_case in ("--dry-run) DRY_RUN=", "--confirm) CONFIRM="):
-            self.assertIn(
-                flag_case, self.src,
-                f"§10: tool must expose {flag_case.split(')')[0]}.",
+    def test_defines_two_subcommands(self):
+        # Both `inventory` and `execute` must be registered subcommands.
+        for name in ("inventory", "execute"):
+            self.assertRegex(
+                self.src,
+                rf'sub\.add_parser\(\s*["\']{name}["\']',
+                f"§10: '{name}' subcommand must be registered.",
             )
 
-    def test_dry_run_never_reaches_delete(self):
-        # The `-delete` action MUST only appear after the DRY_RUN=yes
-        # guard has been checked and passed. Assert both that -delete
-        # exists (real deletion is possible when --confirm is set) and
-        # that it appears AFTER the dry-run early-exit block.
-        dry_run_exit_idx = self.src.find('if [ "$DRY_RUN" = "yes" ]')
-        delete_idx = self.src.find("-delete")
-        self.assertGreater(dry_run_exit_idx, 0, "§10: dry-run guard missing")
-        self.assertGreater(delete_idx, 0, "§10: delete action missing (execute mode broken)")
+    def test_inventory_subcommand_has_no_confirm_or_execute_flag(self):
+        # Parse the module and inspect only the argparse calls attached
+        # to the inventory subparser.
+        tree = ast.parse(self.src)
+        offenders: list[str] = []
+        # Look for `p_inv.add_argument("--confirm"|"--execute"|...)`.
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            if not isinstance(func, ast.Attribute):
+                continue
+            if func.attr != "add_argument":
+                continue
+            if not isinstance(func.value, ast.Name):
+                continue
+            if func.value.id != "p_inv":
+                continue
+            if not node.args:
+                continue
+            first = node.args[0]
+            if isinstance(first, ast.Constant) and isinstance(first.value, str):
+                flag = first.value.lstrip("-").lower()
+                for banned in ("confirm", "execute", "delete", "remove"):
+                    if banned in flag:
+                        offenders.append(first.value)
+        self.assertEqual(
+            offenders, [],
+            f"§10: inventory subcommand must not expose a mutating flag "
+            f"(found: {offenders}).",
+        )
+
+    def test_execute_subcommand_requires_confirm_flag(self):
+        # The `execute` subparser must declare a --confirm flag AND the
+        # command must refuse to run without it.
+        self.assertRegex(
+            self.src,
+            r'p_exec\.add_argument\(\s*["\']--confirm["\']',
+            "§10: execute must expose a --confirm flag.",
+        )
+        self.assertRegex(
+            self.src,
+            r'if not args\.confirm\s*:',
+            "§10: execute must gate mutation behind an args.confirm check.",
+        )
+
+    def test_execute_verifies_sha256_before_deletion(self):
+        # The re-hash call must occur before the delete call, and the
+        # delete must not be reachable if any digest mismatched.
+        rehash_idx = self.src.find("_remote_rehash(")
+        mismatch_idx = self.src.find("mismatches")
+        delete_idx = self.src.find("_remote_delete(")
+        self.assertGreater(rehash_idx, 0, "§10: _remote_rehash call missing.")
+        self.assertGreater(mismatch_idx, 0, "§10: mismatch handling missing.")
+        self.assertGreater(delete_idx, 0, "§10: _remote_delete call missing.")
         self.assertLess(
-            dry_run_exit_idx, delete_idx,
-            "§10: -delete must appear only AFTER the dry-run early-exit.",
+            rehash_idx, delete_idx,
+            "§10: sha256 re-hash must run before deletion.",
+        )
+        self.assertLess(
+            mismatch_idx, delete_idx,
+            "§10: mismatch check must precede deletion.",
         )
 
-    def test_baseline_slack_plus_safety_guard_present(self):
-        # The belt-and-suspenders guard aborts the delete if any
-        # Baseline or Slack-Plus artifact somehow slipped into the
-        # match list.
-        self.assertIn("dmi_release_[0-9]{4}-[0-9]{2}\\.json", self.src)
-        self.assertIn("_slack_plus\\.json", self.src)
+    def test_execute_refuses_when_inventory_missing(self):
+        # Structural check: SystemExit on missing inventory is present.
+        self.assertRegex(
+            self.src,
+            r'raise\s+SystemExit\(\s*f?["\'][^"\']*inventory not found',
+            "§10: execute must raise SystemExit if inventory file is missing.",
+        )
+
+    def test_protected_pattern_guard_present(self):
+        # The belt-and-suspenders regex list must include Baseline,
+        # Slack-Plus, and legacy-unsuffixed CSV/Parquet patterns.
         self.assertIn(
-            "ABORT: match list unexpectedly contains", self.src,
-            "§10: Baseline/Slack-Plus safety abort message missing.",
+            r"^dmi_release_[0-9]{4}-[0-9]{2}\.json$", self.src,
+        )
+        self.assertIn(
+            r"^dmi_release_[0-9]{4}-[0-9]{2}_slack_plus\.json$", self.src,
+        )
+        self.assertIn(
+            r"^dmi-[0-9]{4}-[0-9]{2}-baseline\.(csv|parquet)$", self.src,
+        )
+        self.assertIn(
+            r"^dmi-[0-9]{4}-[0-9]{2}-slack_plus\.(csv|parquet)$", self.src,
+        )
+        self.assertRegex(
+            self.src,
+            r'raise\s+SystemExit\(\s*[^)]*protected or out-of-scope',
+            "§10: protected-pattern guard must raise SystemExit.",
         )
 
-    def test_find_expression_never_matches_baseline_or_slack_plus(self):
-        # Extract every -name glob and assert none of them would match
-        # a Baseline or Slack-Plus filename.
-        globs = re.findall(r"-name\s+['\"]([^'\"]+)['\"]", self.src)
-        self.assertGreater(len(globs), 0, "no -name globs found in tool")
+    def test_ssh_uses_strict_host_verification(self):
+        self.assertIn('"StrictHostKeyChecking=yes"', self.src)
+        self.assertIn('UserKnownHostsFile=', self.src)
+
+    def test_withdrawn_patterns_never_match_baseline_or_slack_plus(self):
+        # Import the module's patterns directly and verify none of them
+        # would fnmatch a protected artifact name.
+        import fnmatch
+        import importlib
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            mod = importlib.import_module(
+                "scripts.withdraw_remote_artifacts",
+            )
+        finally:
+            sys.path.pop(0)
+
         forbidden = [
             "dmi_release_2026-07.json",
             "dmi_release_2026-07_slack_plus.json",
             "dmi-2026-07-baseline.csv",
             "dmi-2026-07-slack_plus.parquet",
+            "dmi-2026-01.csv",
+            "dmi-2026-01.parquet",
         ]
-        import fnmatch
-        for glob in globs:
+        for pat in mod.WITHDRAWN_PATTERNS:
             for name in forbidden:
                 self.assertFalse(
-                    fnmatch.fnmatch(name, glob),
-                    f"§10: glob {glob!r} would match protected artifact "
-                    f"{name!r}",
+                    fnmatch.fnmatch(name, pat),
+                    f"§10: WITHDRAWN_PATTERNS glob {pat!r} would match "
+                    f"protected artifact {name!r}",
                 )
 
-    def test_requires_ssh_credentials_before_touching_remote(self):
-        for var in ("DMI_REMOTE_HOST", "DMI_REMOTE_USER", "DMI_REMOTE_KEY"):
-            self.assertIn(
-                f'"${{{var}:?', self.src,
-                f"§10: {var} must be required (parameter-expansion :? form).",
+    def test_refuse_protected_rejects_baseline(self):
+        # Direct invocation: feeding a baseline path into
+        # _refuse_protected must raise SystemExit.
+        import importlib
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            mod = importlib.import_module(
+                "scripts.withdraw_remote_artifacts",
             )
+        finally:
+            sys.path.pop(0)
+
+        records = [
+            {"path": "/home/agiraces/dmianalysis/data/outputs/"
+                     "dmi_release_2026-07.json",
+             "size": 1, "sha256": "x" * 64},
+        ]
+        with self.assertRaises(SystemExit):
+            mod._refuse_protected(records, "/home/agiraces/dmianalysis")
+
+    def test_refuse_protected_rejects_out_of_base(self):
+        import importlib
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            mod = importlib.import_module(
+                "scripts.withdraw_remote_artifacts",
+            )
+        finally:
+            sys.path.pop(0)
+
+        records = [
+            {"path": "/etc/passwd", "size": 1, "sha256": "y" * 64},
+        ]
+        with self.assertRaises(SystemExit):
+            mod._refuse_protected(records, "/home/agiraces/dmianalysis")
+
+    def test_refuse_protected_accepts_valid_withdrawn(self):
+        import importlib
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            mod = importlib.import_module(
+                "scripts.withdraw_remote_artifacts",
+            )
+        finally:
+            sys.path.pop(0)
+
+        records = [
+            {"path": "/home/agiraces/dmianalysis/data/outputs/"
+                     "dmi_release_2024-11_core.json",
+             "size": 1, "sha256": "z" * 64},
+        ]
+        # Must NOT raise.
+        mod._refuse_protected(records, "/home/agiraces/dmianalysis")
 
 
-class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
+class TestPythonLocalInventoryToolIsReadOnly(unittest.TestCase):
 
     def setUp(self):
-        self.assertTrue(PY_TOOL.exists(), f"{PY_TOOL} missing")
-        self.src = PY_TOOL.read_text()
+        self.assertTrue(
+            LOCAL_INVENTORY_TOOL.exists(),
+            f"{LOCAL_INVENTORY_TOOL} missing",
+        )
+        self.src = LOCAL_INVENTORY_TOOL.read_text()
 
     def test_source_contains_no_mutating_verbs(self):
-        # Grep the source for anything that could remove or overwrite a
-        # file. `os.remove`, `os.unlink`, `Path.unlink`, `shutil.rmtree`,
-        # `shutil.move`, `shutil.copy`, `open(..., 'w')`, `.write_text`,
-        # `.write_bytes`, and the `rm` shell verb are all forbidden.
-        # We allow `sys.stdout.write` (stdout is not a file we care
-        # about) by scoping the regex.
         forbidden = [
             r"\bos\.remove\b",
             r"\bos\.unlink\b",
@@ -156,19 +268,16 @@ class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
             r"\bopen\([^)]*['\"][wa]",
             r"\.write_text\b",
             r"\.write_bytes\b",
-            r"\bsubprocess\.",  # no shelling out either
+            r"\bsubprocess\.",
         ]
         for pattern in forbidden:
             self.assertIsNone(
                 re.search(pattern, self.src),
-                f"§10: inventory tool contains forbidden mutating token "
-                f"matching {pattern!r}",
+                f"§10: local inventory tool contains forbidden mutating "
+                f"token matching {pattern!r}",
             )
 
     def test_argparse_exposes_no_execute_or_confirm_flag(self):
-        # The tool must never grow a mutating CLI surface. Inspect only
-        # actual `add_argument` calls (the docstring is allowed to
-        # discuss forbidden flags in its rationale).
         add_arg_calls = re.findall(
             r"add_argument\(\s*['\"]([^'\"]+)['\"]",
             self.src,
@@ -177,14 +286,15 @@ class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
             offenders = [f for f in add_arg_calls if token in f.lower()]
             self.assertEqual(
                 offenders, [],
-                f"§10: inventory tool must not expose --{token} flag "
+                f"§10: local inventory tool must not expose --{token} flag "
                 f"via argparse (found: {offenders}).",
             )
 
     def test_running_against_empty_dir_succeeds_and_reports_zero(self):
         with tempfile.TemporaryDirectory() as tmp:
             result = subprocess.run(
-                [sys.executable, str(PY_TOOL), "--root", tmp, "--json"],
+                [sys.executable, str(LOCAL_INVENTORY_TOOL),
+                 "--root", tmp, "--json"],
                 capture_output=True, text=True, check=True,
             )
             report = json.loads(result.stdout)
@@ -194,15 +304,15 @@ class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
     def test_running_against_seeded_dir_finds_only_withdrawn_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            # Seed: two withdrawn + two protected + one unrelated file.
             (tmp_path / "dmi_release_2026-01_core.json").write_text("{}")
             (tmp_path / "qa_report_2026-02_core.json").write_text("{}")
-            (tmp_path / "dmi_release_2026-01.json").write_text("{}")            # Baseline
-            (tmp_path / "dmi_release_2026-01_slack_plus.json").write_text("{}")  # Slack+
+            (tmp_path / "dmi_release_2026-01.json").write_text("{}")
+            (tmp_path / "dmi_release_2026-01_slack_plus.json").write_text("{}")
             (tmp_path / "README.md").write_text("nothing to see")
 
             result = subprocess.run(
-                [sys.executable, str(PY_TOOL), "--root", tmp, "--json"],
+                [sys.executable, str(LOCAL_INVENTORY_TOOL),
+                 "--root", tmp, "--json"],
                 capture_output=True, text=True, check=True,
             )
             report = json.loads(result.stdout)
@@ -216,8 +326,6 @@ class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
             )
 
     def test_excluded_dirs_are_skipped(self):
-        # `.git` and `deploy` are excluded so the inventory is not
-        # polluted by staging or version-control mirrors.
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             for excluded in (".git", "deploy", "node_modules"):
@@ -226,7 +334,8 @@ class TestPythonInventoryToolIsReadOnly(unittest.TestCase):
                 (sub / "dmi_release_2026-01_core.json").write_text("{}")
 
             result = subprocess.run(
-                [sys.executable, str(PY_TOOL), "--root", tmp, "--json"],
+                [sys.executable, str(LOCAL_INVENTORY_TOOL),
+                 "--root", tmp, "--json"],
                 capture_output=True, text=True, check=True,
             )
             report = json.loads(result.stdout)
