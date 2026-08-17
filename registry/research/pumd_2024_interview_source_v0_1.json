@@ -1,0 +1,329 @@
+{
+  "registry": "pumd_2024_interview_source",
+  "version": "0.1",
+  "status": "RESEARCH_ONLY",
+  "created": "2026-08-17",
+  "purpose": "Record, from primary BLS sources only, the documentation and microdata used to test whether the public 2024 CE Interview PUMD can reproduce published Table 1101 / LABSTAT LB01 estimates. This registry is evidence about a method. It is not authorization to calculate anything.",
+
+  "what_this_registry_is_not": [
+    "It is not a claim that any DMI figure may be sourced from PUMD.",
+    "It is not an upgrade of pumd_quantitative_usability for any UCC.",
+    "It does not license any estimate for UCCs 910104-910107."
+  ],
+
+  "retrieval_method": {
+    "retrieved_by": "this session, 2026-08-17, over HTTPS from www.bls.gov",
+    "reproduced_by_test": false,
+    "note": "Every document below was fetched by this session and its SHA-256 recorded at retrieval time. Unlike the Milestone-2 shelter observation, these are first-hand retrievals by the session that wrote this file. They are still not reproduced by a committed test, because the benchmark deliberately has no automatic download step.",
+    "local_root": "~/dev/dmi-data/pumd/2024",
+    "why_outside_the_repo": "BLS PUMD archives and the derived CSVs are large and are not redistributable artifacts of this project. Nothing under ~/dev/dmi-data is committed."
+  },
+
+  "documents": {
+    "PUMD_GETTING_STARTED_GUIDE": {
+      "title": "Consumer Expenditure Surveys Public Use Microdata Getting Started Guide",
+      "url": "https://www.bls.gov/cex/pumd-getting-started-guide.htm",
+      "retrieved_utc": "2026-08-17T19:56:10Z",
+      "bytes": 155299,
+      "sha256": "91379c95b8b96bfb1238c3cd43d22fd6a19a6e3ce2cba024d58bd1be22278bf3",
+      "page_last_modified": "April 8, 2026",
+      "passages_relied_on": {
+        "five_quarters_for_a_calendar_year": "To produce calendar year estimates, users need to access all five quarters of data: All four quarters of the year of interest and the first quarter for the subsequent year.",
+        "why_two_years": "Data users need data from two subsequent years to calculate calendar year estimates because in the Interview Survey, users report expenditures for the three months prior to the interview.",
+        "weight_variable": "Users can calculate representative statistics with the weight variable FINLWT21. This variable attributes a weight to each NEWID, which allows users to estimate values for the entire population. This variable is available in the FMLI and FMLD files.",
+        "qnum": "\"QNUM\" adjusts the weights from annual to quarterly. The CE sample is designed to be representative of the entire annual U.S. population in the collection of each quarter. Thus, the weight (FINLWT21) needs to be divided by 4 to adjust for this fact. ... For example for an annual estimate (4 quarters) QNUM is 4.",
+        "mo_scope": "\"MO_SCOPE/3\" adjusts the weights for CUs that are out of scope. Interviews that were conducted in January, February, or March are not fully in scope.",
+        "mo_scope_first_four_quarters": "If QINTRVMO is 1 then MO_SCOPE is 0; 2 -> 1; 3 -> 2; 4-12 -> 3.",
+        "mo_scope_fifth_quarter": "If QINTRVMO is 1 then MO_SCOPE is 3; 2 -> 2; 3 -> 1.",
+        "brr": "Selects 44 subsamples that are balanced half-samples of the full sample. Estimates a statistic for each half-sample, using the replicate weight variables WTREP01-WTREP44.",
+        "why_pumd_differs_from_published": "The CE program integrates information from both the Interview and Diary Surveys in its publications. Therefore any analysis limited to only the one survey may produce results that do not match the published CE estimates. In addition, users may find that estimates do not match the published estimates due to the non-disclosure criteria that are applied to the CE PUMD.",
+        "source_selection": "To see which UCCs the CE tables use to integrate and from which survey, see the Source Selection File."
+      },
+      "passage_contradicted_by_the_archive": {
+        "quoted": "Beginning in 2020, each data release contains the last three quarters of a year and the first quarter of the following year.",
+        "observed": "intrvw24.zip in fact contains fmli241x, fmli242, fmli243, fmli244 and fmli251 (and the matching mtbi files), i.e. all five quarters needed for a 2024 calendar-year estimate.",
+        "how_resolved": "The archive listing was believed over the prose. See archives.INTRVW24.members_relied_on. This discrepancy is recorded rather than silently absorbed."
+      }
+    },
+
+    "PUMD_DOCUMENTATION_PAGE": {
+      "title": "Consumer Expenditure Surveys Public Use Microdata Documentation",
+      "url": "https://www.bls.gov/cex/pumd_doc.htm",
+      "retrieved_utc": "2026-08-17T19:56:11Z",
+      "bytes": 90987,
+      "sha256": "064a2d03722e8e0bef5695e0adb53cbd458d13f1f0c4379648fab94267942dba",
+      "passages_relied_on": {
+        "hierarchical_grouping_layout": "For each UCC, the files provide this information: (1) Type of information in the line, start 1; (2) Level of aggregation, start 4; (3) Name of the UCC, start 7; (4) UCC lists the identifier of the UCC, start 70; (5) Source or purpose of the UCC, start 83, options I: Interview survey, D: Diary survey, G and T: Titles, S: Statistical UCCs; (6) Factor by which the mean has to be multiplied to match the annualized data in the published tables, start 86, options 1: Multiply times 1, 4: Multiply times 4; (7) Data sections, start 89, options CUCHARS, FOOD, EXPEND, INCOME, ASSETS.",
+        "integrated_groupings": "Integrated groupings lists UCCs that the CE tables use, and identifies the survey source for the UCCs."
+      },
+      "documented_layout_does_not_match_the_2024_file": {
+        "documented_start_positions_1_based": {"source": 83, "factor": 86, "section": 89},
+        "observed_start_positions_1_based_in_CE_HG_Inter_2024": {"source": 80, "factor": 83, "section": 86},
+        "observed_start_positions_1_based_in_CE_HG_Inter_2018": {"source": 83, "factor": 86, "section": 89},
+        "how_resolved": "Column offsets are detected per file at load time by locating the 6-digit UCC field and the known token sets, never hardcoded. The 2018 file matches the documentation; the 2024 file is shifted three characters left after the UCC field."
+      }
+    },
+
+    "CE_INTERVIEW_SAMPLE_PROGRAM": {
+      "title": "CEX Interview Survey Sample Program (SAS) - CE-Interview-Mean-and-SE.sas, from sas-table.zip",
+      "url": "https://www.bls.gov/cex/pumd/sas-table.zip",
+      "retrieved_utc": "2026-08-17T20:29:39Z",
+      "archive_bytes": 11955,
+      "archive_sha256": "32d00cd13bcfb886a8536834ebae849b20e4d44c9a2d6490dcfe60f4eab231a2",
+      "member": "SAS table/CE-Interview-Mean-and-SE.sas",
+      "member_sha256": "7ebca2e5b927d8cc044059428da21dbd1c92c3726c6eb64c63b5e801562c96a5",
+      "program_year_constant": 2018,
+      "what_it_establishes": {
+        "file_set": "SET I&YR1..FMLI&YR1.1X, FMLI&YR1.2, FMLI&YR1.3, FMLI&YR1.4, FMLI&YR2.1 - i.e. the 'x' variant of the first quarter from the current release, not the prior release's plain first quarter.",
+        "mo_scope_rule": "IF FIRSTQTR THEN MO_SCOPE = (QINTRVMO - 1); ELSE IF LASTQTR THEN MO_SCOPE = (4 - QINTRVMO); ELSE MO_SCOPE = 3;",
+        "population_weight": "REPS_B(i) = (REPS_A(i) * MO_SCOPE / 12) applied to WTREP01-WTREP44 and FINLWT21, with weights <= 0 mapped to 0. This is algebraically FINLWT21 / QNUM * MO_SCOPE / 3 with QNUM = 4.",
+        "expenditure_weight": "RCOST(i) = REPS_A(i) * COST using the UNADJUSTED weights. The MO_SCOPE adjustment appears only in the denominator population, never in the expenditure numerator.",
+        "calendar_year_filter": "IF REFYR = \"&YEAR\" OR REF_YR = \"&YEAR\"; - MTBI uses REF_YR, ITBI uses REFYR. Filtering is on reference year only; reference month is not used to restrict.",
+        "join": "MERGE FMLY (IN=INFAM) EXPEND (IN=INEXP) BY NEWID; IF INEXP AND INFAM; - an inner join for the numerator, while the denominator population is the full FMLY file. A CU with no record for a UCC therefore contributes to the denominator and not the numerator, which is what makes the published figure a mean over all CUs rather than over purchasers.",
+        "missing_cost": "IF COST = . THEN COST = 0;",
+        "annualization_special_case": "IF UCC = '710110' THEN COST = (COST * 4);",
+        "standard_error": "SE = SQRT((1/44) * SUM of (MEAN_r - MEAN)**2) over the 44 replicates.",
+        "income_grouping": "INCLASS is assigned from FINCBTXM using nine FIXED DOLLAR BRACKETS (<15000, 15000-29999, ... , >=200000)."
+      },
+      "what_it_does_not_establish": "This program reproduces CE table 1203 (income class), NOT table 1101 (income quintiles). BLS does not ship a PUMD sample program that constructs quintile boundaries. See quintile_construction below.",
+      "how_the_710110_special_case_generalises": "The hardcoded factor of 4 in this 2018 program corresponds to column 6 of the hierarchical grouping file, documented as 'Factor by which the mean has to be multiplied to match the annualized data in the published tables'. The benchmark reads that column rather than hardcoding any UCC."
+    },
+
+    "HIERARCHICAL_GROUPING_FILES": {
+      "title": "CE hierarchical grouping (stub) parameter files",
+      "url": "https://www.bls.gov/cex/pumd/stubs.zip",
+      "retrieved_utc": "2026-08-17T20:29:53Z",
+      "archive_bytes": 1564294,
+      "archive_sha256": "58098e493f0e99239b1f306555e3c1ff2cda57e5cb0287517b22a1b789166d33",
+      "members_relied_on": {
+        "CE-HG-Inter-2024.txt": "eabcef3e3497d8a28d0f24dbff2c6e7fa91b3efaac6ca10798cf868c03dfd080",
+        "CE-HG-Integ-2024.txt": "294e31d73db99ad0c56cec4b60973691917de5d750122cf55bacd9e974aefc5e"
+      },
+      "what_it_establishes": [
+        "Which UCCs the published CE tables use at all. A UCC absent from the stub file is not a table line and cannot be benchmarked against a published value.",
+        "The survey source of each published UCC (I / D), which is what makes an Interview-only PUMD estimate comparable to an integrated published table for Interview-sourced UCCs.",
+        "The per-UCC annualization factor (1 or 4)."
+      ],
+      "independent_corroboration_of_milestone_2": {
+        "observed": "UCCs 910050, 910101, 910102 and 910103 are present in CE-HG-Inter-2024.txt and CE-HG-Integ-2024.txt. UCCs 910104, 910105, 910106 and 910107 are absent from both.",
+        "significance": "This corroborates the Milestone-2 partition from a source entirely independent of the earlier session's manual MTBI record scan. It is corroboration only; it does not alter the frozen checkpoint dmi-detailed-inflation-v0.1-m2-corrected."
+      }
+    },
+
+    "PUMD_DICTIONARY": {
+      "title": "Dictionary for the Interview and Diary Surveys",
+      "url": "https://www.bls.gov/cex/pumd/ce-pumd-interview-diary-dictionary.xlsx",
+      "retrieved_utc": "2026-08-17T20:29:53Z",
+      "bytes": 1355152,
+      "sha256": "613810d32de105bcd32fa9030d378472afb4dab23d1922be7b71b0c522d0334c",
+      "passages_relied_on": {
+        "pubflag_description": "MTBI.PUBFLAG - 'Is amount included in published reports?'",
+        "pubflag_code_1": "1 = Not published",
+        "pubflag_code_2": "2 = Published in Integrated Bulletin"
+      },
+      "bearing_on_milestone_2": {
+        "note": "The Milestone-2 registry recorded publication_reason = PUBFLAG_1 for UCCs 910104-910107 from a bare code value whose meaning was not then documented. The dictionary now supplies the meaning: PUBFLAG = 1 means 'Not published'. This confirms the Milestone-2 reading rather than contradicting it.",
+        "action_taken": "None. The frozen checkpoint is not modified by this task."
+      }
+    },
+
+    "TABLES_GETTING_STARTED_GUIDE": {
+      "title": "Consumer Expenditure Surveys Tables Getting Started Guide",
+      "url": "https://www.bls.gov/cex/tables-getting-started-guide.htm",
+      "retrieved_utc": "2026-08-17T20:51:42Z",
+      "bytes": 133683,
+      "sha256": "529e6a2de3dc563a8d004df84c18299c8e63562541c5849c7e63c3fcd110e4c0",
+      "passages_relied_on": {
+        "quintiles_are_equal_weighted_counts": "Although the two columns each represent an equal number of weighted CUs, they are not similar in size."
+      }
+    },
+
+    "CE_FAQ": {
+      "title": "Consumer Expenditure Surveys Frequently Asked Questions",
+      "url": "https://www.bls.gov/cex/csxfaqs.htm",
+      "retrieved_utc": "2026-08-17T20:29:53Z",
+      "bytes": 131892,
+      "sha256": "18e5783c2accfe31e7e98873e6749e56f5792ee92847c5d8f0fac4bf3a1ba0c9",
+      "passages_relied_on": {
+        "disclosure_gap": "Published tables use confidential data, and are not adjusted to comply with non-disclosure requirements. By contrast, PUMD have been adjusted to protect the respondents' privacy.",
+        "imputation_since_2004": "Because all consumer units now have actual or imputed values for income data available to produce means and other information, the old complete income reporter data are no longer published in tables.",
+        "recommended_replication_route": "Replicating the table income estimates can be done a few different ways, but the recommended approach is to utilize the Interview Survey data stored on the ITBI and MTBI files, along with the corresponding weight variable FINLWT21 stored on FMLI."
+      },
+      "bearing_on_the_acceptance_rule": "The disclosure_gap passage is the documented reason a PUMD replication cannot be expected to match a published table exactly. It is the qualitative basis for tolerating non-zero error at all; it does not by itself set a numeric threshold."
+    },
+
+    "HOM_CEX_PRESENTATION": {
+      "title": "Handbook of Methods, Consumer Expenditures and Income: Presentation",
+      "url": "https://www.bls.gov/opub/hom/cex/presentation.htm",
+      "retrieved_utc": "2026-08-17T20:50:11Z",
+      "bytes": 59738,
+      "sha256": "a5049ca5d832ef501766d24c166684210e5153b8ef5b3547da7c8e9e12be7a97",
+      "passages_relied_on": {
+        "standard_tables": "BLS publishes a standard set of CE tables each year, which includes income quintile, income decile, income class, ...",
+        "bls_itself_uses_pumd_for_quintiles": "The current set of research tables includes annual means by income quintiles for selected states, which utilize state weights and public use microdata (PUMD)."
+      }
+    },
+
+    "PUBLISHED_TABLE_1101_2024": {
+      "title": "Table 1101. Quintiles of income before taxes: Annual expenditure means, shares, standard errors, and relative standard errors, Consumer Expenditure Surveys, 2024",
+      "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error/cu-income-quintiles-before-taxes-2024.xlsx",
+      "retrieved_utc": "2026-08-17T20:50:42Z",
+      "bytes": 26381,
+      "sha256": "05640c17c51547efd7ee9fb4c4e22e5c9062f6988d2c4b75e7013e27ad7ff6b5",
+      "source_line": "Source: Consumer Expenditure Surveys, U.S. Bureau of Labor Statistics, December, 2025",
+      "is_this_lb01": "Yes. LABSTAT demographics_code LB01 is titled 'by Income Quintiles' and its characteristics codes 01-06 are All Consumer Units and the five quintiles, in the same order as the columns of this table."
+    },
+
+    "PUBLISHED_TABLE_1101_2024_AGGREGATE": {
+      "title": "Quintiles of income before taxes: Aggregate expenditure shares, Consumer Expenditure Surveys, 2024",
+      "url": "https://www.bls.gov/cex/tables/calendar-year/aggregate-group-share/cu-income-quintiles-before-taxes-2024.xlsx",
+      "retrieved_utc": "2026-08-17T20:50:42Z",
+      "bytes": 12294,
+      "sha256": "ac112debc655863764ce28ac41356d73cd991c65b9b48b6e0ffd82b7c0c94b1c",
+      "why_recorded_but_not_used": "LABSTAT LB01 carries only process_code M. The benchmark therefore compares means with means and never compares a PUMD mean against an aggregate."
+    },
+
+    "SOURCE_SELECTION_FILE": {
+      "title": "CE source selection file (which survey each published UCC is taken from)",
+      "url": "https://www.bls.gov/cex/ce_source_integrate.xlsx",
+      "retrieved_utc": "2026-08-17T20:52:16Z",
+      "bytes": 269840,
+      "sha256": "9c7faa21400358dc6941355db028f35ef6837ded862abca4613bea2058037d83"
+    },
+
+    "PUMD_DATA_FILES_PAGE": {
+      "title": "Consumer Expenditure Surveys Public Use Microdata data files",
+      "url": "https://www.bls.gov/cex/pumd_data.htm",
+      "retrieved_utc": "2026-08-17T20:53:57Z",
+      "bytes": 110936,
+      "sha256": "6d31c39848b9ad17a10a7919309601b90f4f107f00a7018fedbb2bf19054c8f1"
+    }
+  },
+
+  "archives": {
+    "INTRVW24": {
+      "url": "https://www.bls.gov/cex/pumd/data/csv/intrvw24.zip",
+      "retrieved_utc": "2026-08-17T20:54:19Z",
+      "http_status": 200,
+      "bytes": 53613162,
+      "sha256": "421ec90c2b8469c10f91eac27988f65f5d09fcfa9944e5069bb00b5460677f26",
+      "local_path": "~/dev/dmi-data/pumd/2024/interview/intrvw24.zip",
+      "full_member_listing": "~/dev/dmi-data/pumd/2024/interview/intrvw24_manifest.txt",
+      "members_relied_on": {
+        "intrvw24/fmli241x.csv": "24277c0a8b4b9fa829c7610c125be10f3a8d69c3083bf1cdb911bc0e41f7a223",
+        "intrvw24/fmli242.csv": "3b3b432f2b82e89999266b74b66545848d1feb5be231e62c3e7a5e4386133116",
+        "intrvw24/fmli243.csv": "d3226b68530e71dcdb61a0e57bb5a1745885f24b2ffd29fd798e49f02516c3b3",
+        "intrvw24/fmli244.csv": "5fe2c2db2d8bf184fce90c4d54a19c9198c7664d41dfc6cf3808e013bd7f5229",
+        "intrvw24/fmli251.csv": "28410a98aadbc92c1fa31fbdd80b4d3f38fbdba670ed56152d85796e2ac934cf",
+        "intrvw24/mtbi241x.csv": "4c16f43f908c1d45cb0d26f5708719f43d2acef8dc9c607a7a6d7be379564f06",
+        "intrvw24/mtbi242.csv": "a4d5f82b0f77fe22ea1b76f22905df32663b3331d44da8e41fff484f498f85d0",
+        "intrvw24/mtbi243.csv": "b89c9f6afab262d5173da04d1e15981f2e15fa57da6be043e3a25c386b3bb539",
+        "intrvw24/mtbi244.csv": "90f8102af12cd60a211ce8055f96040a0a8701388723ddc1b751c2d92e16c136",
+        "intrvw24/mtbi251.csv": "40bf770c31a286ac9b07c41ab79dc74a3a57d7a85d6ebb14a828ee10e6010a33"
+      },
+      "member_timestamps": "12-16-2025, consistent with the December 2025 source line on Table 1101."
+    },
+    "INTRVW23": {
+      "url": "https://www.bls.gov/cex/pumd/data/csv/intrvw23.zip",
+      "retrieved_utc": "2026-08-17T20:54:21Z",
+      "http_status": 200,
+      "bytes": 46493816,
+      "sha256": "97e9a17edeee28e77a3fd5a7d874e5f4b9034222be204e25b0d902f4c82235ac",
+      "local_path": "~/dev/dmi-data/pumd/2024/interview/intrvw23.zip",
+      "full_member_listing": "~/dev/dmi-data/pumd/2024/interview/intrvw23_manifest.txt",
+      "why_retrieved": "The Getting Started Guide states that releases from 2020 onward omit the first quarter of the release year, which would have forced the 2024 Q1 files to come from here. The 2024 archive in fact contains fmli241x/mtbi241x, so this archive is NOT used by the benchmark.",
+      "role": "Documented alternative only. intrvw23.zip contains fmli241/mtbi241 (the non-'x' variant of the same quarter, processed under the previous release's disclosure rules). The Getting Started Guide states 'It is at the user's discretion as to which file to use.' The benchmark uses the 'x' variant because the BLS sample program does."
+    }
+  },
+
+  "estimation_method_as_established": {
+    "status": "ESTABLISHED_FROM_PRIMARY_SOURCES",
+    "calendar_year": 2024,
+    "fmli_files": ["fmli241x", "fmli242", "fmli243", "fmli244", "fmli251"],
+    "mtbi_files": ["mtbi241x", "mtbi242", "mtbi243", "mtbi244", "mtbi251"],
+    "join_key": "NEWID",
+    "join_kind": "inner join of MTBI onto FMLI for the numerator; the full FMLI file is the denominator population",
+    "final_weight_variable": "FINLWT21",
+    "replicate_weight_variables": "WTREP01-WTREP44",
+    "qnum": 4,
+    "mo_scope_rule": {
+      "first_quarter_file": "MO_SCOPE = QINTRVMO - 1",
+      "fifth_quarter_file": "MO_SCOPE = 4 - QINTRVMO",
+      "other_files": "MO_SCOPE = 3"
+    },
+    "population_weight": "FINLWT21 * MO_SCOPE / 12",
+    "expenditure_weight": "FINLWT21 (NOT MO_SCOPE-adjusted)",
+    "calendar_year_eligibility": "MTBI rows with REF_YR == 2024",
+    "annualization_factor": "hierarchical grouping column 6, per UCC, value 1 or 4",
+    "mean_estimand": "sum(FINLWT21 * COST * factor) / sum(FINLWT21 * MO_SCOPE / 12), i.e. an annual mean per consumer unit",
+    "standard_error": "sqrt((1/44) * sum over r of (mean_r - mean)^2)",
+    "multi_quarter_households": "Not deduplicated. Each NEWID is one CU-quarter and each quarter's interview is separately weighted to be representative of the population (Getting Started Guide 6.1). CUID identifies the same address across quarters but is deliberately not used to collapse records."
+  },
+
+  "quintile_construction": {
+    "status": "PARTIALLY_ESTABLISHED",
+    "what_is_established": [
+      "The published quintile columns are intended to hold an equal number of weighted CUs (Tables Getting Started Guide).",
+      "Since 2004 the tabulation covers all CUs using actual or imputed income, not complete income reporters only (CE FAQ). This is corroborated by LABSTAT: the LB01 'Total complete income reporters' and 'Incomplete income reports' series (characteristics codes A1 and A2) end in 2003.",
+      "BLS publishes the resulting quintile lower limits for 2024 directly in Table 1101.",
+      "The published quintile CU counts are NOT exactly equal (27139, 27186, 26959, 27205, 27272 thousand against an equal-split value of about 27152), so whatever rule BLS uses assigns whole CUs to a side of a boundary rather than splitting them."
+    ],
+    "what_is_not_established": [
+      "Which income variable is ranked (FINCBTXM, an individual imputation iteration FINCBTX1-5, or a variable including meals and rent as pay, which the FAQ notes FINCBTXM excludes).",
+      "Whether the ranking weight is FINLWT21 or the MO_SCOPE-adjusted population weight.",
+      "How ties and the boundary CU are handled."
+    ],
+    "consequence_for_this_benchmark": "The exact BLS quintile algorithm cannot be established from public sources, so it is not invented here. The benchmark instead ASSIGNS quintiles using the lower limits BLS itself publishes in Table 1101. That is a documented BLS quantity, not a reconstruction. A weighted-rank reconstruction of those same limits is computed and reported as a DIAGNOSTIC ONLY and is never used to assign a CU.",
+    "published_lower_limits_2024": {
+      "q1_lowest_20_percent": null,
+      "q2_second_20_percent": 29932,
+      "q3_third_20_percent": 57452,
+      "q4_fourth_20_percent": 94511,
+      "q5_highest_20_percent": 155925,
+      "units": "dollars of income before taxes",
+      "source": "Table 1101, row 'Lower limit'"
+    },
+    "income_variable_used_for_assignment": {
+      "variable": "FINCBTXM",
+      "why": "It is the only income-before-taxes variable the BLS PUMD sample program itself uses to form income groups. It is a precommitted single choice, not the winner of a search over candidates.",
+      "documented_caveat": "The CE FAQ states that FINCBTXM does not include meals or rent as pay, whereas the published 'Income before taxes' table line aggregates UCCs 800700, 800710 and 980000. A systematic quintile-boundary offset attributable to this is an expected and reportable finding, not a licence to substitute a different variable after seeing the result."
+    }
+  },
+
+  "published_population_targets_2024": {
+    "source": "LABSTAT cx.data.1.AllData, period A01, year 2024",
+    "units": "thousands of consumer units",
+    "CXUCONSUNITLB0101M_all_cu": 135760,
+    "CXUCONSUNITLB0102M_q1": 27139,
+    "CXUCONSUNITLB0103M_q2": 27186,
+    "CXUCONSUNITLB0104M_q3": 26959,
+    "CXUCONSUNITLB0105M_q4": 27205,
+    "CXUCONSUNITLB0106M_q5": 27272,
+    "income_before_taxes_mean": {
+      "all_cu": 104207,
+      "q1": 16658,
+      "q2": 42925,
+      "q3": 74474,
+      "q4": 121548,
+      "q5": 264510
+    }
+  },
+
+  "labstat_lb01_identity": {
+    "demographics_code": "LB01",
+    "title_fragment": "by Income Quintiles",
+    "process_code": "M",
+    "only_process_code_present": true,
+    "characteristics_codes": {
+      "01": "All Consumer Units",
+      "02": "Lowest 20 percent income quintile",
+      "03": "Second 20 percent income quintile",
+      "04": "Third 20 percent income quintile",
+      "05": "Fourth 20 percent income quintile",
+      "06": "Highest 20 percent income quintile",
+      "A1": "Total complete income reporters (ends 2003)",
+      "A2": "Incomplete income reports (ends 2003)"
+    },
+    "estimand": "Annual mean expenditure per consumer unit. LB01 publishes no aggregate series, so the benchmark compares means only."
+  }
+}

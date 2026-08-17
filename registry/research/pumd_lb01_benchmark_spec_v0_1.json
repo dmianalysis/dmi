@@ -1,0 +1,158 @@
+{
+  "artifact": "pumd_lb01_benchmark_spec",
+  "spec_version": "v0.2",
+  "roster_version": "v0.2",
+  "roster_hash": "5d01d306772bedeb8025723f8f4684133b7200e689d77fadfd29a1c3d3d88a33",
+  "status": "FROZEN",
+  "scope": "Research only. This artifact governs a validation gate for the 2024 CE Interview PUMD. It does not authorise any DMI figure to be sourced from PUMD, and it does not alter the Milestone-2 classification of any UCC.",
+
+  "estimand": {
+    "code": "MEAN_ANNUAL_EXPENDITURE_PER_CONSUMER_UNIT",
+    "units": "US dollars per consumer unit per year",
+    "published_side": "The value of the LABSTAT LB01 series, process code M. cx.series carries only process code M for demographics code LB01, so LB01 publishes a mean per consumer unit and nothing else at the series level.",
+    "pumd_side": "sum(FINLWT21 * COST * stub_factor) over calendar-2024 MTBI records, divided by sum(FINLWT21 * MO_SCOPE / 12) over FMLI records in the same population.",
+    "note": "A mean is never compared with an aggregate. The cx.aspect AG value is a different estimand and is not used in this benchmark."
+  },
+
+  "revision_history": [
+    {
+      "spec_version": "v0.1",
+      "roster_version": "v0.1",
+      "roster_hash": "b66bc442ea25963304b8c02120d225b6b8dba50aed8abd1bcf4e192d72d279a3",
+      "roster_size": 18,
+      "outcome": "FAIL on p90_abs_pct_error_max and mean_signed_pct_error_abs_max",
+      "artifacts_preserved_at": "data/research/detailed_inflation/pumd_benchmark_2024/superseded/roster_v0_1/",
+      "why_superseded": {
+        "defect": "The v0.1 eligibility rule tested the survey-source code in CE-HG-Inter-2024.txt. That file is the Interview stub, so its survey code is I for essentially every row; the test was vacuous. LB01 is Table 1101, an INTEGRATED table, and the file that states which survey supplies a published integrated value is CE-HG-Integ-2024.txt.",
+        "consequence": "Twenty-seven UCCs present in the Interview stub carry survey code D in the integrated file. Their published means come from the Diary survey and cannot be reproduced from Interview microdata at all. One of them, 690119 (Computer software), entered the v0.1 roster.",
+        "independent_corroboration": "Every 2024 Interview MTBI record for 690119 carries PUBFLAG = 1, documented in the PUMD dictionary as 'Not published'. The Interview records for that UCC are not the source of the published value, which is what the integrated stub already said.",
+        "honesty_note": "This correction was made AFTER the v0.1 results were seen. It is a fix to a defective eligibility test, applied uniformly to the whole candidate pool and not a removal of one poor performer: the corrected rule is stated without reference to any error, and it disqualifies 690119 for the same reason it disqualifies the other twenty-six Diary-sourced UCCs, none of which was in the roster. The v0.1 roster, results and FAIL verdict are preserved unaltered.",
+        "collateral_effect": "EDUCATION_COMMUNICATION had exactly one eligible MEDIUM-stratum candidate, 690119. Losing it cost that node its full-stratum coverage, so the node filter dropped the node and with it 670320 and 690116. The roster fell from 18 UCCs to 15. This was not chosen; it is what the unchanged node rule does with the corrected pool."
+      },
+      "second_change": {
+        "defect": "summarize() included cells below the small-value floor in the percentage-error distribution, contradicting this spec's own statement that such cells are judged on absolute difference instead because a percentage against a near-zero base is not informative.",
+        "effect": "LB01 publishes the mean as a whole number of dollars. At a published mean of two dollars, rounding alone moves the value by 25 percent. Thirty-five of the 108 v0.1 comparisons had a published mean under ten dollars, and their rounding artefacts dominated p90 and the mean signed error.",
+        "resolution": "The code was corrected to match the frozen text. Those cells still contribute their PASS or FAIL to the pass fraction; they no longer contribute a percentage to the distribution statistics.",
+        "no_threshold_was_changed": true
+      }
+    }
+  ],
+
+  "roster_selection_rule": {
+    "described_in": "dmi_research/detailed_inflation/pumd_benchmark.py::select_roster",
+    "eligibility": [
+      "Milestone-2 provenance_class == DIRECT_CONCORDANCE_UCC",
+      "Milestone-2 ce_source == I (Interview)",
+      "not one of the 58 Milestone-1 exception UCCs",
+      "present in CE-HG-Inter-2024.txt with section == EXPEND, so it is an ordinary expenditure concept and not an addendum, asset flow or consumer-unit characteristic",
+      "present in CE-HG-Integ-2024.txt with section == EXPEND and survey == I, so the published integrated value is supplied by the Interview survey",
+      "LABSTAT publishes a mean for all six LB01 populations"
+    ],
+    "stratification": "equal-count terciles of the eligible pool by published All-CU mean, descending, ties broken by ascending UCC",
+    "node_filter": "only DMI nodes with at least one eligible UCC in every tercile, so each retained node spans the full magnitude range",
+    "within_cell": "the median member by rank within the (node, stratum) cell",
+    "fixed_before_results": true,
+    "size": 15
+  },
+
+  "acceptance_rule": {
+    "population_tolerance_pct": 0.5,
+    "quintile_population_tolerance_pct": 2.5,
+    "median_abs_pct_error_max": 5.0,
+    "p75_abs_pct_error_max": 8.0,
+    "p90_abs_pct_error_max": 15.0,
+    "per_ucc_abs_pct_error_max": 10.0,
+    "per_ucc_pass_fraction_min": 0.8,
+    "mean_signed_pct_error_abs_max": 3.0,
+    "small_value_absolute_floor": 10.0,
+    "small_value_abs_diff_max": 2.0
+  },
+
+  "derivation_of_the_acceptance_rule": {
+    "principle": "The thresholds are derived from what BLS documents about why PUMD estimates differ from published tables, not from the observed error distribution.",
+    "documented_sources_of_divergence": [
+      {
+        "source": "PUMD Getting Started Guide, section 6",
+        "quote_gist": "Analysis of the Interview survey alone, and non-disclosure criteria, cause PUMD estimates to diverge from published estimates.",
+        "effect_on_this_benchmark": "The Interview-only component is largely removed by construction: every roster UCC carries survey code I in the 2024 Interview hierarchical grouping file, so BLS itself publishes it from the Interview. What remains is the non-disclosure component."
+      },
+      {
+        "source": "CE FAQ (csxfaqs.htm)",
+        "quote": "Published tables use confidential data, and are not adjusted to comply with non-disclosure requirements. By contrast, PUMD have been adjusted to protect the respondents' privacy.",
+        "effect_on_this_benchmark": "Topcoding and related alterations perturb individual COST values and shift high-income consumer units across income boundaries. This is the dominant expected error, it is largest in the top quintile, and it is bounded but not zero."
+      },
+      {
+        "source": "CE FAQ (csxfaqs.htm), income imputation since 2004",
+        "effect_on_this_benchmark": "FINCBTXM is an imputation mean. Quintile assignment therefore differs from the confidential assignment for consumer units near a boundary, in both directions."
+      }
+    ],
+    "why_these_magnitudes": {
+      "per_ucc_abs_pct_error_max": "A single-digit-percent tolerance is what a source that reproduces published structure must achieve; 10 percent allows for disclosure perturbation and boundary reassignment without permitting an estimate that is materially wrong.",
+      "median_abs_pct_error_max": "The typical comparison should be close, not merely tolerable, so the median is held to half the per-cell tolerance.",
+      "p90_abs_pct_error_max": "The tail is allowed to be worse than the per-cell tolerance because the roster deliberately includes small, high-RSE items where a few dollars is a large percentage.",
+      "per_ucc_pass_fraction_min": "One comparison in five may exceed the per-cell tolerance before the source is judged unusable.",
+      "mean_signed_pct_error_abs_max": "Errors should be dispersion, not bias. A systematic signed error would indicate a wrong annualization or a wrong weight, which is a different failure from noise.",
+      "small_value_absolute_floor": "LB01 publishes the mean as a whole number of dollars, so the published value carries a rounding half-width of fifty cents. At a published mean of ten dollars that is five percent of the value from rounding alone, which is where the median tolerance sits. Below that floor a percentage against the published base measures publication precision rather than reproduction quality, so those cells are judged on absolute difference instead and are excluded from the percentage distribution. Their PASS or FAIL still counts in the pass fraction. This is the alternate diagnostic, not an exemption."
+    }
+  },
+
+  "thresholds_unchanged_since": "v0.1",
+  "threshold_change_log": [],
+
+  "precommitment_disclosure": {
+    "honest_statement": "Not every threshold in this file is blind.",
+    "blind": [
+      "median_abs_pct_error_max",
+      "p75_abs_pct_error_max",
+      "p90_abs_pct_error_max",
+      "per_ucc_abs_pct_error_max",
+      "per_ucc_pass_fraction_min",
+      "mean_signed_pct_error_abs_max",
+      "small_value_absolute_floor",
+      "small_value_abs_diff_max"
+    ],
+    "blind_meaning": "No UCC-level percentage error had been computed when these were written. The expenditure comparison had not been run.",
+    "not_blind": [
+      "population_tolerance_pct",
+      "quintile_population_tolerance_pct"
+    ],
+    "not_blind_meaning": "The population and quintile-assignment stages were prototyped before this file was written, so the total consumer-unit agreement and the per-quintile population agreement had already been observed. Those two thresholds are therefore informed rather than blind, and are reported as such rather than presented as predictions.",
+    "consequence": "If the expenditure benchmark fails, these thresholds are not to be loosened. A failure is a valid outcome and is reported as one."
+  },
+
+  "excluded_from_calibration": ["910104", "910105", "910106", "910107"],
+  "exclusion_rationale": {
+    "why": "Milestone 2 classified these four as CONCORDANCE_ONLY_UCC with pumd_membership = VERIFIED and pumd_quantitative_usability = NOT_ESTABLISHED. Letting them influence a tolerance would make the tolerance a function of the very UCCs whose usability is unresolved.",
+    "how_enforced": "They cannot enter the roster: the eligibility rule requires DIRECT_CONCORDANCE_UCC, and RosterEntry.__post_init__ raises if one appears anyway. run_benchmark raises if the roster intersects the exclusion list. No annual or quintile expenditure estimate is calculated, printed, saved or reported for any of them by this task.",
+    "corroboration_found_during_this_task": "None of 910104-910107 appears in CE-HG-Inter-2024.txt or CE-HG-Integ-2024.txt, while 910050, 910101, 910102 and 910103 do. The PUMD dictionary documents MTBI PUBFLAG 1 as 'Not published' and 2 as 'Published in Integrated Bulletin'. Both findings corroborate the frozen Milestone-2 result; neither changes it."
+  },
+
+  "population_validation": {
+    "published_targets_2024_consumer_units_thousands": {
+      "All Consumer Units": 135760,
+      "Q1": 27139,
+      "Q2": 27186,
+      "Q3": 26959,
+      "Q4": 27205,
+      "Q5": 27272
+    },
+    "published_mean_income_before_taxes_2024": {
+      "All Consumer Units": 104207,
+      "Q1": 16658,
+      "Q2": 42925,
+      "Q3": 74474,
+      "Q4": 121548,
+      "Q5": 264510
+    },
+    "published_quintile_lower_limits_2024": [29932, 57452, 94511, 155925],
+    "gate": "The population and quintile structure is validated and reported before any expenditure comparison, so that a bad quintile reconstruction cannot be mistaken for a bad annualization."
+  },
+
+  "failure_discipline": {
+    "the_whole_roster_is_always_run": true,
+    "no_ucc_is_dropped_for_reproducing_poorly": true,
+    "no_unexplained_scaling_factor_may_be_introduced": true,
+    "no_correction_coefficient_may_be_fitted_to_LABSTAT": true,
+    "failed_artifacts_are_preserved": true
+  }
+}

@@ -1,0 +1,5 @@
+boundary,published_lower_limit,reconstructed_lower_limit,absolute_difference,percentage_difference,used_for_assignment
+Q2 lower limit,29932.0,30000.0,68.0,0.22718161165308032,published
+Q3 lower limit,57452.0,57500.0,48.0,0.08354800529137367,published
+Q4 lower limit,94511.0,95000.0,489.0,0.5174000909946991,published
+Q5 lower limit,155925.0,157204.2,1279.2000000000116,0.8203944203944279,published

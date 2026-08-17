@@ -1,0 +1,49 @@
+{
+  "benchmark_status": "FAIL",
+  "benchmark_year": 2024,
+  "comparison_count": 108,
+  "excluded_from_calibration": [
+    "910104",
+    "910105",
+    "910106",
+    "910107"
+  ],
+  "failed_criteria": [
+    "p90_abs_pct_error_max",
+    "mean_signed_pct_error_abs_max"
+  ],
+  "failures_by_domain": {
+    "Housing": 7,
+    "Transportation": 2
+  },
+  "failures_by_population": {
+    "All Consumer Units": 1,
+    "Q1": 1,
+    "Q2": 1,
+    "Q3": 2,
+    "Q4": 2,
+    "Q5": 2
+  },
+  "max_abs_pct_error": 70.06912769908776,
+  "mean_signed_pct_error": -3.5588048349000303,
+  "mean_signed_pct_error_by_population": {
+    "All Consumer Units": -6.09742326861844,
+    "Q1": -4.924443875139932,
+    "Q2": -2.2193436840449103,
+    "Q3": -1.5709763161280794,
+    "Q4": -3.440433812733662,
+    "Q5": -3.100208052735164
+  },
+  "median_abs_pct_error": 2.12260883327555,
+  "p75_abs_pct_error": 6.551942847253123,
+  "p90_abs_pct_error": 19.96495759640533,
+  "pass_fraction": 0.9166666666666666,
+  "population_status": "PASS",
+  "quintile_population_status": "PASS",
+  "roster_hash": "b66bc442ea25963304b8c02120d225b6b8dba50aed8abd1bcf4e192d72d279a3",
+  "roster_size": 18,
+  "roster_version": "v0.1",
+  "source_registry": "registry/research/pumd_2024_interview_source_v0_1.json",
+  "spec_artifact": "registry/research/pumd_lb01_benchmark_spec_v0_1.json",
+  "spec_version": "v0.1"
+}

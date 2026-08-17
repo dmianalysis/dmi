@@ -1,0 +1,19 @@
+ucc,published_title,dmi_node,domain_label,magnitude_stratum,annualization_factor,all_cu_published_mean,all_cu_published_rse,selection_rank_in_cell,cell_size,stub_title
+230112,Painting and papering,HOUSEHOLD_FURNISHINGS_OPERATIONS,Housing,LARGE,1,126.0,18.91,4,10,Painting and papering
+250212,"Gas, bottled/tank (owned home)",HOUSEHOLD_ENERGY,Housing,MEDIUM,1,45.0,12.25,1,3,"Gas, bottled/tank (owned home)"
+260111,Electricity (renter),HOUSEHOLD_ENERGY,Housing,LARGE,1,459.0,2.96,1,4,Electricity (renter)
+260114,Electricity (rented vacation),HOUSEHOLD_ENERGY,Housing,SMALL,1,4.0,16.94,2,5,Electricity (rented vacation)
+270411,Trash/garbage collection (renter),WATER_SEWER_TRASH,Housing,MEDIUM,1,25.0,5.26,0,1,Trash/garbage collection (renter)
+270412,Trash/garbage collection (owned home),WATER_SEWER_TRASH,Housing,LARGE,1,225.0,2.74,1,3,Trash/garbage collection (owned home)
+270413,Trash/garbage collection (owned vacation),WATER_SEWER_TRASH,Housing,SMALL,1,8.0,17.24,0,2,Trash/garbage collection (owned vacation)
+280220,Slipcovers and decorative pillows,HOUSEHOLD_FURNISHINGS_OPERATIONS,Housing,SMALL,1,6.0,10.26,11,24,Slipcovers and decorative pillows
+320420,Power tools,HOUSEHOLD_FURNISHINGS_OPERATIONS,Housing,MEDIUM,1,35.0,15.36,12,25,Power tools
+450350,Car/truck lease payments,TRANSPORT_SERVICES,Transportation,LARGE,1,228.0,9.40,3,8,Car/truck lease payments
+450353,Cash down payment car/truck lease,TRANSPORT_SERVICES,Transportation,MEDIUM,1,39.0,22.28,3,8,Cash down payment car/truck lease
+460110,Used cars,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,Transportation,LARGE,1,710.0,11.67,2,5,Used cars
+470212,Motor oil on out of town trips,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,Transportation,SMALL,1,2.0,4.45,0,1,Motor oil on out of town trips
+480100,"Vehicle parts, accessories, fluid excluding tires",TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,Transportation,MEDIUM,1,45.0,13.17,0,2,"Vehicle parts, accessories, fluid excluding tires"
+520542,Tolls on out of town trips,TRANSPORT_SERVICES,Transportation,SMALL,1,6.0,6.14,2,5,Tolls on out of town trips
+670320,"Babysitting, childcare, daycare, preschool",EDUCATION_COMMUNICATION,Housing,LARGE,1,470.0,6.86,2,6,"Babysitting, childcare, daycare, preschool"
+690116,Internet services away from home,EDUCATION_COMMUNICATION,Housing,SMALL,1,4.0,10.85,1,4,Internet services away from home
+690119,Computer software,EDUCATION_COMMUNICATION,Housing,MEDIUM,1,28.0,12.51,0,1,Computer software
