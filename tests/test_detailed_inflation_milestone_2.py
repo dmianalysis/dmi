@@ -14,6 +14,7 @@ Attribution: source data are published by the U.S. Bureau of Labor Statistics.
 
 from __future__ import annotations
 
+import ast
 import json
 import tempfile
 import unittest
@@ -51,12 +52,49 @@ from dmi_research.detailed_inflation.semantics import (
     NODE_TO_BLS_MAJOR_GROUPS,
     ReviewResult,
     build_semantic_validation,
+    load_eli_descriptions,
 )
 from dmi_research.detailed_inflation.taxonomy import (
     MappingStatus,
     load_eli_resolver,
     load_taxonomy,
 )
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+DEFINITION_NODES = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def _unresolved_citation(reference):
+    """Return why ``reference`` does not name a real test, or None if it does.
+
+    The registry cites its evidence as ``path/to/module.py::Class::method``.
+    Checking only that the module exists is not enough: a citation naming a
+    class or method that was never written reads exactly like a verified one,
+    which is the failure this whole check exists to prevent. So the target is
+    resolved by parsing the module rather than by trusting the string.
+    """
+    module, _, qualname = str(reference).partition("::")
+    if not qualname:
+        return "no test named within the module"
+    path = REPO_ROOT / module
+    if not path.is_file():
+        return f"module {module} does not exist"
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    scope = tree.body
+    for part in qualname.split("::"):
+        for node in scope:
+            if isinstance(node, DEFINITION_NODES) and node.name == part:
+                scope = node.body
+                break
+        else:
+            defined = sorted(
+                node.name for node in scope if isinstance(node, DEFINITION_NODES)
+            )
+            return f"{part} is not defined there (found {defined})"
+    return None
+
 
 #: Milestone 1 found 58 exception UCCs carrying this much All-CU expenditure
 #: out of a 6,836,520 ($M) basis. Milestone 2 must resolve exactly these.
@@ -186,10 +224,12 @@ class TestScopeRuleRegistryRejectsDefects(unittest.TestCase):
             path.unlink()
 
     def test_double_claimed_ucc_is_rejected(self):
+        """The stolen UCC keeps its label so double-claiming is the only defect."""
+
         def mutate(payload):
-            payload["rules"][1]["source_uccs"].append(
-                payload["rules"][0]["source_uccs"][0]
-            )
+            victim, thief = payload["rules"][0], payload["rules"][1]
+            thief["source_uccs"].append(victim["source_uccs"][0])
+            thief["source_labels"].append(victim["source_labels"][0])
 
         self._assert_rejected(mutate, "claimed")
 
@@ -233,6 +273,14 @@ class TestScopeRuleRegistryRejectsDefects(unittest.TestCase):
             payload["coverage"]["reconciliation_all_cu"]["unresolved"] += 1000.0
 
         self._assert_rejected(mutate, "reconcil")
+
+    def test_validation_test_naming_a_missing_module_is_rejected(self):
+        def mutate(payload):
+            payload["rules"][0]["validation_test"] = (
+                "tests/research/test_never_written.py::test_something"
+            )
+
+        self._assert_rejected(mutate, "does not exist")
 
 
 class TestTrackB(unittest.TestCase):
@@ -413,6 +461,113 @@ class TestStructuralEvidence(unittest.TestCase):
                 f"{ucc} is a Milestone-1 exception and must be unmapped",
             )
 
+    def test_ev_charging_node_and_disjointness(self):
+        """TR_EV_CHARGING_v0_1.
+
+        Spec section 11 forbids assigning EV charging by analogy. The scope
+        claim rests on BLS's own ELI definition, so it is checked against the
+        pinned Appendix 2 text rather than against the sibling gasoline codes.
+        """
+        rule = self.registry.rule_by_id("TR_EV_CHARGING_v0_1")
+        self.assertEqual(rule.source_uccs, ("470311",))
+        self.assertEqual(rule.output_eli, "TB022")
+
+        # BLS names electricity as an alternative motor fuel. Without this the
+        # rule would be an analogy from the neighbouring gasoline codes.
+        descriptions = load_eli_descriptions()
+        definition = descriptions["TB022"]["definition"].lower()
+        self.assertIn("electric", definition)
+        self.assertIn("consumer automobiles", definition)
+
+        # The destination node follows from the ELI, not from our preference.
+        self.assertEqual(self.resolver.resolve("TB022"), "MOTOR_FUEL")
+        self.assertEqual(rule.resolved_node_for("470311"), "MOTOR_FUEL")
+
+        # Home charging is a different ELI on a different node, so the
+        # away-from-home restriction is what keeps the two from colliding.
+        self.assertEqual(self.resolver.resolve("HF011"), "HOUSEHOLD_ENERGY")
+
+        # 470311 is unmapped while the codes that do carry TB022's weight are
+        # mapped. That asymmetry is the rule's whole reason for existing.
+        self.assertIsNone(self.concordance.get("470311"))
+        for ucc in ("470111", "470113"):
+            entry = self.concordance.get(ucc)
+            self.assertIsNotNone(entry)
+            self.assertIn(
+                "TB022",
+                entry.elis,
+                f"{ucc} is claimed to carry TB022's weight under concordance "
+                f"trailer note (1)",
+            )
+
+    def test_vehicle_finance_uccs_are_unmapped(self):
+        """OS_CPI_VEHICLE_FINANCE_CHARGES_v0_1.
+
+        The CPI excludes interest and finance charges outright, so every
+        member must be absent from the concordance and the rule must cite that
+        exclusion rather than infer it.
+        """
+        rule = self.registry.rule_by_id("OS_CPI_VEHICLE_FINANCE_CHARGES_v0_1")
+        self.assertEqual(len(rule.source_uccs), 4)
+        self.assertIs(rule.final_status, MappingStatus.OUT_OF_SCOPE)
+        self.assertIs(rule.evidence_strength, EvidenceStrength.STRONG)
+        for ucc in rule.source_uccs:
+            self.assertIsNone(self.concordance.get(ucc))
+        for label in rule.source_labels:
+            self.assertIn("finance charge", label.lower())
+
+    def test_owned_vacation_branch_is_wholly_unmapped(self):
+        """RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1.
+
+        The REPLACE treatment rests on the *whole* owned-vacation branch being
+        unmapped. A single mapped member would mean BLS treats the branch
+        item-by-item and would undercut the rule.
+        """
+        rule = self.registry.rule_by_id("RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1")
+        self.assertEqual(len(rule.source_uccs), 15)
+        self.assertIs(rule.rule_type, RuleType.REPLACE)
+        for ucc in rule.source_uccs:
+            self.assertIsNone(self.concordance.get(ucc))
+        for label in rule.source_labels:
+            self.assertIn(
+                "owned vacation",
+                label.lower(),
+                "every member must be an owned-vacation code",
+            )
+
+    def test_capital_improvement_unmapped_on_all_tenures(self):
+        """OS_CPI_CAPITAL_IMPROVEMENT_v0_1.
+
+        Tenure cannot explain this exclusion, because the concept is unmapped
+        for renters, owners and vacation homes alike. That is what
+        distinguishes it from the owner-structure exclusion.
+        """
+        rule = self.registry.rule_by_id("OS_CPI_CAPITAL_IMPROVEMENT_v0_1")
+        self.assertIn("990920", rule.source_uccs)  # renter
+        self.assertIn("990930", rule.source_uccs)  # owner
+        self.assertIn("990940", rule.source_uccs)  # owned vacation
+        for ucc in rule.source_uccs:
+            self.assertIsNone(self.concordance.get(ucc))
+        self.assertIs(rule.final_status, MappingStatus.OUT_OF_SCOPE)
+        self.assertIs(
+            rule.track_b_treatment, TrackBTreatment.EXCLUDE_CAPITAL_ACQUISITION
+        )
+
+    def test_every_rule_names_a_test_that_exists(self):
+        """A rule may not cite validation it does not have.
+
+        The registry previously named a test module that had never been
+        written, which is how a claim can look verified while being unchecked.
+        """
+        for rule in self.registry.rules:
+            self.assertTrue(
+                rule.validation_test, f"{rule.rule_id} names no validation test"
+            )
+            unresolved = _unresolved_citation(rule.validation_test)
+            self.assertIsNone(
+                unresolved, f"{rule.rule_id} cites {rule.validation_test}: {unresolved}"
+            )
+
     def test_unreproduced_claims_say_so(self):
         """A claim no test reproduces must not look like one that a test does."""
         for name, claim in self.evidence.items():
@@ -429,6 +584,51 @@ class TestStructuralEvidence(unittest.TestCase):
                 self.assertTrue(
                     claim.get("not_reproduced_reason"),
                     f"{name} is not reproduced and must say why",
+                )
+
+    def test_citation_resolver_rejects_fabricated_targets(self):
+        """The guard above is only worth having if it can fail.
+
+        A checker that accepts everything is indistinguishable from no checker,
+        so each way a citation can be wrong is exercised here against this very
+        module.
+        """
+        real = (
+            "tests/test_detailed_inflation_milestone_2.py"
+            "::TestStructuralEvidence::test_ev_charging_node_and_disjointness"
+        )
+        self.assertIsNone(_unresolved_citation(real))
+
+        for bad in (
+            # A real module and class, but a method nobody wrote.
+            "tests/test_detailed_inflation_milestone_2.py"
+            "::TestStructuralEvidence::test_never_written",
+            # A real module, but a class nobody wrote.
+            "tests/test_detailed_inflation_milestone_2.py"
+            "::TestNeverWritten::test_ev_charging_node_and_disjointness",
+            # No module at all -- the original defect.
+            "tests/research/test_never_written.py::TestX::test_y",
+            # A module with no test named inside it.
+            "tests/test_detailed_inflation_milestone_2.py",
+        ):
+            self.assertIsNotNone(
+                _unresolved_citation(bad), f"{bad} should not resolve"
+            )
+
+    def test_structural_evidence_citations_resolve(self):
+        """Section 13 evidence blocks are held to the same standard as rules.
+
+        A block may cite several tests, and every one of them must name a test
+        that exists, or the block's ``reproduced_by_test`` flag is worthless.
+        """
+        for name, claim in self.evidence.items():
+            cited = claim.get("validation_test") or []
+            if isinstance(cited, str):
+                cited = [cited]
+            for reference in cited:
+                unresolved = _unresolved_citation(reference)
+                self.assertIsNone(
+                    unresolved, f"{name} cites {reference}: {unresolved}"
                 )
 
 

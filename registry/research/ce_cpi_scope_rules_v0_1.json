@@ -175,7 +175,7 @@
       "evidence_strength": "STRONG",
       "suppression_status": "NONE",
       "review_status": "ACCEPTED",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_trip_food_allocation_is_node_invariant",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_trip_food_allocation_is_node_invariant",
       "track_b": {
         "treatment": "NOT_APPLICABLE",
         "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
@@ -228,7 +228,7 @@
       "evidence_strength": "STRONG",
       "suppression_status": "NONE",
       "review_status": "ACCEPTED",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_vehicle_finance_uccs_are_all_under_vehfinch",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_finance_uccs_are_unmapped",
       "track_b": {
         "treatment": "NOT_APPLICABLE",
         "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
@@ -292,7 +292,7 @@
       "suppression_note": "830112 (late fee, owned vacation) is suppressed for All Consumer Units and for four quintiles. Its published sibling 830111 is 21 million dollars, so the suppressed amount is bounded far below materiality.",
       "review_status": "PROPOSED",
       "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). Pending the PUMD annual-weighting and quintile benchmark validation required before the Track-A shelter rule is finalized.",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_shelter_coupled_rules_are_proposed",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
         "rationale": "This expenditure is out of scope for Track A because the CPI prices owner-occupied shelter by rental equivalence and treats mortgage interest as the cost of an investment asset. Under a household-payments concept the opposite holds: contractual mortgage interest, home-equity interest and mortgage late fees are contemporaneous cash outlays that a household must meet, and the BLS Homeowner Cost Index research series retains mortgage interest for exactly this reason. This is the single largest concept difference between the two tracks.",
@@ -346,7 +346,7 @@
       "suppression_status": "NONE",
       "review_status": "PROPOSED",
       "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5).",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_shelter_coupled_rules_are_proposed",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
         "rationale": "Out of scope for Track A because the CPI treats residential property tax as a cost of owning the asset rather than a price of shelter consumption. Under a payments concept property tax is a recurring compulsory outlay tied to occupancy of the dwelling and is retained, consistent with the BLS HCI treatment.",
@@ -405,7 +405,7 @@
       "evidence_strength": "STRONG",
       "suppression_status": "NONE",
       "review_status": "ACCEPTED",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_vehicle_registration_combine_identity",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_registration_combine_destination",
       "track_b": {
         "treatment": "NOT_APPLICABLE",
         "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
@@ -464,7 +464,7 @@
       "evidence_strength_note": "Scope is established by tier-1 current BLS sources naming electricity as an alternative motor fuel, which is STRONG. It is graded MODERATE overall because BLS does not name UCC 470311 anywhere, so the link from this specific CE code to TB022 rests on the CE stub placement and the away-from-home question wording rather than on a BLS statement.",
       "suppression_status": "NONE",
       "review_status": "ACCEPTED",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_ev_charging_node_and_disjointness",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_ev_charging_node_and_disjointness",
       "track_b": {
         "treatment": "NOT_APPLICABLE",
         "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
@@ -531,7 +531,7 @@
       "suppression_status": "NONE",
       "review_status": "PROPOSED",
       "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). This is the largest MODERATE-evidence exclusion in the registry at 3.4 percent of basis and should receive explicit reviewer attention.",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_owner_renter_counterpart_structure",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owner_renter_counterpart_structure",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
         "rationale": "Out of scope for Track A because the CPI weights owner maintenance from the renter counterpart and these eight UCCs have no renter counterpart, so under rental equivalence they are absorbed into the value of the structure. Under a payments concept they are ordinary recurring maintenance and occupancy outlays, not capital acquisition, and are retained. This includes ground rent (210901) and parking (220901), which are occupancy payments rather than works on the structure.",
@@ -615,7 +615,7 @@
       "suppression_note": "320633 is suppressed for All Consumer Units and several quintiles; 8 of 15 UCCs are suppressed in Q1. The suppressed members are the smallest codes in a branch whose published total is 0.18 percent of basis, so the exposure is bounded well below materiality.",
       "review_status": "PROPOSED",
       "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). The Milestone 2 amendment requires the PUMD annual-weighting and quintile benchmark validation to pass before Track A is finalized; secondary-residence estimates are noisy and RSE must be carried rather than used to drop these items.",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_owned_vacation_branch_is_wholly_unmapped",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owned_vacation_branch_is_wholly_unmapped",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
         "rationale": "Track A replaces these owner outlays with rental equivalence for the secondary residence. A payments concept performs no such substitution: the household's actual outlays on the vacation or secondary home are the contemporaneous payments, so the recorded CE amounts are retained as-is. Track B therefore does not inherit the Track-A replacement and is not blocked by the unresolved rental-equivalence question.",
@@ -672,7 +672,7 @@
       "suppression_status": "MATERIAL",
       "suppression_note": "Computed by dmi_research.detailed_inflation.resolution: 13 of this rule's 24 population cells are suppressed, and in the worst population up to 52.2% of the rule's own possible total is unobserved, above the 25% threshold. Two of the four members (990930, 990940) are suppressed in all six populations. Spec section 16 requires such a rule to find an alternative source, aggregate to a sufficiently stable level, or remain blocked. The disposition here is to aggregate: the rule is not blocked because the EXCLUDE decision rests on the concordance evidence that capital improvement is unmapped on all three tenures, not on the magnitudes, and the magnitudes are bounded from the published BLS parent at no more than 0.0123% of the expenditure basis in any population. The suppressed cells are carried as bounded unknowns and are never coerced to zero. Any future use of this rule must consume it at the rule total, not at the individual UCC, because the individual UCC amounts are not published.",
       "review_status": "ACCEPTED",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_capital_improvement_unmapped_on_all_tenures",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_capital_improvement_unmapped_on_all_tenures",
       "track_b": {
         "treatment": "EXCLUDE_CAPITAL_ACQUISITION",
         "rationale": "This is the one Track-A exclusion that Track B also excludes. Additions, finished basements, remodeled rooms and materials bought for jobs not started are capital acquisition that adds to the asset, not a recurring payment for current housing services. Milestone 2 section 7 requires current expense to be distinguished from capital acquisition, and this rule is where that distinction binds. Note that the labor component of these jobs is not in this rule; only materials UCCs appear as Milestone-1 exceptions.",
@@ -820,7 +820,7 @@
       "suppression_note": "Computed by dmi_research.detailed_inflation.resolution: 27 suppressed cells, but at most 9.4% of the rule's possible total is unobserved and the bound is at most 0.0123% of the expenditure basis. This field grades exposure to suppression only. That these UCCs have no established CE-to-CPI scope treatment is a separate defect recorded by review_status OPEN and by the per-member notes; it is not a suppression problem and must not be conflated with one.",
       "review_status": "OPEN",
       "go_no_go_note": "Milestone 2 Section 20.1 targets zero unresolved expenditure but forbids distorting the methodology to reach it. The residual is 0.1602 percent of the 6836520 million dollar basis. It is recommended for approval as a known limitation under Section 20.1, with 340915 (0.088 percent) as the single item that would most reduce it if BLS confirms a destination.",
-      "validation_test": "tests/research/test_detailed_inflation_scope_rules.py::test_unresolved_candidates_are_never_applied",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_candidate_nodes_are_never_applied",
       "track_b": {
         "treatment": "UNRESOLVED",
         "rationale": "These UCCs have no established Track-A scope treatment, and with the exception of the one transportation member their Track-B relevance cannot be stated without the same missing evidence. Assigning them a Track-B treatment would be a guess dressed as a finding.",

@@ -34,7 +34,8 @@ from typing import Mapping, Optional, Sequence
 
 from .taxonomy import ELI_RE, MappingStatus
 
-REGISTRY_DIR = Path(__file__).resolve().parents[2] / "registry" / "research"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+REGISTRY_DIR = _REPO_ROOT / "registry" / "research"
 SCOPE_RULES_PATH = REGISTRY_DIR / "ce_cpi_scope_rules_v0_1.json"
 
 #: Structural form of a CE Universal Classification Code.
@@ -177,6 +178,10 @@ class ScopeRule:
     track_b_rationale: str
     track_b_price_index_needed: tuple
     output_eli: Optional[str] = None
+    #: CE item titles for ``source_uccs``, in the same order. Carried so a
+    #: rule's membership claim ("every member is an owned-vacation code") is
+    #: checkable without re-reading the CE basis.
+    source_labels: tuple = ()
     members: tuple = ()
     validation_test: Optional[str] = None
     review_blocker: Optional[str] = None
@@ -422,6 +427,15 @@ def _validate_rule(raw: Mapping) -> ScopeRule:
                 f"{sorted(member_uccs ^ set(source_uccs))}"
             )
 
+    source_labels = tuple(raw.get("source_labels", ()))
+    if source_labels and len(source_labels) != len(source_uccs):
+        raise ScopeRuleError(
+            f"{context}: source_labels has {len(source_labels)} entries for "
+            f"{len(source_uccs)} source_uccs"
+        )
+
+    _validate_validation_test(raw.get("validation_test"), context)
+
     track_b = _validate_track_b(raw["track_b"], source_uccs, context)
 
     return ScopeRule(
@@ -446,6 +460,7 @@ def _validate_rule(raw: Mapping) -> ScopeRule:
         suppression_note=raw.get("suppression_note"),
         review_status=review_status,
         output_eli=output_eli,
+        source_labels=source_labels,
         members=members,
         validation_test=raw.get("validation_test"),
         review_blocker=raw.get("review_blocker"),
@@ -454,6 +469,31 @@ def _validate_rule(raw: Mapping) -> ScopeRule:
         track_b_rationale=track_b[2],
         track_b_price_index_needed=track_b[3],
     )
+
+
+def _validate_validation_test(reference, context: str) -> None:
+    """Refuse a rule that cites validation it does not have.
+
+    An earlier draft of this registry named a test module that had never been
+    written. Every rule looked verified and none of them were, which is a worse
+    failure than an honest blank, so the citation is checked against the
+    filesystem here rather than trusted.
+    """
+    if not reference:
+        raise ScopeRuleError(
+            f"{context}: every rule must name the test that reproduces its "
+            f"evidence in validation_test"
+        )
+    module, separator, name = str(reference).partition("::")
+    if not separator or not name:
+        raise ScopeRuleError(
+            f"{context}: validation_test {reference!r} must be "
+            f"'path/to/test_module.py::TestName'"
+        )
+    if not (_REPO_ROOT / module).is_file():
+        raise ScopeRuleError(
+            f"{context}: validation_test names {module}, which does not exist"
+        )
 
 
 def _validate_track_b(raw: Mapping, source_uccs: tuple, context: str):

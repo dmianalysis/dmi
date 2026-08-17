@@ -260,6 +260,17 @@ repository, so no test re-derives it. Only the concordance-side claim
 claims reproduction it does not have. Reproducing the record-level identity is
 outstanding work.
 
+**Every evidence citation is resolved, not trusted.** An earlier draft of this
+registry cited its validation in a test module that had never been written. All
+ten rules and all three structural-evidence blocks pointed at it, so every claim
+read as verified while none was checked — a worse failure than an honest blank,
+because it is invisible. The citations now name real tests, the loader refuses a
+rule whose `validation_test` module is absent, and
+`test_every_rule_names_a_test_that_exists` parses the target module to confirm
+the named class and method exist rather than merely that the file does. A
+companion test fabricates each way a citation can be wrong to prove that guard
+can still fail.
+
 **Internet Archive lookups failed throughout** (HTTP 503), so the dates at
 which BLS wording changed between concordance vintages could not be
 established. This is a genuine unresolved gap in the provenance chain.
@@ -306,7 +317,7 @@ historical record (§18).
 | `dmi_research/detailed_inflation/semantics.py` | §15 ELI→node semantic validation |
 | `dmi_research/detailed_inflation/resolution.py` | §16 suppression, §18 output, §19 reconciliation |
 | `scripts/resolve_detailed_inflation_2024.py` | CLI |
-| `tests/test_detailed_inflation_milestone_2.py` | 50 tests, including negative tests that mutate the registry |
+| `tests/test_detailed_inflation_milestone_2.py` | 58 tests, including negative tests that mutate the registry |
 
 ## 11. Attribution
 
