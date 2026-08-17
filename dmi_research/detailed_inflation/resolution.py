@@ -923,7 +923,10 @@ def _replacement_accounting(*, registry, rows) -> dict:
                 "this run. It depends on the Track-A shelter rule, which is "
                 "held until the PUMD annual-weighting and quintile procedure "
                 "has been validated against published 2024 LB01 LABSTAT "
-                "benchmarks. Spec section 19.2 does not expect the removed and "
+                "benchmarks. UCCs 910104-910107 are verified as PUMD/Interview "
+                "UCCs, so the inputs are known to exist; what is missing is a "
+                "benchmarked way to weight them, and that is the blocker. "
+                "Spec section 19.2 does not expect the removed and "
                 "replacement amounts to be equal, so neither may be inferred "
                 "from the other. Because the rule is not in force, the removed "
                 "outlay above has not actually been removed from the section "
@@ -1098,7 +1101,9 @@ def _build_summary(resolution: Resolution, registry: ScopeRuleRegistry) -> dict:
             "finalized. Four shelter-coupled rules remain PROPOSED.",
             "PUMD annual-weighting and quintile procedure must be validated "
             "against published 2024 LB01 LABSTAT benchmarks before the "
-            "910104-910107 aggregates are computed.",
+            "910104-910107 aggregates are computed. The four UCCs are verified "
+            "as PUMD/Interview UCCs, so this is a weighting problem rather than "
+            "a data-availability one; verified membership authorizes no amount.",
             "shelter_cpi_track_2024.csv, shelter_payments_track_2024.csv and "
             "shelter_concept_comparison_2024.csv are not produced by this run.",
         ],

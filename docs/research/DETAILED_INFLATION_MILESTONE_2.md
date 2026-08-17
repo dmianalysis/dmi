@@ -258,25 +258,61 @@ non-publication:
 
 | Property | Scale | Asserted for |
 |---|---|---|
-| `publication_reason` | `PUBFLAG_1` / `UNDOCUMENTED` / `NOT_APPLICABLE` | `PUBFLAG_1` for `510115`; `UNDOCUMENTED` for the other 16 |
-| `pumd_membership` | `VERIFIED` / `NOT_VERIFIED` | `VERIFIED` for `510115` only; `NOT_VERIFIED` for 16 |
+| `publication_reason` | `PUBFLAG_1` / `UNDOCUMENTED` / `NOT_APPLICABLE` | `PUBFLAG_1` for `510115` and `910104`–`910107`; `UNDOCUMENTED` for the other 12 |
+| `pumd_membership` | `VERIFIED` / `NOT_VERIFIED` | `VERIFIED` for `510115` and `910104`–`910107`; `NOT_VERIFIED` for 12 |
+| `pumd_quantitative_usability` | `BENCHMARKED` / `NOT_ESTABLISHED` | `NOT_ESTABLISHED` for all 17, including the five whose membership is `VERIFIED` |
 | `cpi_adjustment_status` | `VERIFIED` / `INFERRED` / `UNKNOWN` | `INFERRED` for `910104`–`910107`; `UNKNOWN` for 13; `VERIFIED` for none |
 
-`NOT_VERIFIED` and `UNKNOWN` are the defaults and mean *no evidence was
-recorded*, not *the property is false*. Nothing is graded `VERIFIED` for CPI
-adjustment because no BLS statement of a specific adjustment was located. The
-four shelter codes are graded `INFERRED` and labelled `claim_type:
-DMI_INFERENCE`: their BLS titles and their `HC011` destination describe an
-imputed equivalence concept rather than a recorded outlay, which implies *some*
-adjustment relative to reported expenditure, but that is a DMI reading of BLS
-titles and not a BLS statement.
+`NOT_VERIFIED`, `NOT_ESTABLISHED` and `UNKNOWN` are the defaults and mean *no
+evidence was recorded*, not *the property is false*. Nothing is graded
+`VERIFIED` for CPI adjustment because no BLS statement of a specific adjustment
+was located. The four shelter codes are graded `INFERRED` and labelled
+`claim_type: DMI_INFERENCE`: their BLS titles and their `HC011` destination
+describe an imputed equivalence concept rather than a recorded outlay, which
+implies *some* adjustment relative to reported expenditure, but that is a DMI
+reading of BLS titles and not a BLS statement.
 
-One tempting shortcut is explicitly rejected. All four shelter codes carry `CE
-SOURCE = I`, but that column names the **collection instrument**, not the PUMD
-data dictionary, so it is not evidence of microdata reachability. The only
-committed PUMD observation is for `510115` (see §9), and even that is graded
-`reproduced_by_test: false` with a stated caveat, because the citation is an
-asserted research finding rather than a check this repository re-runs.
+**Membership and usability are separate axes, and the gap between them is the
+whole point.** `pumd_membership` answers whether the code exists on microdata
+records. `pumd_quantitative_usability` answers whether a defensible annual or
+quintile figure can be produced for it, which additionally requires the CE
+annual weighting and income-quintile procedure to have been built and validated
+against published LABSTAT aggregates. Nothing is `BENCHMARKED`. The implication
+is enforced in code in one direction only — `BENCHMARKED` requires `VERIFIED`,
+never the reverse — so upgrading a membership claim cannot quietly upgrade an
+aggregation claim with it. A record count is not an estimate.
+
+`910104`–`910107` are graded `VERIFIED` on the strength of a cited observation of
+the 2024 CE Interview PUMD (`intrvw24.zip`, CSV distribution): the four codes were
+recorded on 46,119 / 2,070 / 45 / 891 MTBI records respectively, all carrying
+`PUBFLAG=1`, while their four published counterparts carry `PUBFLAG=2`. That
+observation is recorded once at
+`pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE` and cited
+from each roster entry. It supplies the documented non-publication reason these
+four previously lacked, and it independently corroborates the structural
+partition from a source the partition does not use. The raw `COST` totals
+available on the same records are **deliberately not recorded**, because an
+unweighted sum is not an estimate and would invite being read as one.
+
+**What kind of evidence that is, stated exactly.** The download and the record
+scan were performed manually during an earlier working session in this
+workstream, on 2026-08-16. The figures were transcribed into the registry on
+2026-08-17 when the roster was regraded; that pass did not re-download the
+archive and did not re-read the MTBI files. Nothing in this repository has ever
+touched the 2024 Interview PUMD, and no test re-derives any of these counts.
+Both dates are carried separately in the registry, and every `VERIFIED` grade is
+labelled `evidence_kind: PRIOR_MANUAL_SOURCE_OBSERVATION` with
+`reproduced_by_test: false`. That is weaker than a fresh verification and
+stronger than an assumption, and it is recorded as exactly that rather than as
+either neighbour. Re-deriving the counts from source remains outstanding work.
+
+Two tempting shortcuts are explicitly rejected. First, all four shelter codes
+carry `CE SOURCE = I`, but that column names the **collection instrument**, not
+the microdata, so it is not evidence of reachability; the proof that it is not
+doing the work is that other Interview codes on the same roster remain
+`NOT_VERIFIED` because nobody has looked at them. Second, verified membership is
+not authorization to calculate: all four codes remain `NOT_ESTABLISHED` for
+aggregation, and the shelter rules stay `PROPOSED`.
 
 **The 17 are the finding.** A pipeline keyed on `cx.item` cannot see them and
 will not error, so it under-counts the CPI-relevant universe silently. They are
@@ -289,13 +325,16 @@ and still never appeared as exceptions, precisely because they never enter a
 
 BLS publishes no annual LABSTAT aggregate for any of the 17, so an amount for
 one of them could not come from `cx.data` in any case; PUMD microdata under a
-validated weighting procedure is the only candidate source, which is a statement
-about where one would have to look rather than a finding that the data are
-there. `510115` is the clearest case: it is the `COMBINE` destination of
-`TR_VEHICLE_REGISTRATION_FEES_v0_1`, and its absence from `cx.item` is exactly
-why that rule reconstructs it from the two published components rather than
-reading it. Only `510115` carries a documented reason for non-publication (CE
-microdata `PUBFLAG=1`); the other 16 are marked `UNDOCUMENTED` rather than given
+validated weighting procedure is the only candidate source. For 12 of the 17
+that is still a statement about where one would have to look rather than a
+finding that the data are there; for the five that are `VERIFIED`, the data have
+been located and the weighting procedure has not. `510115` is the clearest case:
+it is the `COMBINE` destination of `TR_VEHICLE_REGISTRATION_FEES_v0_1`, and its
+absence from `cx.item` is exactly why that rule reconstructs it from the two
+published components rather than reading it — which is also why its
+`NOT_ESTABLISHED` usability costs nothing, as its rule needs no PUMD-derived
+aggregate. Five of the 17 now carry a documented reason for non-publication (CE
+microdata `PUBFLAG=1`); the other 12 are marked `UNDOCUMENTED` rather than given
 an invented explanation. The classification is structural and does not depend on
 knowing why.
 
@@ -327,8 +366,9 @@ input.
 This classification **authorizes nothing**. It changes no Milestone-1 or
 Milestone-2 result, adds no expenditure, and does not entitle any
 `CONCORDANCE_ONLY_UCC` to enter a DMI weight; the four shelter codes stay gated
-behind the PUMD benchmark validation described in §8, whose first step is
-establishing whether they are in the microdata at all. `build_basis` still raises
+behind the PUMD benchmark validation described in §8, which is now the *only*
+outstanding step, the question of whether they are in the microdata having been
+settled affirmatively. `build_basis` still raises
 on a `cx.series` UCC missing from `cx.item`, unchanged. What is new is that the
 assumption is now named, pinned with counts, and re-derived on every run:
 `verify_against_registry` fails if the counts drift or if the 17-code roster
@@ -379,11 +419,17 @@ all of them. The three shelter CSVs named in spec §17
 placeholder would misrepresent an unfinished decision as a finished one.
 
 The blocker is a prerequisite, not an oversight: the PUMD annual-weighting and
-quintile procedure must first be built and validated against multiple published
-2024 LB01 LABSTAT benchmarks before UCCs 910104–910107 can be aggregated. Those
-validation results must be reported before the shelter rule is finalized. As §6
-notes, PUMD membership for those four codes is itself `NOT_VERIFIED`, so the
-first step is establishing whether the microdata carries them.
+income-quintile procedure must first be built and validated against multiple
+published 2024 LB01 LABSTAT benchmarks before UCCs 910104–910107 can be
+aggregated. Those validation results must be reported before the shelter rule is
+finalized.
+
+As §6 records, those four codes are `VERIFIED` as PUMD/Interview UCCs, so this is
+a weighting problem and not a data-availability one. Confirming the codes exist
+removes a question about where the data is; it does not remove the question of
+whether we can weight it, and only the second was ever the blocker. The
+observation puts 45 records in the `910106` cell, which is a further reason the
+benchmark must precede any figure rather than follow it.
 
 Consequently §19.2 replacement accounting reports the **removed** owner outlay
 ($12,620M All-CU) and marks the replacement `PENDING`. §19.2 does not expect
@@ -416,16 +462,19 @@ the concordance).
 and both water-softening twins map. It is left unresolved rather than
 "corrected", because inventing a mapping is exactly what §5 forbids.
 
-**One structural claim is not reproduced by a committed test.** The
+**Two microdata claims are not reproduced by a committed test.** The
 `510115 = 520110 + 950024` identity underpinning the vehicle-registration
-`COMBINE` rule was verified against 2024 CE Interview PUMD MTBI records
-(4,785 of 4,785, 100%), but that microdata is not distributed with this
-repository, so no test re-derives it. Only the concordance-side claim
-(`510115`→`TF011`) is test-enforced. The registry marks that evidence block
-`reproduced_by_test: false` with a stated reason, and
-`test_unreproduced_claims_say_so` fails the build if any evidence block ever
-claims reproduction it does not have. Reproducing the record-level identity is
-outstanding work.
+`COMBINE` rule was observed against 2024 CE Interview PUMD MTBI records
+(4,785 of 4,785, 100%), and the `910104`–`910107` membership observation of §6
+was taken from the same 2024 Interview distribution. Both are manual readings
+done in earlier sessions and transcribed into the registry; that microdata is
+not distributed with this repository and is not downloaded during a test run, so
+no test re-derives either and none ever has. Only the concordance-side claim
+(`510115`→`TF011`) is test-enforced. Both blocks are labelled `evidence_kind:
+PRIOR_MANUAL_SOURCE_OBSERVATION` and marked `reproduced_by_test: false` with a
+stated reason, and `test_unreproduced_claims_say_so` fails the build if any
+evidence block ever claims reproduction it does not have. Reproducing both
+record-level findings is outstanding work.
 
 **Every evidence citation is resolved, not trusted.** An earlier draft of this
 registry cited its validation in a test module that had never been written. All
@@ -487,14 +536,16 @@ historical record (§18).
 | `dmi_research/detailed_inflation/provenance.py` | §6 UCC provenance classification and registry agreement check |
 | `dmi_research/detailed_inflation/resolution.py` | §16 suppression, §18 output, §19 reconciliation |
 | `scripts/resolve_detailed_inflation_2024.py` | CLI |
-| `tests/test_detailed_inflation_milestone_2.py` | 112 tests, including negative tests that mutate the registry |
+| `tests/test_detailed_inflation_milestone_2.py` | 118 tests, including negative tests that mutate the registry |
 
 ## 12. Corrections to this milestone's own claims
 
-Two defects were found in the first cut of Milestone 2. Both were cases where
-the prose was appropriately cautious but the data model was not, so a machine
-consumer reading the artifacts would have drawn a stronger conclusion than the
-evidence supports. Both are recorded here rather than quietly fixed.
+Three corrections were made after the first cut of Milestone 2. The first two
+were cases where the prose was appropriately cautious but the data model was
+not, so a machine consumer reading the artifacts would have drawn a stronger
+conclusion than the evidence supports. The third runs the other way: the model
+was more cautious than the evidence required. All are recorded here rather than
+quietly fixed.
 
 **A proposed disposition was recorded as an effective one.** `build_resolution`
 wrote each rule's `final_status` into a single `m2_track_a_status` column
@@ -518,13 +569,35 @@ into separately graded evidence fields as described in §6. The 490/508/17
 partition is unchanged, because the classification logic was never wrong; only
 its name was.
 
-Neither correction changes a single expenditure figure, a mapping, a rule or a
-count. What changed is which claims the artifacts make. The regression tests
-added with the fixes are written to fail on the original behaviour: a mutation
-test flips one `ACCEPTED` exclusion to `PROPOSED` and requires its expenditure to
-move out of the accepted bucket, and an AST check parses `resolution.py` to prove
-no code path turns `final_status` into an effective status without consulting the
-review state.
+**The rewrite then understated evidence this workstream had already produced.**
+Splitting the name into graded fields was correct, but it set
+`pumd_membership: NOT_VERIFIED` for `910104`–`910107` when the 2024 Interview
+PUMD had in fact been examined earlier in this workstream and the four codes
+observed on MTBI records with `PUBFLAG=1`. Recording an already-answered
+question as unanswered is its own kind of inaccuracy. The four are regraded
+`VERIFIED` against that cited observation, labelled as the preserved prior
+manual reading it is rather than as a fresh verification, and their
+`publication_reason` moves from `UNDOCUMENTED` to `PUBFLAG_1` on the same
+evidence.
+
+The correction was made without loosening anything downstream, because
+membership was never the constraint. A fourth axis,
+`pumd_quantitative_usability`, now carries the claim that actually gates the
+shelter work, and it is `NOT_ESTABLISHED` everywhere. The shelter rules remain
+`PROPOSED`, their blockers now name the LB01 benchmark as the outstanding
+condition instead of the microdata search, and no expenditure figure moves.
+
+None of the three corrections changes a single expenditure figure, a mapping, a
+rule or a count. What changed is which claims the artifacts make. The regression
+tests added with the fixes are written to fail on the original behaviour: a
+mutation test flips one `ACCEPTED` exclusion to `PROPOSED` and requires its
+expenditure to move out of the accepted bucket; an AST check parses
+`resolution.py` to prove no code path turns `final_status` into an effective
+status without consulting the review state; and the membership/usability split is
+guarded both by a dataclass invariant that refuses `BENCHMARKED` without
+`VERIFIED` and by tests that fail if a verified code is ever marked aggregable,
+if the observation ever records a dollar amount, or if a shelter blocker is
+rewritten as clearance.
 
 ## 13. Attribution
 

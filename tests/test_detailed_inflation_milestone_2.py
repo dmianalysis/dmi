@@ -38,6 +38,7 @@ from dmi_research.detailed_inflation.provenance import (
     CpiAdjustmentStatus,
     PublicationReason,
     PumdMembership,
+    PumdQuantitativeUsability,
     UccProvenanceClass,
     UccProvenanceError,
     build_ucc_provenance,
@@ -244,6 +245,38 @@ class TestScopeRuleRegistry(unittest.TestCase):
                 ReviewStatus.PROPOSED,
                 f"{rule_id} must not be accepted before the shelter rule is settled",
             )
+
+    def test_shelter_blockers_name_the_benchmark_rather_than_the_data(self):
+        """Verified UCCs did not unblock the shelter rules, and must not appear to.
+
+        The four inputs are now confirmed present in the microdata, which closes
+        the question of whether the data exists and closes nothing else. Each
+        blocker must therefore state the condition that is actually outstanding
+        -- a weighting and quintile procedure benchmarked against published LB01
+        LABSTAT estimates -- so that nobody reads the upgrade as clearance.
+        """
+        shelter = [
+            "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+            "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+            "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+            "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+        ]
+        for rule_id in shelter:
+            blocker = self.registry.rule_by_id(rule_id).review_blocker
+            for phrase in (
+                "910104-910107",
+                "verified as PUMD/Interview UCCs",
+                "PENDING",
+                "annual-weighting",
+                "income-quintile",
+                "benchmarked",
+                "LB01",
+            ):
+                self.assertIn(
+                    phrase,
+                    blocker,
+                    f"{rule_id} blocker does not state {phrase!r}",
+                )
 
     def test_combine_rules_state_a_formula(self):
         for rule in self.registry.rules_of_type(RuleType.COMBINE):
@@ -753,13 +786,14 @@ class TestUccProvenanceClasses(unittest.TestCase):
             self.assertTrue(item["elis"], f"{item['ucc']} names no ELI")
             self.assertTrue(item["dmi_node"], f"{item['ucc']} names no DMI node")
             self.assertTrue(item["note"], f"{item['ucc']} carries no note")
-            # Each of the three claims must be stated, and stated on its own
+            # Each of the four claims must be stated, and stated on its own
             # declared scale. A roster entry that simply omitted one would let
             # the reader supply the missing value from the class name, which is
             # the inference this split exists to block.
             for field in (
                 "publication_reason",
                 "pumd_membership",
+                "pumd_quantitative_usability",
                 "cpi_adjustment_status",
             ):
                 self.assertIn(
@@ -954,16 +988,23 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
         self.assertTrue(scope["what_it_does_not_prove"])
         self.assertIn("CPI_ADJUSTED_PUMD_UCC", scope["naming_history"])
 
-    def test_the_three_claims_are_graded_on_declared_scales(self):
+    def test_the_four_claims_are_graded_on_declared_scales(self):
         """A claim with no scale cannot be audited."""
         scales = self.registry["evidence_scales"]
         self.assertTrue(scales["note"])
+        self.assertTrue(scales["membership_is_not_usability"])
         self.assertEqual(
-            set(scales) - {"note"},
-            {"pumd_membership", "cpi_adjustment_status", "publication_reason"},
+            set(scales) - {"note", "membership_is_not_usability"},
+            {
+                "pumd_membership",
+                "pumd_quantitative_usability",
+                "cpi_adjustment_status",
+                "publication_reason",
+            },
         )
         for field, enum in (
             ("pumd_membership", PumdMembership),
+            ("pumd_quantitative_usability", PumdQuantitativeUsability),
             ("cpi_adjustment_status", CpiAdjustmentStatus),
             ("publication_reason", PublicationReason),
         ):
@@ -976,10 +1017,11 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
                 self.assertTrue(definition, f"{field}/{value} is undefined")
 
     def test_pumd_membership_is_not_inferred_from_the_class(self):
-        """The core requirement: membership does not imply PUMD availability.
+        """The core requirement: the class does not imply PUMD availability.
 
         If the roster asserted VERIFIED across the board, the split would be
-        cosmetic. Exactly one of the 17 carries a cited observation.
+        cosmetic. Five of the 17 carry a cited observation and the rest carry
+        none, so the grade tracks evidence rather than membership of the class.
         """
         verified = [
             item["ucc"]
@@ -998,9 +1040,9 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
             "would have been accurate and this split unnecessary",
         )
         self.assertEqual(
-            len(verified),
-            1,
-            "exactly one concordance-only UCC carries a cited PUMD observation; "
+            sorted(verified),
+            ["510115", "910104", "910105", "910106", "910107"],
+            "only UCCs backed by a cited microdata observation may be VERIFIED; "
             "if this grows, check that each new citation resolves",
         )
         for ucc in verified:
@@ -1031,6 +1073,160 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
                 item,
                 f"{item['ucc']} is NOT_VERIFIED yet carries evidence",
             )
+
+    def test_verified_membership_is_not_a_licence_to_aggregate(self):
+        """The whole point of the second axis.
+
+        Five UCCs are now VERIFIED members of the microdata. Not one of them is
+        aggregable, because no weighting and quintile procedure has been
+        benchmarked. If a VERIFIED entry ever appeared without an explicit
+        usability grade, a reader would be free to assume the amount follows
+        from the observation, and it does not.
+        """
+        for item in self.roster:
+            self.assertEqual(
+                item["pumd_quantitative_usability"],
+                PumdQuantitativeUsability.NOT_ESTABLISHED.value,
+                f"{item['ucc']} claims a validated aggregation procedure; none "
+                f"has been built, let alone benchmarked",
+            )
+            if item["pumd_membership"] != PumdMembership.VERIFIED.value:
+                continue
+            self.assertTrue(
+                item["pumd_quantitative_usability_note"],
+                f"{item['ucc']} is VERIFIED and must say in its own entry why "
+                f"that still yields no amount",
+            )
+
+    def test_the_membership_observation_counts_records_not_dollars(self):
+        """An unweighted sum would be read as an estimate, so none is recorded.
+
+        The observation that upgraded the shelter codes counted records. Cost
+        totals were available on those same records and are deliberately absent,
+        because a raw sum looks exactly like the aggregate the blocker says we
+        cannot yet produce.
+        """
+        block = self.registry["pumd_observations"][
+            "CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE"
+        ]
+        self.assertTrue(block["source"].startswith("https://www.bls.gov/"))
+        self.assertTrue(block["observed"])
+        self.assertEqual(
+            sorted(block["record_counts"]), ["910104", "910105", "910106", "910107"]
+        )
+        self.assertFalse(
+            block["reproduced_by_test"],
+            "the 2024 PUMD is not committed, so no test re-derives these counts",
+        )
+        self.assertTrue(block["reproducibility_caveat"])
+        self.assertTrue(block["what_this_does_not_establish"])
+        keys = json.dumps(block).lower()
+        for forbidden in ("cost", "dollar", "expenditure_estimate"):
+            self.assertNotIn(
+                f'"{forbidden}"',
+                keys,
+                f"the observation must not carry a {forbidden} figure",
+            )
+
+    def test_verified_membership_is_labelled_a_preserved_prior_observation(self):
+        """A grade must say how it was obtained, not only what it concluded.
+
+        Nothing in this repository has ever read the 2024 Interview PUMD. Every
+        VERIFIED grade rests on a manual reading done earlier in the workstream
+        and transcribed here, which is weaker than a fresh verification and
+        stronger than an assumption. Recording it as either neighbour would
+        misdescribe it, so each evidence block names the kind of evidence and
+        that label is checked rather than trusted.
+        """
+        for item in self.roster:
+            if item["pumd_membership"] != PumdMembership.VERIFIED.value:
+                continue
+            evidence = item["pumd_membership_evidence"]
+            self.assertEqual(
+                evidence["evidence_kind"],
+                "PRIOR_MANUAL_SOURCE_OBSERVATION",
+                f"{item['ucc']} does not say what kind of evidence backs it",
+            )
+            self.assertFalse(evidence["reproduced_by_test"])
+        block = self.registry["pumd_observations"][
+            "CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE"
+        ]
+        self.assertEqual(block["evidence_kind"], "PRIOR_MANUAL_SOURCE_OBSERVATION")
+        # The date of the reading and the date it entered the registry are
+        # separate facts. Collapsing them is precisely what would imply that the
+        # session which wrote the grade had gone and looked.
+        self.assertNotEqual(block["observed"], block["transcribed_into_this_registry"])
+        self.assertIn(
+            "did not re-download",
+            block["how_this_record_was_obtained"],
+            "the record must state plainly that no re-reading took place",
+        )
+
+    def test_a_benchmarked_claim_cannot_outrun_the_membership_it_rests_on(self):
+        """The asymmetry is enforced in code, not merely asserted in prose.
+
+        Usability implies membership; membership implies nothing. Only the
+        direction that actually holds is refused, so the ordinary state -- a UCC
+        plainly present but not yet aggregable -- stays constructible.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp),
+                [
+                    ("010119", "FA011", "In both", "Flour"),
+                    ("999999", "FA011", "Concordance only", "Flour"),
+                ],
+            )
+            concordance = load_concordance(path)
+
+        with self.assertRaises(UccProvenanceError) as caught:
+            classify_ucc_provenance(
+                concordance,
+                ["010119"],
+                evidence={
+                    "999999": {
+                        "pumd_membership": PumdMembership.NOT_VERIFIED.value,
+                        "pumd_quantitative_usability": (
+                            PumdQuantitativeUsability.BENCHMARKED.value
+                        ),
+                    }
+                },
+            )
+        self.assertIn("999999", str(caught.exception))
+
+        # The reverse is the normal case and must remain expressible.
+        report = classify_ucc_provenance(
+            concordance,
+            ["010119"],
+            evidence={
+                "999999": {
+                    "pumd_membership": PumdMembership.VERIFIED.value,
+                    "pumd_quantitative_usability": (
+                        PumdQuantitativeUsability.NOT_ESTABLISHED.value
+                    ),
+                }
+            },
+        )
+        row = next(r for r in report.rows if r.ucc == "999999")
+        self.assertIs(
+            row.pumd_quantitative_usability, PumdQuantitativeUsability.NOT_ESTABLISHED
+        )
+
+    def test_usability_defaults_to_not_established_when_unstated(self):
+        """Silence about aggregation must not read as permission to aggregate."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp),
+                [
+                    ("010119", "FA011", "In both", "Flour"),
+                    ("999999", "FA011", "Concordance only", "Flour"),
+                ],
+            )
+            report = classify_ucc_provenance(load_concordance(path), ["010119"])
+        row = next(r for r in report.rows if r.ucc == "999999")
+        self.assertIs(
+            row.pumd_quantitative_usability, PumdQuantitativeUsability.NOT_ESTABLISHED
+        )
 
     def test_cpi_adjustment_inferences_are_labelled_as_dmi_readings(self):
         """An INFERRED status must say whose inference it is.
@@ -1063,25 +1259,47 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
         )
 
     def test_ce_source_is_not_treated_as_pumd_evidence(self):
-        """CE SOURCE = I names the instrument, not the microdata dictionary.
+        """CE SOURCE = I names the instrument, not the microdata.
 
-        This was the tempting shortcut: all four shelter inputs are Interview
-        codes, so it would be easy to read 'I' as proof of PUMD reachability.
+        This is the tempting shortcut, and it survives the shelter upgrade: the
+        four shelter codes are VERIFIED because the microdata was looked at, not
+        because they are Interview codes. The proof is that being an Interview
+        code is not sufficient -- other Interview entries on the same roster,
+        with the same 'I', remain NOT_VERIFIED because nobody has looked.
         """
         note = self.registry["concordance_only_uccs"]["ce_source_is_not_pumd_evidence"]
         self.assertTrue(note)
+        interview = [item for item in self.roster if item["ce_source"] == "I"]
+        self.assertTrue(interview, "the fixture must contain Interview codes")
+        unlooked = [
+            item["ucc"]
+            for item in interview
+            if item["pumd_membership"] == PumdMembership.NOT_VERIFIED.value
+        ]
+        self.assertTrue(
+            unlooked,
+            "if every Interview code were VERIFIED, 'I' would be doing the work "
+            "of the evidence and this distinction would be decorative",
+        )
         shelter = {"910104", "910105", "910106", "910107"}
         for item in self.roster:
             if item["ucc"] not in shelter:
                 continue
             self.assertEqual(item["ce_source"], "I")
-            self.assertEqual(
-                item["pumd_membership"],
-                PumdMembership.NOT_VERIFIED.value,
-                f"{item['ucc']} is an Interview code, which is not evidence of "
-                f"PUMD membership",
+            self.assertEqual(item["pumd_membership"], PumdMembership.VERIFIED.value)
+            # The grade must trace to an observation of the microdata, and that
+            # observation must name what was read.
+            evidence = item["pumd_membership_evidence"]
+            target = _resolve_registry_citation(evidence["citation"])
+            self.assertIsNotNone(target)
+            self.assertTrue(target["files_read_in_that_session"])
+            self.assertGreater(target["record_counts"][item["ucc"]], 0)
+            self.assertNotIn(
+                "ce_source",
+                json.dumps(target),
+                f"{item['ucc']} evidence must rest on the microdata, not on the "
+                f"CE SOURCE column",
             )
-            self.assertTrue(item["pumd_membership_note"])
 
     def test_shelter_provenance_keeps_both_sides_on_the_right_side(self):
         """§B: the concordance inputs and the published counterparts.
@@ -1108,15 +1326,23 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
             self.assertNotIn(ucc, roster_uccs)
             self.assertIsNone(self.concordance.get(ucc))
 
-    def test_the_csv_surfaces_all_three_claims_beside_the_class(self):
+    def test_the_csv_surfaces_all_four_claims_beside_the_class(self):
         """A consumer reading the artifact must see the evidence, not infer it."""
         for column in (
             "provenance_class",
             "publication_reason",
             "pumd_membership",
+            "pumd_quantitative_usability",
             "cpi_adjustment_status",
         ):
             self.assertIn(column, PROVENANCE_CSV_COLUMNS)
+        # Adjacency is not cosmetic. The usability column exists to be read by
+        # anyone who reads the membership column, so it sits next to it rather
+        # than at the end where it could be missed.
+        self.assertEqual(
+            PROVENANCE_CSV_COLUMNS.index("pumd_quantitative_usability"),
+            PROVENANCE_CSV_COLUMNS.index("pumd_membership") + 1,
+        )
 
     def test_absent_evidence_defaults_to_the_weakest_reading(self):
         """Silence must not be resolved in either direction.

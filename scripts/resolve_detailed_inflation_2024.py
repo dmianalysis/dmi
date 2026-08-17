@@ -197,12 +197,16 @@ def _print_report(resolution, sem, provenance, registry, written) -> None:
         f"    {len(hidden)} concordance UCC(s) are absent from cx.item and would "
         f"be invisible to a cx.item-keyed pipeline. The class is source-file "
         f"membership only; PUMD availability and CPI adjustment are separate "
-        f"claims and are shown per UCC:"
+        f"claims and are shown per UCC. Note that pumd=VERIFIED means the code "
+        f"was found in the microdata, not that an amount can be derived for it: "
+        f"that is the separate aggregable= column, which is NOT_ESTABLISHED "
+        f"everywhere because no weighting procedure has been benchmarked."
     )
     for row in hidden:
         print(
             f"      {row.ucc}  {row.dmi_node or '-':36s} "
             f"pumd={row.pumd_membership.value:12s} "
+            f"aggregable={row.pumd_quantitative_usability.value:15s} "
             f"cpi_adj={row.cpi_adjustment_status.value:8s} "
             f"why_unpublished={row.publication_reason.value:12s} "
             f"{row.concordance_title}"

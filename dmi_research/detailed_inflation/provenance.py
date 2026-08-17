@@ -40,6 +40,17 @@ An earlier version of this module called the third class
 the act of naming the first, which is exactly the inference this split exists
 to prevent.
 
+Nor is an evidence claim an authorization
+-----------------------------------------
+Finding a UCC in the microdata and being able to state a defensible annual
+figure for it are different achievements, and the second is much harder. A
+record count is not an estimate: producing one requires the CE annual weighting
+and income-quintile procedure, and that procedure is only trustworthy once it
+reproduces published LABSTAT aggregates for codes where a published answer
+exists to check against. :class:`PumdQuantitativeUsability` is therefore a
+fourth axis, defaulting to ``NOT_ESTABLISHED`` and constrained so that it can
+never be the automatic consequence of a verified membership.
+
 This classification is descriptive. It authorizes no expenditure amount and
 changes no Milestone-1 or Milestone-2 result.
 
@@ -68,9 +79,11 @@ PROVENANCE_CLASSES_PATH = (
     / "ucc_provenance_classes_v0_1.json"
 )
 
-#: Columns of the emitted classification artifact. The three evidence columns
+#: Columns of the emitted classification artifact. The four evidence columns
 #: sit beside the structural class, not inside it, so a reader can see at a
 #: glance that the class is derived and the properties are asserted.
+#: ``pumd_quantitative_usability`` is adjacent to ``pumd_membership`` on
+#: purpose: the two are read together or the first is misread as the second.
 PROVENANCE_CSV_COLUMNS = (
     "ucc",
     "provenance_class",
@@ -83,6 +96,7 @@ PROVENANCE_CSV_COLUMNS = (
     "ce_source",
     "publication_reason",
     "pumd_membership",
+    "pumd_quantitative_usability",
     "cpi_adjustment_status",
 )
 
@@ -108,12 +122,35 @@ class PumdMembership(str, Enum):
     This is not implied by any provenance class. A concordance-only UCC is
     absent from a published aggregate file; that says nothing about whether the
     microdata carries it.
+
+    It implies nothing in the other direction either. ``VERIFIED`` means the
+    records exist and were counted, which is a long way short of being able to
+    state what the population spent. See :class:`PumdQuantitativeUsability`.
     """
 
     #: A committed DMI research record cites a specific PUMD observation.
     VERIFIED = "VERIFIED"
     #: No observation is cited. Not a claim that the UCC is absent.
     NOT_VERIFIED = "NOT_VERIFIED"
+
+
+class PumdQuantitativeUsability(str, Enum):
+    """Whether a defensible annual aggregate can be produced for this UCC.
+
+    Kept apart from :class:`PumdMembership` because the two questions have very
+    different answers and collapsing them is the most tempting mistake in this
+    area. Unweighted microdata rows are not an estimate; converting them into
+    one needs the CE annual weighting and income-quintile procedure, whose
+    output is only credible once it has been checked against published LABSTAT
+    figures for codes that have them.
+    """
+
+    #: The weighting and quintile procedure reproduces published LABSTAT
+    #: benchmarks for this UCC's concept. Not asserted for any UCC.
+    BENCHMARKED = "BENCHMARKED"
+    #: No validated procedure exists. The default, and the correct reading
+    #: whenever the benchmark has not actually been run and reported.
+    NOT_ESTABLISHED = "NOT_ESTABLISHED"
 
 
 class CpiAdjustmentStatus(str, Enum):
@@ -143,7 +180,7 @@ class PublicationReason(str, Enum):
 class UccProvenanceRow:
     """The provenance class of one UCC, and the separate claims about it.
 
-    ``provenance_class`` is derived from set membership. The three fields below
+    ``provenance_class`` is derived from set membership. The four fields below
     it are read from the pinned registry and default to not-claimed. No code
     path sets them from the class.
     """
@@ -159,7 +196,32 @@ class UccProvenanceRow:
     ce_source: str
     publication_reason: PublicationReason = PublicationReason.NOT_APPLICABLE
     pumd_membership: PumdMembership = PumdMembership.NOT_VERIFIED
+    pumd_quantitative_usability: PumdQuantitativeUsability = (
+        PumdQuantitativeUsability.NOT_ESTABLISHED
+    )
     cpi_adjustment_status: CpiAdjustmentStatus = CpiAdjustmentStatus.UNKNOWN
+
+    def __post_init__(self):
+        """Usability is a stronger claim than membership and must cost more.
+
+        The implication runs one way only. A benchmarked procedure for a UCC
+        nobody has found in the microdata is incoherent, so that combination is
+        refused; the reverse, a UCC that is plainly present but not yet
+        aggregable, is the normal state and is left alone. Encoding only the
+        direction that actually holds keeps the asymmetry from eroding into
+        'verified, therefore usable'.
+        """
+        if (
+            self.pumd_quantitative_usability is PumdQuantitativeUsability.BENCHMARKED
+            and self.pumd_membership is not PumdMembership.VERIFIED
+        ):
+            raise UccProvenanceError(
+                f"{self.ucc}: pumd_quantitative_usability=BENCHMARKED requires "
+                f"pumd_membership=VERIFIED, but membership is "
+                f"{self.pumd_membership.value}. A validated aggregation "
+                f"procedure cannot be claimed for a UCC not shown to be in the "
+                f"microdata."
+            )
 
 
 @dataclass(frozen=True)
@@ -188,9 +250,10 @@ def load_provenance_classes(path: Path = PROVENANCE_CLASSES_PATH) -> dict:
 def concordance_only_evidence(registry: Optional[Mapping] = None) -> dict:
     """The registry's per-UCC evidence records, keyed by UCC.
 
-    These are claims about PUMD availability, CPI adjustment and the reason for
-    non-publication. They are recorded, cited and graded in the registry; this
-    function only transports them.
+    These are claims about PUMD membership, whether a benchmarked aggregation
+    procedure exists, CPI adjustment, and the reason for non-publication. They
+    are recorded, cited and graded in the registry; this function only
+    transports them.
     """
     registry = registry if registry is not None else load_provenance_classes()
     roster = registry.get("concordance_only_uccs", {}).get("roster", ())
@@ -223,9 +286,9 @@ def classify_ucc_provenance(
     be lost by ignoring a class.
 
     ``evidence`` optionally supplies the registry's per-UCC claims about PUMD
-    availability, CPI adjustment and non-publication. Omitting it does not
-    change any class; it leaves every such claim at its not-claimed default,
-    which is the correct reading of no evidence.
+    membership, aggregation usability, CPI adjustment and non-publication.
+    Omitting it does not change any class; it leaves every such claim at its
+    not-claimed default, which is the correct reading of no evidence.
     """
     published = published_ucc_universe(item_codes)
     mapped = frozenset(concordance.entries)
@@ -273,12 +336,16 @@ def classify_ucc_provenance(
 
 
 def _evidence_for(ucc: str, in_published: bool, evidence: Mapping) -> dict:
-    """The three asserted properties of ``ucc``, or their not-claimed defaults.
+    """The four asserted properties of ``ucc``, or their not-claimed defaults.
 
     A published UCC has nothing to explain about non-publication, so its
     ``publication_reason`` is ``NOT_APPLICABLE``. Everything else defaults to
     the weakest reading, because silence in the registry is an absence of
     evidence and must not be read as evidence of absence either way.
+
+    Note that ``pumd_quantitative_usability`` is read from its own registry
+    key. It is deliberately not derived from ``pumd_membership``, so upgrading
+    a membership claim cannot quietly upgrade an aggregation claim with it.
     """
     record = evidence.get(ucc, {})
     return {
@@ -292,6 +359,12 @@ def _evidence_for(ucc: str, in_published: bool, evidence: Mapping) -> dict:
         ),
         "pumd_membership": PumdMembership(
             record.get("pumd_membership", PumdMembership.NOT_VERIFIED.value)
+        ),
+        "pumd_quantitative_usability": PumdQuantitativeUsability(
+            record.get(
+                "pumd_quantitative_usability",
+                PumdQuantitativeUsability.NOT_ESTABLISHED.value,
+            )
         ),
         "cpi_adjustment_status": CpiAdjustmentStatus(
             record.get("cpi_adjustment_status", CpiAdjustmentStatus.UNKNOWN.value)
@@ -367,6 +440,7 @@ def provenance_csv_rows(report: UccProvenanceReport) -> list:
             row.ce_source,
             row.publication_reason.value,
             row.pumd_membership.value,
+            row.pumd_quantitative_usability.value,
             row.cpi_adjustment_status.value,
         ]
         for row in report.rows

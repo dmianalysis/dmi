@@ -291,7 +291,7 @@
       "suppression_status": "IMMATERIAL",
       "suppression_note": "830112 (late fee, owned vacation) is suppressed for All Consumer Units and for four quintiles. Its published sibling 830111 is 21 million dollars, so the suppressed amount is bounded far below materiality.",
       "review_status": "PROPOSED",
-      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). Pending the PUMD annual-weighting and quintile benchmark validation required before the Track-A shelter rule is finalized.",
+      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). UCCs 910104-910107 are verified as PUMD/Interview UCCs, cited at registry/research/ucc_provenance_classes_v0_1.json :: pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE, but Track-A shelter remains PENDING until the PUMD annual-weighting and income-quintile procedure is benchmarked successfully against published 2024 LB01 LABSTAT estimates. The codes being present in the microdata was never the difficulty; producing a defensible weighted aggregate from them is.",
       "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
@@ -345,7 +345,7 @@
       "evidence_strength": "STRONG",
       "suppression_status": "NONE",
       "review_status": "PROPOSED",
-      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5).",
+      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). UCCs 910104-910107 are verified as PUMD/Interview UCCs, but Track-A shelter remains PENDING until the PUMD annual-weighting and income-quintile procedure is benchmarked successfully against published 2024 LB01 LABSTAT estimates.",
       "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
@@ -389,7 +389,7 @@
       "evidence_notes": "Four independent legs. (1) The pinned concordance maps CE successor code 510115 'Veh Registration Incl Prop Tax' to TF011. (2) CE 2024 Interview PUMD: 510115 equals 520110 plus 950024 on 4785 of 4785 records, 100.0 percent, aggregate 894639 + 383417 = 1278056. (3) The 2020, 2022 and 2024 concordance vintages mapped the predecessor codes 520111 + 520112 + 950024 to the same TF011; only the CE coding changed, not the CPI concept. (4) BLS ELI definition for TF011: 'Includes the price for initial issue and renewal of private passenger vehicle registration, operator license, and learner permit as required by the state government... Includes all fees and surcharges which must be paid simultaneously with registration and licensing.' This also resolves the apparent tension with the CPI's exclusion of direct taxes: BLS classifies the vehicle personal property levy as part of a registration fee, and the Handbook states government fees are in scope.",
       "transformation_formula": "E(510115, p) = E(520110, p) + E(950024, p) for each population p. The combined amount maps to ELI TF011 and thence to node TRANSPORT_SERVICES.",
       "assumptions": [
-        "510115 does not appear in cx.item because it carries PUBFLAG=1 ('Not published') in the CE microdata. It is therefore a CPI-adjusted PUMD UCC rather than a published CE UCC, and its absence from the published item file is expected, not an error.",
+        "510115 does not appear in cx.item because it carries PUBFLAG=1 ('Not published') in the CE microdata. It is therefore a CONCORDANCE_ONLY_UCC rather than a published CE UCC, and its absence from the published item file is expected, not an error.",
         "The record-level identity was verified on 2024 Interview data. The rule asserts the identity for 2024 only; a later CE vintage must be re-verified before the rule version is carried forward.",
         "Combining at the population level assumes the identity holds within each income quintile, which follows from its holding on every individual record."
       ],
@@ -530,7 +530,7 @@
       "evidence_strength_note": "The exclusion principle is stated by BLS, but BLS does not name these eight UCCs. The assignment rests on the reproducible owner/renter counterpart test rather than on a BLS enumeration, so it is graded MODERATE and carries review_status PROPOSED.",
       "suppression_status": "NONE",
       "review_status": "PROPOSED",
-      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). This is the largest MODERATE-evidence exclusion in the registry at 3.4 percent of basis and should receive explicit reviewer attention.",
+      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). UCCs 910104-910107 are verified as PUMD/Interview UCCs, but Track-A shelter remains PENDING until the PUMD annual-weighting and income-quintile procedure is benchmarked successfully against published 2024 LB01 LABSTAT estimates. This is also the largest MODERATE-evidence exclusion in the registry at 3.4 percent of basis and should receive explicit reviewer attention on its own merits.",
       "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owner_renter_counterpart_structure",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
@@ -614,7 +614,7 @@
       "suppression_status": "IMMATERIAL",
       "suppression_note": "320633 is suppressed for All Consumer Units and several quintiles; 8 of 15 UCCs are suppressed in Q1. The suppressed members are the smallest codes in a branch whose published total is 0.18 percent of basis, so the exposure is bounded well below materiality.",
       "review_status": "PROPOSED",
-      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). The Milestone 2 amendment requires the PUMD annual-weighting and quintile benchmark validation to pass before Track A is finalized; secondary-residence estimates are noisy and RSE must be carried rather than used to drop these items.",
+      "review_blocker": "Takes effect only jointly with the Track-A rental-equivalence rule (Milestone 2 Section 6.5). UCCs 910104-910107 are verified as PUMD/Interview UCCs, but Track-A shelter remains PENDING until the PUMD annual-weighting and income-quintile procedure is benchmarked successfully against published 2024 LB01 LABSTAT estimates. Secondary-residence estimates are noisy and RSE must be carried rather than used to drop these items; the observed microdata cell for 910106 is 45 records, which is a further reason the benchmark must precede any figure rather than follow it.",
       "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owned_vacation_branch_is_wholly_unmapped",
       "track_b": {
         "treatment": "RETAIN_CURRENT_PAYMENT",
