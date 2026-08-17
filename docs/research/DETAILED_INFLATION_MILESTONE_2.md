@@ -9,7 +9,7 @@ CPI price data, and produces no DMI release. Nothing here is imported by
 release workflow.
 
 **The owner-occupied shelter rule is not settled.** Four rules covering
-$1,137,534M of expenditure remain `PROPOSED`. See §7 below.
+$1,137,534M of expenditure remain `PROPOSED`. See §8 below.
 
 ---
 
@@ -179,7 +179,81 @@ lost, with the published code preserved in `source_code_as_published` and the
 correction documented in the provenance as a DMI correction, not a BLS-authored
 change.
 
-## 6. Track B: the payments concept (§7)
+## 6. UCC provenance: `cx.item` is not the CPI's universe
+
+Milestone 1 keyed its accounting basis on the published CE item file `cx.item`
+and treated a UCC with no row there as a fatal error — `build_basis` raises. That
+is right for a *published* basis and wrong as a general assumption, and the
+distinction had never been written down. Testing the pinned concordance against
+`cx.item` shows the two BLS universes only partly overlap:
+
+| Class | Membership | UCCs |
+|---|---|---:|
+| `DIRECT_CONCORDANCE_UCC` | in `cx.item` **and** in the concordance | 490 |
+| `PUBLISHED_CE_UCC` | in `cx.item` only | 508 |
+| `CPI_ADJUSTED_PUMD_UCC` | in the concordance only | **17** |
+| union | | 1,015 |
+
+The three classes partition the union exactly: every UCC has one class, none has
+two, and the class is *derived* from set membership rather than assigned by hand.
+The arithmetic closes on both sides — 490 + 508 = 998, the numeric item codes in
+`cx.item`; 490 + 17 = 507, the concordance UCCs.
+
+**The 17 are the finding.** A pipeline keyed on `cx.item` cannot see them and
+will not error, so it under-counts the CPI-relevant universe silently. They are
+not obscure: every one resolves to a live DMI computation node — `RECREATION` 8,
+`SHELTER` 4, `TRANSPORT_COMMODITIES_EX_MOTOR_FUEL` 3, `TRANSPORT_SERVICES` 1,
+`HOUSEHOLD_FURNISHINGS_OPERATIONS` 1 — so none is safely ignorable. Eight fall
+outside the four Milestone-1 target domains; the other nine are *inside* them
+and still never appeared as exceptions, precisely because they never enter a
+`cx.item`-derived basis at all.
+
+BLS publishes no annual LABSTAT aggregate for any of the 17, so an amount for
+one of them must come from PUMD microdata under a validated weighting procedure,
+never from `cx.data`. `510115` is the clearest case: it is the `COMBINE`
+destination of `TR_VEHICLE_REGISTRATION_FEES_v0_1`, and its absence from
+`cx.item` is exactly why that rule reconstructs it from the two published
+components rather than reading it. Only `510115` carries a documented reason for
+non-publication (CE microdata `PUBFLAG=1`); the other 16 are marked
+`UNDOCUMENTED` rather than given an invented explanation. The classification is
+structural and does not depend on knowing why.
+
+Three of the 17 are trade-in allowances (`450116`, `450216`, `600153`). A
+trade-in offsets a gross purchase price rather than adding to outlay, and its
+sign convention in CPI weighting is not established here, so the registry warns
+that they must not be summed as ordinary positive expenditure.
+
+**The shelter correspondence is derived, and it corroborates the amendment.**
+The four rental-equivalence codes the concordance uses — `910104`–`910107` — are
+all `CPI_ADJUSTED_PUMD_UCC`. Their published counterparts `910050` and
+`910101`–`910103` are all `PUBLISHED_CE_UCC`: published but unmapped. That
+asymmetry is measured from the two files, not assumed, and it is why the
+normative Track-A input is the concordance code and the published addenda are
+validation counterparts only. The ordered concept-for-concept pairing between
+the two sets is recorded as `claim_type: DMI_INFERENCE` with an explicit warning
+that **BLS publishes no such crosswalk**, and a test asserts the label rather
+than trusting the prose.
+
+The `910103` anomaly is preserved rather than tidied: three published addenda
+read "Estimated **monthly** rental value" while `910103` alone reads "Estimated
+**annual** rental value of timeshare", all four at `display_level` 1 under
+subcategory `TITLEOFI`. Summing them as published would add an annual figure to
+three monthly ones. It is recorded `status: UNRESOLVED, blocking: false` —
+unresolved because the published record does not explain it, non-blocking
+because it is confined to the counterpart series and `910107` is the normative
+input.
+
+This classification **authorizes nothing**. It changes no Milestone-1 or
+Milestone-2 result, adds no expenditure, and does not entitle any
+`CPI_ADJUSTED_PUMD_UCC` to enter a DMI weight; the four shelter codes stay gated
+behind the PUMD benchmark validation described in §8. `build_basis` still raises
+on a `cx.series` UCC missing from `cx.item`, unchanged. What is new is that the
+assumption is now named, pinned with counts, and re-derived on every run:
+`verify_against_registry` fails if the counts drift or if the 17-code roster
+changes, so a new concordance vintage surfaces as an error instead of quietly
+reclassifying UCCs.
+
+## 7. Track B: the payments concept (§7)
 
 Track B asks which Housing UCCs would remain relevant under a
 household-outlay concept of the kind BLS's Homeowner Cost Index research
@@ -210,7 +284,7 @@ index and an effective residential property tax index would both have to be
 constructed. Property management fees and ground rent have no identified price
 source either.
 
-## 7. What is deliberately not done
+## 8. What is deliberately not done
 
 **The Track-A owner-occupied shelter rule is not finalized.** The four
 shelter-coupled rules stay `PROPOSED` and `is_applicable` returns `False` for
@@ -231,7 +305,7 @@ the two to be equal, so neither may be inferred from the other.
 **No weights are normalized** (§19.3) and no index is calculated (§3.2, §7).
 `test_no_index_or_weights_are_produced` asserts this against the summary.
 
-## 8. Known limitations
+## 9. Known limitations
 
 **11 UCCs remain unresolved** ($10,951M, 0.1602%). The largest is `340915`
 Home security system service fees ($6,028M, 0.088%), where sibling `340911` and
@@ -279,7 +353,7 @@ established. This is a genuine unresolved gap in the provenance chain.
 scale defined in the registry preamble. The underlying documents are BLS's; the
 grading of them is not.
 
-## 9. How to run it
+## 10. How to run it
 
 ```bash
 python scripts/resolve_detailed_inflation_2024.py \
@@ -302,24 +376,27 @@ Artifacts land in `data/research/detailed_inflation/milestone_2/`:
 | `transformation_reconciliation.csv` | §19.1 identity per population |
 | `unresolved_ledger_v0_2.csv` | The 11 open items, with candidates marked not-applied |
 | `eli_node_semantic_validation.csv` | §15, one row per concordance-reachable ELI |
+| `ucc_provenance_classes_2024.csv` | §6, one row per UCC in either BLS universe (1,015) |
 | `scope_resolution_summary.json` | Machine-readable summary of everything above |
 
 The Milestone-1 artifacts under `audit_2024/` are **unchanged** and remain the
 historical record (§18).
 
-## 10. Code map
+## 11. Code map
 
 | Path | Role |
 |---|---|
 | `registry/research/ce_cpi_scope_rules_v0_1.json` | The 10 scope rules, sources, structural evidence, Track B |
 | `registry/research/cpi_eli_descriptions_v0_1.tsv` | Pinned BLS Appendix 2 ELI titles and major groups |
+| `registry/research/ucc_provenance_classes_v0_1.json` | §6 class definitions, pinned counts, the 17-code roster, the shelter correspondence |
 | `dmi_research/detailed_inflation/scope_rules.py` | Registry loader; enforces §5 and §13 invariants |
 | `dmi_research/detailed_inflation/semantics.py` | §15 ELI→node semantic validation |
+| `dmi_research/detailed_inflation/provenance.py` | §6 UCC provenance classification and registry agreement check |
 | `dmi_research/detailed_inflation/resolution.py` | §16 suppression, §18 output, §19 reconciliation |
 | `scripts/resolve_detailed_inflation_2024.py` | CLI |
-| `tests/test_detailed_inflation_milestone_2.py` | 58 tests, including negative tests that mutate the registry |
+| `tests/test_detailed_inflation_milestone_2.py` | 76 tests, including negative tests that mutate the registry |
 
-## 11. Attribution
+## 12. Attribution
 
 Source data and documents are published by the U.S. Bureau of Labor Statistics:
 Consumer Expenditure Surveys (LABSTAT `cx.*`, hierarchical grouping files),

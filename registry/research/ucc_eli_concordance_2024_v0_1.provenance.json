@@ -5,6 +5,21 @@
     "Note: This UCC-ELI concordance changes periodically. This mapping reflects the CPI item structure that was introduced for 2024 annual expenditure weights used in the calculation of indexes starting in January 2026. Additionally, items SEME02 and SEME03 are not reflected in this concordance. Weights are created for these series via imputation to fully populate to the required 7776 item area cell structure for index estimation.",
     "Source: U.S. Bureau of Labor Statistics"
   ],
+  "ce_source_column": {
+    "bls_column_name": "CE SOURCE",
+    "meaning": "Which Consumer Expenditure survey instrument collects the UCC. The CE runs two independent instruments and a UCC is collected by one of them, which determines where a microdata amount for it must be read from.",
+    "codes": {
+      "I": "Interview survey. Respondents recall expenditure over a three-month reference period; used for larger and more regular expenditures.",
+      "D": "Diary survey. Respondents record expenditure themselves over two consecutive one-week periods; used for small, frequently purchased items."
+    },
+    "observed_counts": {
+      "rows": {"I": 434, "D": 190},
+      "distinct_uccs": {"I": 318, "D": 189}
+    },
+    "single_valued_per_ucc": true,
+    "single_valued_note": "No UCC carries conflicting CE SOURCE values across its rows, so collapsing the concordance from 624 rows to 507 UCCs does not discard a distinction. This is asserted by test_ce_source_is_single_valued_per_ucc.",
+    "usage_note": "Milestone 1 and Milestone 2 read no microdata, so this column drives no logic yet. It is carried because a PUMD-derived amount must be read from the correct instrument file, and the Track-A shelter codes 910104-910107 are all Interview."
+  },
   "distinct_eli_count": 294,
   "distinct_ucc_count": 507,
   "multi_eli_ucc_count": 29,
@@ -15,6 +30,8 @@
   "row_count": 624,
   "source_bytes": 40804,
   "source_file_name": "ce-cpi-concordance-August-2026.xlsx",
+  "source_page_url": "https://www.bls.gov/cpi/additional-resources/ce-cpi-concordance.htm",
+  "source_page_url_note": "The BLS landing page for this concordance, as registered in registry/sources_registry_v0_1.yaml. It was not re-fetched when this field was added: bls.gov returned HTTP 403 to the retrieval attempt, the same access failure recorded for the Internet Archive lookups in Milestone 2. The URL is therefore the repository's registered source location, not a link verified live in this run. The pinned artifact's authority rests on source_sha256, which is verifiable offline.",
   "source_sha256": "769d578cd7964cbbe24330cc4cac1e068a6fc68f426615d41ae533d8cd13f430",
   "source_sheet": "UTEM_2024",
   "status": "RESEARCH_ONLY",

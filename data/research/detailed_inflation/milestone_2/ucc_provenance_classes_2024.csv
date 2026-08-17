@@ -1,0 +1,1016 @@
+ucc,provenance_class,in_published_ce,in_concordance,published_title,concordance_title,elis,dmi_node,ce_source
+001000,PUBLISHED_CE_UCC,true,false,"Purchase price of stocks, bonds or mutual funds",,,,
+001010,PUBLISHED_CE_UCC,true,false,"Sale price of stocks, bonds, and mutual funds, net",,,,
+001210,PUBLISHED_CE_UCC,true,false,Investments to farm or business,,,,
+001220,PUBLISHED_CE_UCC,true,false,Assets taken from farm or business,,,,
+002010,PUBLISHED_CE_UCC,true,false,Change in savings account,,,,
+002020,PUBLISHED_CE_UCC,true,false,Change in checking account,,,,
+002030,PUBLISHED_CE_UCC,true,false,Change in U.S. savings bonds,,,,
+002120,PUBLISHED_CE_UCC,true,false,Other non-health insurance,,,,
+003000,PUBLISHED_CE_UCC,true,false,Change in money owed to consumer unit,,,,
+003100,PUBLISHED_CE_UCC,true,false,Change in surrender of insurance policies,,,,
+005100,PUBLISHED_CE_UCC,true,false,"Value of savings, checking, money market, and CDs",,,,
+005110,PUBLISHED_CE_UCC,true,false,"Value of savings, checking, money market, and CDs one year ago",,,,
+005200,PUBLISHED_CE_UCC,true,false,Value of retirement plans,,,,
+005210,PUBLISHED_CE_UCC,true,false,Value of retirement plans one year ago,,,,
+005300,PUBLISHED_CE_UCC,true,false,Surrender value of whole life insurance policies,,,,
+005310,PUBLISHED_CE_UCC,true,false,Surrender value of whole life insurance policies one year ago,,,,
+005400,PUBLISHED_CE_UCC,true,false,Amount owed on credit cards,,,,
+005410,PUBLISHED_CE_UCC,true,false,Amount owed on credit cards one year ago,,,,
+005420,PUBLISHED_CE_UCC,true,false,"Finance, late, and interest charges for credit cards",,,,
+005500,PUBLISHED_CE_UCC,true,false,Amount owed on student loans,,,,
+005510,PUBLISHED_CE_UCC,true,false,Amount owed on student loans one year ago,,,,
+005520,PUBLISHED_CE_UCC,true,false,"Finance, late, and interest charges for student loans",,,,
+005600,PUBLISHED_CE_UCC,true,false,Amount owed on other loans,,,,
+005610,PUBLISHED_CE_UCC,true,false,Amount owed on other loans one year ago,,,,
+005620,PUBLISHED_CE_UCC,true,false,"Finance, late, and interest charges for other loans",,,,
+005700,PUBLISHED_CE_UCC,true,false,Value of other financial assets,,,,
+005710,PUBLISHED_CE_UCC,true,false,Value of other financial assets one year ago,,,,
+005800,PUBLISHED_CE_UCC,true,false,"Value of stocks, bonds, and mutual funds",,,,
+005810,PUBLISHED_CE_UCC,true,false,"Value of stocks, bonds, and mutual funds one year ago",,,,
+006003,PUBLISHED_CE_UCC,true,false,"Total amount owed 2nd interview, CY Q1",,,,
+006004,PUBLISHED_CE_UCC,true,false,"Total amount owed 5th interview, CY Q1",,,,
+006005,PUBLISHED_CE_UCC,true,false,"Total amount owed 2nd interview, CY+1, Q1",,,,
+006006,PUBLISHED_CE_UCC,true,false,"Total amount owed 5th interview, CY+1, Q1",,,,
+006007,PUBLISHED_CE_UCC,true,false,Total amt owed CY Q1,,,,
+006008,PUBLISHED_CE_UCC,true,false,"Total amt owed CY+1, Q1",,,,
+010110,PUBLISHED_CE_UCC,true,false,Flour,,,,
+010119,DIRECT_CONCORDANCE_UCC,true,true,Flour and prepared flour mixes,Flour And Prepared Flour Mixes,FA011,FOOD,D
+010120,PUBLISHED_CE_UCC,true,false,Prepared flour mixes,,,,
+010210,DIRECT_CONCORDANCE_UCC,true,true,"Cereal, breakfast, and granola bars","Cereal, Breakfast, & Granola Bars",FA021,FOOD,D
+010310,DIRECT_CONCORDANCE_UCC,true,true,Rice,Rice,FA031,FOOD,D
+010320,DIRECT_CONCORDANCE_UCC,true,true,"Pasta, cornmeal, and other cereal products",Pasta Cornmeal Oth Cereal Prods,FA031,FOOD,D
+020110,PUBLISHED_CE_UCC,true,false,White bread,,,,
+020210,PUBLISHED_CE_UCC,true,false,"Bread, other than white",,,,
+020219,DIRECT_CONCORDANCE_UCC,true,true,Bread,Bread,FB011,FOOD,D
+020310,DIRECT_CONCORDANCE_UCC,true,true,Biscuits and rolls,"Fresh Biscuits, Rolls, Muffins",FB021,FOOD,D
+020410,DIRECT_CONCORDANCE_UCC,true,true,Cakes and cupcakes,Cakes And Cupcakes,FB031,FOOD,D
+020510,DIRECT_CONCORDANCE_UCC,true,true,Cookies,Cookies,FB032,FOOD,D
+020610,DIRECT_CONCORDANCE_UCC,true,true,Crackers,Crackers,FB041,FOOD,D
+020620,DIRECT_CONCORDANCE_UCC,true,true,Bread and cracker products,Bread And Cracker Products,FB041,FOOD,D
+020710,DIRECT_CONCORDANCE_UCC,true,true,"Sweetrolls, coffee cakes, and doughnuts","Doughnuts,Sweetrolls,Coffecake",FB042,FOOD,D
+020810,DIRECT_CONCORDANCE_UCC,true,true,Frozen and refrigerated bakery products,Frozen & Refrig. Bakery Prod.,FB043,FOOD,D
+020820,DIRECT_CONCORDANCE_UCC,true,true,"Pies, tarts, and turnovers","Fresh Pies, Tarts, Turnovers",FB044,FOOD,D
+030110,DIRECT_CONCORDANCE_UCC,true,true,Ground beef,Ground Beef Exclude Canned,FC011,FOOD,D
+030210,PUBLISHED_CE_UCC,true,false,Chuck roast,,,,
+030219,DIRECT_CONCORDANCE_UCC,true,true,Roasts,Uncooked Beef Roasts,FC021,FOOD,D
+030310,PUBLISHED_CE_UCC,true,false,Round roast,,,,
+030410,PUBLISHED_CE_UCC,true,false,Other roast,,,,
+030510,PUBLISHED_CE_UCC,true,false,Round steak,,,,
+030519,DIRECT_CONCORDANCE_UCC,true,true,Steak,Uncooked Beef Steaks,FC031,FOOD,D
+030610,PUBLISHED_CE_UCC,true,false,Sirloin steak,,,,
+030710,PUBLISHED_CE_UCC,true,false,Other steak,,,,
+030810,DIRECT_CONCORDANCE_UCC,true,true,Other beef,Other Beef (Exclude Canned),FC041,FOOD,D
+040110,PUBLISHED_CE_UCC,true,false,Bacon,,,,
+040119,DIRECT_CONCORDANCE_UCC,true,true,"Bacon, breakfast sausage, and related products","Bacon, Breakfast Sausage And Rela",FD011,FOOD,D
+040210,DIRECT_CONCORDANCE_UCC,true,true,Pork chops,Pork Chops,FD031,FOOD,D
+040310,PUBLISHED_CE_UCC,true,false,"Ham, not canned",,,,
+040319,DIRECT_CONCORDANCE_UCC,true,true,Ham,Ham,FD021,FOOD,D
+040410,DIRECT_CONCORDANCE_UCC,true,true,Other pork,Other Pork,FD041,FOOD,D
+040510,PUBLISHED_CE_UCC,true,false,Sausage,,,,
+040610,PUBLISHED_CE_UCC,true,false,Canned ham,,,,
+050110,DIRECT_CONCORDANCE_UCC,true,true,Frankfurters,Frankfurters,FE011,FOOD,D
+050210,PUBLISHED_CE_UCC,true,false,"Bologna, liverwurst, and salami",,,,
+050310,PUBLISHED_CE_UCC,true,false,Other lunchmeats,,,,
+050319,DIRECT_CONCORDANCE_UCC,true,true,Lunchmeats,Lunchmeats,FE012,FOOD,D
+050410,PUBLISHED_CE_UCC,true,false,Lamb and organ meats,,,,
+050419,DIRECT_CONCORDANCE_UCC,true,true,"Lamb, organ meat, and game","Lamb, Organ Meats, And Game",FE013,FOOD,D
+050900,PUBLISHED_CE_UCC,true,false,"Mutton, goat, and game",,,,
+060110,PUBLISHED_CE_UCC,true,false,Fresh and frozen whole chickens,,,,
+060119,DIRECT_CONCORDANCE_UCC,true,true,Chicken,Chicken,FF011,FOOD,D
+060210,PUBLISHED_CE_UCC,true,false,Fresh and frozen chicken parts,,,,
+060310,DIRECT_CONCORDANCE_UCC,true,true,Other poultry,Other Poultry,FF021,FOOD,D
+070110,PUBLISHED_CE_UCC,true,false,Canned fish and seafood,,,,
+070119,DIRECT_CONCORDANCE_UCC,true,true,Processed fish and seafood,Processed Fish And Seafood,FG021,FOOD,D
+070230,DIRECT_CONCORDANCE_UCC,true,true,Fresh fish and shellfish,Fresh Fish & Shellfish,FG011,FOOD,D
+070240,PUBLISHED_CE_UCC,true,false,Frozen fish and shellfish,,,,
+080110,DIRECT_CONCORDANCE_UCC,true,true,Eggs,Eggs,FH011,FOOD,D
+090110,DIRECT_CONCORDANCE_UCC,true,true,"Fresh milk, all types",Fresh Milk All Types,FJ011,FOOD,D
+090210,PUBLISHED_CE_UCC,true,false,Cream,,,,
+100110,PUBLISHED_CE_UCC,true,false,Butter,,,,
+100119,DIRECT_CONCORDANCE_UCC,true,true,Butter and margarine,Butter And Margarine,FS011,FOOD,D
+100210,DIRECT_CONCORDANCE_UCC,true,true,Cheese,Cheese,FJ021,FOOD,D
+100410,DIRECT_CONCORDANCE_UCC,true,true,Ice cream and related products,Ice Cream And Related Products,FJ031,FOOD,D
+100510,PUBLISHED_CE_UCC,true,false,Miscellaneous dairy products,,,,
+100519,DIRECT_CONCORDANCE_UCC,true,true,Other dairy and related products,Other Dairy And Related Products,FJ041,FOOD,D
+110110,DIRECT_CONCORDANCE_UCC,true,true,Apples,Apples,FK011,FOOD,D
+110210,DIRECT_CONCORDANCE_UCC,true,true,Bananas,Bananas,FK021,FOOD,D
+110310,PUBLISHED_CE_UCC,true,false,Oranges,,,,
+110319,DIRECT_CONCORDANCE_UCC,true,true,Citrus fruits,Citrus Fruits,FK031,FOOD,D
+110410,DIRECT_CONCORDANCE_UCC,true,true,Other fresh fruits,Other Fresh Fruits,FK041,FOOD,D
+110510,PUBLISHED_CE_UCC,true,false,"Citrus fruits, excluding oranges",,,,
+120110,DIRECT_CONCORDANCE_UCC,true,true,Potatoes,Potatoes,FL011,FOOD,D
+120210,DIRECT_CONCORDANCE_UCC,true,true,Lettuce,Lettuce,FL021,FOOD,D
+120310,DIRECT_CONCORDANCE_UCC,true,true,Tomatoes,Tomatoes,FL031,FOOD,D
+120410,DIRECT_CONCORDANCE_UCC,true,true,Other fresh vegetables,Other Fresh Vegetables,FL041,FOOD,D
+130110,PUBLISHED_CE_UCC,true,false,Frozen orange juice,,,,
+130119,DIRECT_CONCORDANCE_UCC,true,true,Frozen noncarbonated juices and drinks,Frozen Noncarbonated Juices And Drinks,FN021,FOOD,D
+130121,PUBLISHED_CE_UCC,true,false,Frozen fruits,,,,
+130122,PUBLISHED_CE_UCC,true,false,Frozen fruit juices,,,,
+130129,DIRECT_CONCORDANCE_UCC,true,true,Frozen fruits and vegetables,Frozen Fruits And Vegetables,FM021,FOOD,D
+130211,PUBLISHED_CE_UCC,true,false,Fresh fruit juice,,,,
+130212,PUBLISHED_CE_UCC,true,false,Canned and bottled fruit juice,,,,
+130310,PUBLISHED_CE_UCC,true,false,Canned fruits,,,,
+130320,PUBLISHED_CE_UCC,true,false,Dried fruits,,,,
+140110,PUBLISHED_CE_UCC,true,false,Frozen vegetables,,,,
+140210,PUBLISHED_CE_UCC,true,false,Canned beans,,,,
+140219,DIRECT_CONCORDANCE_UCC,true,true,Canned fruits and vegetables,Canned Fruits And Vegetables,FM011,FOOD,D
+140220,PUBLISHED_CE_UCC,true,false,Canned corn,,,,
+140230,PUBLISHED_CE_UCC,true,false,Canned miscellaneous vegetables,,,,
+140310,PUBLISHED_CE_UCC,true,false,Dried processed vegetables,,,,
+140320,PUBLISHED_CE_UCC,true,false,Dried peas,,,,
+140330,PUBLISHED_CE_UCC,true,false,Dried beans,,,,
+140340,PUBLISHED_CE_UCC,true,false,Dried miscellaneous vegetables,,,,
+140349,DIRECT_CONCORDANCE_UCC,true,true,Dried fruits and vegetables,Dried Fruits And Vegetables,FM031,FOOD,D
+140410,PUBLISHED_CE_UCC,true,false,Frozen vegetable juices,,,,
+140420,PUBLISHED_CE_UCC,true,false,Fresh and canned vegetable juices,,,,
+150110,DIRECT_CONCORDANCE_UCC,true,true,Candy and chewing gum,Candy And Chewing Gum,FR021,FOOD,D
+150211,PUBLISHED_CE_UCC,true,false,Sugar,,,,
+150212,PUBLISHED_CE_UCC,true,false,Artificial sweeteners,,,,
+150219,DIRECT_CONCORDANCE_UCC,true,true,Sugar and artificial sweeteners,Sugar And Artificial Sweeteners,FR011,FOOD,D
+150310,DIRECT_CONCORDANCE_UCC,true,true,"Jams, preserves, and other sweets",Other Sweets,FR031,FOOD,D
+160110,PUBLISHED_CE_UCC,true,false,Margarine,,,,
+160211,DIRECT_CONCORDANCE_UCC,true,true,Fats and oils,Fats & Oils,FS032,FOOD,D
+160212,DIRECT_CONCORDANCE_UCC,true,true,Salad dressings,Salad Dressings,FS021,FOOD,D
+160310,PUBLISHED_CE_UCC,true,false,Nondairy cream and imitation milk,,,,
+160320,DIRECT_CONCORDANCE_UCC,true,true,Peanut butter,Peanut Butter,FS031,FOOD,D
+170110,DIRECT_CONCORDANCE_UCC,true,true,Cola,Cola Drinks,FN011,FOOD,D
+170210,DIRECT_CONCORDANCE_UCC,true,true,Other carbonated drinks,Other Carbonated Drinks,FN011,FOOD,D
+170310,PUBLISHED_CE_UCC,true,false,Roasted coffee,,,,
+170319,DIRECT_CONCORDANCE_UCC,true,true,Coffee,Coffee,FP011,FOOD,D
+170410,PUBLISHED_CE_UCC,true,false,Instant and freeze dried coffee,,,,
+170510,PUBLISHED_CE_UCC,true,false,"Noncarbonated fruit flavored drinks, including non-frozen lemonade",,,,
+170520,DIRECT_CONCORDANCE_UCC,true,true,Tea,Tea,FP021,FOOD,D
+170531,DIRECT_CONCORDANCE_UCC,true,true,Other noncarbonated beverages and ice,Other Noncarb. Beverages/Ice,FP022,FOOD,D
+170532,PUBLISHED_CE_UCC,true,false,Bottled water,,,,
+170533,PUBLISHED_CE_UCC,true,false,Sports drinks,,,,
+170539,DIRECT_CONCORDANCE_UCC,true,true,Nonfrozen noncarbonated juices and drinks,Nonfrozen Noncarbonated Juices An,FN031,FOOD,D
+180110,DIRECT_CONCORDANCE_UCC,true,true,Canned and packaged soups,Soup,FT011,FOOD,D
+180210,DIRECT_CONCORDANCE_UCC,true,true,Frozen meals,Frozen Meals,FT021,FOOD,D
+180220,DIRECT_CONCORDANCE_UCC,true,true,Other frozen prepared foods,Froz/Prep. Food Oth Than Meals,FT021,FOOD,D
+180310,DIRECT_CONCORDANCE_UCC,true,true,Potato chips and other snacks,Potato Chips And Other Snacks,FT031,FOOD,D
+180320,DIRECT_CONCORDANCE_UCC,true,true,Nuts,Nuts,FT031,FOOD,D
+180410,DIRECT_CONCORDANCE_UCC,true,true,"Salt, spices, and other seasonings",Salt/Other Seasonings & Spices,FT041,FOOD,D
+180420,DIRECT_CONCORDANCE_UCC,true,true,"Olives, pickles, and relishes","Olives, Pickles, Relishes",FT042,FOOD,D
+180510,DIRECT_CONCORDANCE_UCC,true,true,Sauces and gravies,Sauces And Gravies,FT043,FOOD,D
+180520,DIRECT_CONCORDANCE_UCC,true,true,Baking needs and miscellaneous products,Other Condiments,FT044,FOOD,D
+180611,DIRECT_CONCORDANCE_UCC,true,true,Prepared salads,Prepared Salads,FT061,FOOD,D
+180612,DIRECT_CONCORDANCE_UCC,true,true,Prepared desserts,Prepared Desserts,FT062,FOOD,D
+180620,DIRECT_CONCORDANCE_UCC,true,true,Baby food,Baby Food,FT051,FOOD,D
+180710,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous prepared foods,Misc. Prepared Foods,FT062,FOOD,D
+180720,PUBLISHED_CE_UCC,true,false,Vitamin supplements,,,,
+190111,PUBLISHED_CE_UCC,true,false,"Lunch at fast food, carry out, delivery, concession stands, buffets, and cafeterias (other than employer and school cafeteria)",,,,
+190112,PUBLISHED_CE_UCC,true,false,Lunch at full service restaurants,,,,
+190113,PUBLISHED_CE_UCC,true,false,Lunch at vending machines and mobile vendors,,,,
+190114,PUBLISHED_CE_UCC,true,false,Lunch at employer and school cafeterias,,,,
+190211,PUBLISHED_CE_UCC,true,false,"Dinner at fast food, carry out, delivery, concession stands, buffets, and cafeterias (other than employer and school cafeteria)",,,,
+190212,PUBLISHED_CE_UCC,true,false,Dinner at full service restaurants,,,,
+190213,PUBLISHED_CE_UCC,true,false,Dinner at vending machines and mobile vendors,,,,
+190214,PUBLISHED_CE_UCC,true,false,Dinner at employer and school cafeterias,,,,
+190311,PUBLISHED_CE_UCC,true,false,"Snacks and nonalcoholic beverages at fast food, carry out, delivery, concession stands, buffets and cafeterias (other than employer and school cafeteria)",,,,
+190312,PUBLISHED_CE_UCC,true,false,Snacks and nonalcoholic beverages at full service restaurants,,,,
+190313,PUBLISHED_CE_UCC,true,false,Snacks and nonalcoholic beverages at vending machines and mobile vendors,,,,
+190314,PUBLISHED_CE_UCC,true,false,Snacks and nonalcoholic beverages at employer and school cafeterias,,,,
+190321,PUBLISHED_CE_UCC,true,false,"Breakfast and brunch at fast food, carry out, delivery, concession stands, buffets, and cafeterias (other than employer and school cafeteria)",,,,
+190322,PUBLISHED_CE_UCC,true,false,Breakfast and brunch at full service restaurants,,,,
+190323,PUBLISHED_CE_UCC,true,false,Breakfast and brunch at vending machines and mobile vendors,,,,
+190324,PUBLISHED_CE_UCC,true,false,Breakfast and brunch at employer and school cafeterias,,,,
+190400,DIRECT_CONCORDANCE_UCC,true,true,Food and nonalcoholic beverages at fast food,Food/Nonalc Bev - Fast Food,FV021,FOOD,D
+190500,DIRECT_CONCORDANCE_UCC,true,true,Food and nonalcoholic beverages at full service restaurants,Food/Nonalc Bev - Full Service,FV011,FOOD,D
+190600,DIRECT_CONCORDANCE_UCC,true,true,Food and nonalcoholic beverages at vending machines and mobile vendors,Food/Nonalc Bev - Vending,FV041,FOOD,D
+190700,DIRECT_CONCORDANCE_UCC,true,true,Food and nonalcoholic beverages at employer,Food/Nonalc Bev - Employer,FV031,FOOD,D
+190901,PUBLISHED_CE_UCC,true,false,Food or board at school,,,,
+190902,DIRECT_CONCORDANCE_UCC,true,true,Catered affairs,Food And Bev For Catered Affairs,FV051,FOOD,I
+190903,PUBLISHED_CE_UCC,true,false,Food on out of town trips,,,,
+190904,PUBLISHED_CE_UCC,true,false,Food prepared by consumer unit on out of town trips,,,,
+190905,DIRECT_CONCORDANCE_UCC,true,true,School meals and board,School Meals And Board,FV051,FOOD,I
+200111,PUBLISHED_CE_UCC,true,false,Beer and ale,,,,
+200112,PUBLISHED_CE_UCC,true,false,Nonalcoholic beer,,,,
+200119,DIRECT_CONCORDANCE_UCC,true,true,"Beer, ale, and other malt beverage","Beer, Ale, And Other Malt Beverag",FW011,ALCOHOLIC_BEVERAGES,D
+200210,PUBLISHED_CE_UCC,true,false,Whiskey,,,,
+200219,DIRECT_CONCORDANCE_UCC,true,true,Distilled spirits,Distilled Spirits At Home,FW021,ALCOHOLIC_BEVERAGES,D
+200310,DIRECT_CONCORDANCE_UCC,true,true,Wine,Wine At Home,FW031,ALCOHOLIC_BEVERAGES,D
+200410,PUBLISHED_CE_UCC,true,false,Other alcoholic beverages,,,,
+200511,PUBLISHED_CE_UCC,true,false,"Beer and ale at fast food, carry out, delivery, concession stands, buffets, and cafeterias",,,,
+200512,PUBLISHED_CE_UCC,true,false,Beer and ale at full service restaurants,,,,
+200513,PUBLISHED_CE_UCC,true,false,Beer and ale at vending machines and mobile vendors,,,,
+200514,PUBLISHED_CE_UCC,true,false,Beer at employer,,,,
+200515,PUBLISHED_CE_UCC,true,false,Beer at board,,,,
+200516,PUBLISHED_CE_UCC,true,false,Beer and ale at catered affairs,,,,
+200521,PUBLISHED_CE_UCC,true,false,"Wine at fast food, carry out, delivery, concession stands, buffets, and cafeterias",,,,
+200522,PUBLISHED_CE_UCC,true,false,Wine at full service restaurants,,,,
+200523,PUBLISHED_CE_UCC,true,false,Wine at vending machines and mobile vendors,,,,
+200524,PUBLISHED_CE_UCC,true,false,Wine at employer,,,,
+200525,PUBLISHED_CE_UCC,true,false,Wine at board,,,,
+200526,PUBLISHED_CE_UCC,true,false,Wine at catered affairs,,,,
+200531,PUBLISHED_CE_UCC,true,false,"Other alcoholic beverages at fast food, carry out, delivery, concession stands, buffets, and cafeterias",,,,
+200532,PUBLISHED_CE_UCC,true,false,Other alcoholic beverages at full service restaurants,,,,
+200533,PUBLISHED_CE_UCC,true,false,Other alcoholic beverages at vending machines and mobile vendors,,,,
+200534,PUBLISHED_CE_UCC,true,false,Other alcohol at employer,,,,
+200535,PUBLISHED_CE_UCC,true,false,Other alcohol at board,,,,
+200536,PUBLISHED_CE_UCC,true,false,Other alcoholic beverages at catered affairs,,,,
+200900,PUBLISHED_CE_UCC,true,false,Alcoholic beverages purchased on trips,,,,
+210110,DIRECT_CONCORDANCE_UCC,true,true,Rent,Rent Of Dwelling,HA011,SHELTER,I
+210210,DIRECT_CONCORDANCE_UCC,true,true,Lodging on out of town trips,Lodging Away From Home,HB021,SHELTER,I
+210310,DIRECT_CONCORDANCE_UCC,true,true,Housing while attending school,Housing For Someone At School,HB011,SHELTER,I
+210901,PUBLISHED_CE_UCC,true,false,Ground rent,,,,
+210902,PUBLISHED_CE_UCC,true,false,Ground rent,,,,
+220121,DIRECT_CONCORDANCE_UCC,true,true,Homeowners insurance,Homeowners Insurance Ownd,HD011,SHELTER,I
+220122,PUBLISHED_CE_UCC,true,false,Homeowners insurance,,,,
+220211,PUBLISHED_CE_UCC,true,false,Property taxes,,,,
+220212,PUBLISHED_CE_UCC,true,false,Property taxes,,,,
+220311,PUBLISHED_CE_UCC,true,false,Mortgage interest,,,,
+220312,PUBLISHED_CE_UCC,true,false,Mortgage interest,,,,
+220313,PUBLISHED_CE_UCC,true,false,"Interest paid, home equity loan",,,,
+220314,PUBLISHED_CE_UCC,true,false,"Interest paid, home equity loan",,,,
+220512,PUBLISHED_CE_UCC,true,false,"Materials and supplies purchased for insulation, dwellings under construction, additions, finishing, remodeling, landscaping, etc.",,,,
+220513,PUBLISHED_CE_UCC,true,false,"Supplies purchased for additions, maintenance, repairs, and new construction",,,,
+220611,PUBLISHED_CE_UCC,true,false,Capital improvements: labor and materials (owned home),,,,
+220612,PUBLISHED_CE_UCC,true,false,"Dishwasher, disposal, or range hood",,,,
+220615,PUBLISHED_CE_UCC,true,false,Capital improvements: labor and materials (owned vacation),,,,
+220616,PUBLISHED_CE_UCC,true,false,Wall-to-wall carpeting,,,,
+220901,PUBLISHED_CE_UCC,true,false,Parking,,,,
+220902,PUBLISHED_CE_UCC,true,false,Parking,,,,
+230112,DIRECT_CONCORDANCE_UCC,true,true,Painting and papering,Painting/Papering Labor/Mat Ownd,HP043,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+230113,PUBLISHED_CE_UCC,true,false,Plumbing and water heating,,,,
+230114,PUBLISHED_CE_UCC,true,false,"Heat, a/c, and electrical work",,,,
+230115,PUBLISHED_CE_UCC,true,false,Roofing and gutters,,,,
+230117,DIRECT_CONCORDANCE_UCC,true,true,"Dishwashers (built-in), garbage disposals, and range hoods (renter)",Repl Dishwash/Disp/Hood Rntr,HP043,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+230118,DIRECT_CONCORDANCE_UCC,true,true,"Dishwashers (built-in), garbage disposals, and range hoods (owned home)",Repl Dishwash/Disp/Hood Ownd,HP043,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+230121,PUBLISHED_CE_UCC,true,false,Repair and replacement of hard surface flooring,,,,
+230122,PUBLISHED_CE_UCC,true,false,Repair and replacement of hard surface flooring,,,,
+230123,PUBLISHED_CE_UCC,true,false,Repair and replacement of hard surface flooring,,,,
+230133,PUBLISHED_CE_UCC,true,false,Wall-to-wall carpet (replacement) (owned home),,,,
+230134,PUBLISHED_CE_UCC,true,false,Wall-to-wall carpet (renter),,,,
+230141,DIRECT_CONCORDANCE_UCC,true,true,Repair of built-in appliances,Repair-Displ/Dwshr/Rang Hd Rntr,HP041,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+230142,DIRECT_CONCORDANCE_UCC,true,true,Repair of built-in appliances,Repair-Displ/Dwshr/Rang Hd Ownd,HP041,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+230143,PUBLISHED_CE_UCC,true,false,"Home warranties, maintenance, repairs, or services contracts on household appliances (owner)",,,,
+230144,PUBLISHED_CE_UCC,true,false,"Home warranties, maintenance, repairs, or services contracts on household appliances (owner)",,,,
+230150,DIRECT_CONCORDANCE_UCC,true,true,Repair or maintenance services,Rep/Maint Labor/Mat Rntr,HP043,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+230151,PUBLISHED_CE_UCC,true,false,Other repair and maintenance services,,,,
+230152,PUBLISHED_CE_UCC,true,false,Repair and remodeling services,,,,
+230901,PUBLISHED_CE_UCC,true,false,Property management,,,,
+230902,PUBLISHED_CE_UCC,true,false,Property management,,,,
+240111,DIRECT_CONCORDANCE_UCC,true,true,"Paint, wallpaper, and supplies",Paint/Wallpaper And Supp Rntr,HM011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240112,DIRECT_CONCORDANCE_UCC,true,true,"Paints, wallpaper, and supplies",Paint/Wallpaper And Supp Ownd,HM011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240113,PUBLISHED_CE_UCC,true,false,"Paints, wallpaper, and supplies",,,,
+240121,DIRECT_CONCORDANCE_UCC,true,true,Tools and equipment for painting and wallpapering,Equip For Paint/Wpaper Rntr,HM011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240122,DIRECT_CONCORDANCE_UCC,true,true,Tools and equipment for painting and wallpapering,Equip For Paint/Wpaper Ownd,HM011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240123,PUBLISHED_CE_UCC,true,false,Tools and equipment for painting and wallpapering,,,,
+240211,DIRECT_CONCORDANCE_UCC,true,true,"Materials for plastering, panels, roofing, and gutters, etc.","Mat For Panl/Roof/Siding,Etc Rntr",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240212,DIRECT_CONCORDANCE_UCC,true,true,"Materials for plaster, panel, siding, windows, doors, screens, and awnings","Mat For Panel/Siding, Etc Ownd",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240213,PUBLISHED_CE_UCC,true,false,Materials and equipment for roofs and gutters,,,,
+240214,PUBLISHED_CE_UCC,true,false,"Materials for plastering, paneling, roofing, gutters, downspouts, siding, windows, doors, screens, and awnings",,,,
+240221,DIRECT_CONCORDANCE_UCC,true,true,"Materials for patio, walk, fence, driveway, masonry, brick and stucco work","Mat For Patio,Masonry,Etc Rntr",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240222,DIRECT_CONCORDANCE_UCC,true,true,"Materials for patio, walk, fence, driveway, masonry, brick, and stucco work","Mat For Patio,Masonry,Etc Ownd",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240223,PUBLISHED_CE_UCC,true,false,"Material for patio, walk, fence, drive, masonry, brick, and stucco",,,,
+240311,DIRECT_CONCORDANCE_UCC,true,true,Plumbing supplies and equipment,Plumbing Supp/Equip Rntr,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240312,DIRECT_CONCORDANCE_UCC,true,true,Plumbing supplies and equipment,Plumbing Supp/Equip Ownd,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240313,PUBLISHED_CE_UCC,true,false,Plumbing supplies and equipment,,,,
+240321,DIRECT_CONCORDANCE_UCC,true,true,"Electrical supplies, heating, and cooling equipment","Elec Supp, Heat/Cool Equip Rntr",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240322,DIRECT_CONCORDANCE_UCC,true,true,"Electrical supplies, heating, and cooling equipment","Elec Supp,Heat/Cool Equip Ownd",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+240323,PUBLISHED_CE_UCC,true,false,"Electrical supplies, heating, and cooling equipment",,,,
+250111,DIRECT_CONCORDANCE_UCC,true,true,Fuel oil (renter),Fuel Oil Rntr,HE011,HOUSEHOLD_ENERGY,I
+250112,DIRECT_CONCORDANCE_UCC,true,true,Fuel oil (owned home),Fuel Oil Ownd,HE011,HOUSEHOLD_ENERGY,I
+250113,DIRECT_CONCORDANCE_UCC,true,true,Fuel oil (owned vacation),Fuel Oil Ownv,HE011,HOUSEHOLD_ENERGY,I
+250114,DIRECT_CONCORDANCE_UCC,true,true,Fuel oil (rented vacation),Fuel Oil Rntv,HE011,HOUSEHOLD_ENERGY,I
+250211,DIRECT_CONCORDANCE_UCC,true,true,"Gas, bottled/tank (renter)","Gas, Bottled Or Tank Rntr",HE021,HOUSEHOLD_ENERGY,I
+250212,DIRECT_CONCORDANCE_UCC,true,true,"Gas, bottled/tank (owned home)","Gas, Bottled Or Tank Ownd",HE021,HOUSEHOLD_ENERGY,I
+250213,DIRECT_CONCORDANCE_UCC,true,true,"Gas, bottled/tank (owned vacation)","Gas,Bottled Or Tank - Ownv & Rvs",HE021,HOUSEHOLD_ENERGY,I
+250214,DIRECT_CONCORDANCE_UCC,true,true,"Gas, bottled/tank (rented vacation)","Gas, Bottled Or Tank Rntv",HE021,HOUSEHOLD_ENERGY,I
+250911,DIRECT_CONCORDANCE_UCC,true,true,"Coal, wood, and other fuels (renter)",Other Fuels Rntr,HE021,HOUSEHOLD_ENERGY,I
+250912,DIRECT_CONCORDANCE_UCC,true,true,"Coal, wood, and other fuels (owned home)",Other Fuels Ownd,HE021,HOUSEHOLD_ENERGY,I
+250913,DIRECT_CONCORDANCE_UCC,true,true,"Coal, wood, and other fuels (owned vacation)",Other Fuels Ownv,HE021,HOUSEHOLD_ENERGY,I
+250914,DIRECT_CONCORDANCE_UCC,true,true,"Coal, wood, and other fuels (rented vacation)",Other Fuels Rntv,HE021,HOUSEHOLD_ENERGY,I
+260111,DIRECT_CONCORDANCE_UCC,true,true,Electricity (renter),Electricity Rntr,HF011,HOUSEHOLD_ENERGY,I
+260112,DIRECT_CONCORDANCE_UCC,true,true,Electricity (owned home),Electricity Ownd,HF011,HOUSEHOLD_ENERGY,I
+260113,DIRECT_CONCORDANCE_UCC,true,true,Electricity (owned vacation),Electricity Ownv,HF011,HOUSEHOLD_ENERGY,I
+260114,DIRECT_CONCORDANCE_UCC,true,true,Electricity (rented vacation),Electricity Rntv,HF011,HOUSEHOLD_ENERGY,I
+260211,DIRECT_CONCORDANCE_UCC,true,true,Natural gas (renter),Utility--Natural Gas Rntr,HF021,HOUSEHOLD_ENERGY,I
+260212,DIRECT_CONCORDANCE_UCC,true,true,Natural gas (owned home),Utility--Natural Gas Ownd,HF021,HOUSEHOLD_ENERGY,I
+260213,DIRECT_CONCORDANCE_UCC,true,true,Natural gas (owned vacation),Utility--Natural Gas Ownv,HF021,HOUSEHOLD_ENERGY,I
+260214,DIRECT_CONCORDANCE_UCC,true,true,Natural gas (rented vacation),Utility--Natural Gas Rntv,HF021,HOUSEHOLD_ENERGY,I
+270101,PUBLISHED_CE_UCC,true,false,Residential telephone/pay phones,,,,
+270102,DIRECT_CONCORDANCE_UCC,true,true,Cellular phone service,Cellular Phone Service,ED031;EE041,EDUCATION_COMMUNICATION,I
+270104,PUBLISHED_CE_UCC,true,false,Phone cards,,,,
+270105,PUBLISHED_CE_UCC,true,false,Voice over IP service,,,,
+270106,DIRECT_CONCORDANCE_UCC,true,true,Residential telephone including VOIP,Residential Telephone Incl Voip,ED041,EDUCATION_COMMUNICATION,I
+270211,DIRECT_CONCORDANCE_UCC,true,true,Water/sewer maintenance (renter),Water And Sewerage Maint Rntr,HG011,WATER_SEWER_TRASH,I
+270212,DIRECT_CONCORDANCE_UCC,true,true,Water/sewer maintenance (owned home),Water And Sewerage Maint Ownd,HG011,WATER_SEWER_TRASH,I
+270213,DIRECT_CONCORDANCE_UCC,true,true,Water/sewer maintenance (owned vacation),Water And Sewerage Maint Ownv,HG011,WATER_SEWER_TRASH,I
+270214,DIRECT_CONCORDANCE_UCC,true,true,Water/sewer maintenance (rented vacation),Water And Sewerage Maint Rntv,HG011,WATER_SEWER_TRASH,I
+270310,DIRECT_CONCORDANCE_UCC,true,true,Cable and satellite television services,Cable/Satellite/Com Antenna Serv,RA021,RECREATION,I
+270311,DIRECT_CONCORDANCE_UCC,true,true,Satellite radio services,Satellite Radio Service,RA061,RECREATION,I
+270411,DIRECT_CONCORDANCE_UCC,true,true,Trash/garbage collection (renter),Trash/Garbage Collect Rntr,HG021,WATER_SEWER_TRASH,I
+270412,DIRECT_CONCORDANCE_UCC,true,true,Trash/garbage collection (owned home),Trash/Garbage Collect Ownd,HG021,WATER_SEWER_TRASH,I
+270413,DIRECT_CONCORDANCE_UCC,true,true,Trash/garbage collection (owned vacation),Trash/Garbage Collect Ownv,HG021,WATER_SEWER_TRASH,I
+270414,DIRECT_CONCORDANCE_UCC,true,true,Trash/garbage collection (rented vacation),Trash/Garbage Collect Rntv,HG021,WATER_SEWER_TRASH,I
+270901,DIRECT_CONCORDANCE_UCC,true,true,Septic tank cleaning (renter),Septic Tank Cleaning Rntr,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+270902,DIRECT_CONCORDANCE_UCC,true,true,Septic tank cleaning (owned home),Septic Tank Cleaning Ownd,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+270903,PUBLISHED_CE_UCC,true,false,Septic tank cleaning (owned vacation),,,,
+270904,PUBLISHED_CE_UCC,true,false,Septic tank cleaning (rented vacation),,,,
+270905,CPI_ADJUSTED_PUMD_UCC,false,true,,Steam Heat,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+270906,PUBLISHED_CE_UCC,true,false,Septic tank cleaning (renter),,,,
+270907,DIRECT_CONCORDANCE_UCC,true,true,Septic tank cleaning (owner),Septic Tank Cleaning Ownr,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+280110,DIRECT_CONCORDANCE_UCC,true,true,Bathroom linens,Bathroom Linens,HH031,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+280120,DIRECT_CONCORDANCE_UCC,true,true,Bedroom linens,Bedroom Linens,HH032,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+280130,PUBLISHED_CE_UCC,true,false,Kitchen and dining room linens,,,,
+280140,DIRECT_CONCORDANCE_UCC,true,true,"Kitchen, dining room, and other linens",Kitchen/Dining Room/Othr Linens,HH033,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+280210,DIRECT_CONCORDANCE_UCC,true,true,Curtains and draperies,Curtains And Drapes,HH021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+280220,DIRECT_CONCORDANCE_UCC,true,true,Slipcovers and decorative pillows,Slipcovers/Decorative Pillows,HJ021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+280230,PUBLISHED_CE_UCC,true,false,"Sewing materials for slipcovers, curtains, other",,,,
+280900,PUBLISHED_CE_UCC,true,false,Other linens,,,,
+290110,DIRECT_CONCORDANCE_UCC,true,true,Mattresses and springs,Mattress And Springs,HJ011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290120,DIRECT_CONCORDANCE_UCC,true,true,Other bedroom furniture,Other Bedroom Furniture,HJ012,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290210,DIRECT_CONCORDANCE_UCC,true,true,Sofas,Sofas,HJ021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290310,DIRECT_CONCORDANCE_UCC,true,true,Living room chairs,Living Room Chairs,HJ022,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290320,DIRECT_CONCORDANCE_UCC,true,true,Living room tables,Living Room Tables,HJ023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290410,DIRECT_CONCORDANCE_UCC,true,true,Kitchen and dining room furniture,Kitchen/Dining Room Furniture,HJ024,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290420,DIRECT_CONCORDANCE_UCC,true,true,Infants' furniture,Infants Furniture,HJ031,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290430,DIRECT_CONCORDANCE_UCC,true,true,Outdoor furniture,Outdoor Furniture,HJ032,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+290440,DIRECT_CONCORDANCE_UCC,true,true,"Wall units, cabinets, and other furniture","Wall Units, Cabinets, Occas Furn",HJ033,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300111,DIRECT_CONCORDANCE_UCC,true,true,Refrigerators and freezers (renter),Purch/Inst Refrig/Freezer Rntr,HK011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300112,DIRECT_CONCORDANCE_UCC,true,true,Refrigerators and freezers (owned home),Purch/Inst Refrig/Freezer Ownd,HK011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300211,PUBLISHED_CE_UCC,true,false,Washing machines (renter),,,,
+300212,PUBLISHED_CE_UCC,true,false,Washing machines (owned home),,,,
+300216,DIRECT_CONCORDANCE_UCC,true,true,Clothes washers or dryers (renter),Purch/Inst Clths Washr/Dryr Rntr,HK012,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300217,DIRECT_CONCORDANCE_UCC,true,true,Clothes washers or dryers (owned home),Purch/Inst Clths Washr/Dryr Ownd,HK012,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300221,PUBLISHED_CE_UCC,true,false,Clothes dryers (renter),,,,
+300222,PUBLISHED_CE_UCC,true,false,Clothes dryers (owned home),,,,
+300311,DIRECT_CONCORDANCE_UCC,true,true,Cooking stoves and ovens (renter),"Stoves, Ovens Rntr",HK013,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300312,DIRECT_CONCORDANCE_UCC,true,true,Cooking stoves and ovens (owned home),"Stoves, Ovens Ownd",HK013,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300321,DIRECT_CONCORDANCE_UCC,true,true,Microwave ovens (renter),Microwave Ovens Rntr,HK014,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300322,DIRECT_CONCORDANCE_UCC,true,true,Microwave ovens (owned home),Microwave Ovens Ownd,HK014,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300331,DIRECT_CONCORDANCE_UCC,true,true,Portable dishwashers (renter),Purch/Inst Port Dishwasher Rntr,HK090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300332,DIRECT_CONCORDANCE_UCC,true,true,Portable dishwashers (owned home),Purch/Inst Port Dishwasher Ownd,HK090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300411,DIRECT_CONCORDANCE_UCC,true,true,Window air conditioners (renter),Purch/Inst Window A/C Rntr,HK023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300412,DIRECT_CONCORDANCE_UCC,true,true,Window air conditioners (owned home),Purch/Inst Window A/C Ownd,HK023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+300900,PUBLISHED_CE_UCC,true,false,Miscellaneous household appliances,,,,
+310140,DIRECT_CONCORDANCE_UCC,true,true,Televisions,Televisions,RA011,RECREATION,I
+310210,DIRECT_CONCORDANCE_UCC,true,true,VCR's and video disc players,Vcrs/Video Disc Players,RA031,RECREATION,I
+310220,DIRECT_CONCORDANCE_UCC,true,true,"Video cassettes, tapes, and discs",Video Cassettes/Tapes/Discs,RA041,RECREATION,D
+310230,PUBLISHED_CE_UCC,true,false,Video game hardware and software,,,,
+310231,DIRECT_CONCORDANCE_UCC,true,true,Video game software,Video Game Software,RE012,RECREATION,I
+310232,DIRECT_CONCORDANCE_UCC,true,true,Video game hardware and accessories,Video Game Hardware/ Accessories,RE012,RECREATION,I
+310240,PUBLISHED_CE_UCC,true,false,"Streaming, downloading video",,,,
+310241,CPI_ADJUSTED_PUMD_UCC,false,true,,Streaming Video Files,RA042,RECREATION,D
+310242,CPI_ADJUSTED_PUMD_UCC,false,true,,Downloading Video Files,RA041,RECREATION,D
+310243,PUBLISHED_CE_UCC,true,false,"Rental, streaming, and downloading videos",,,,
+310311,PUBLISHED_CE_UCC,true,false,Radios,,,,
+310312,DIRECT_CONCORDANCE_UCC,true,true,Phonographs,Phonographs,RA051,RECREATION,D
+310313,PUBLISHED_CE_UCC,true,false,Tape recorders and players,,,,
+310314,DIRECT_CONCORDANCE_UCC,true,true,Personal digital audio players,Digital Audio Players,RA051,RECREATION,I
+310315,DIRECT_CONCORDANCE_UCC,true,true,Digital media players and recorders,Digital Media Players & Recorders,RA031,RECREATION,D
+310316,DIRECT_CONCORDANCE_UCC,true,true,"Stereos, radios, speakers, and sound components including those in vehicles",Radios/Speakers/Sound Comp Systms,RA051,RECREATION,I
+310320,PUBLISHED_CE_UCC,true,false,Sound components and component systems,,,,
+310331,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous sound equipment,Misc Sound Equipment,RA051,RECREATION,D
+310332,DIRECT_CONCORDANCE_UCC,true,true,Sound equipment accessories,Sound Equip Accessories,RA051,RECREATION,D
+310334,DIRECT_CONCORDANCE_UCC,true,true,Satellite dishes,Satellite Dishes,RA031,RECREATION,I
+310335,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous video equipment,Misc Video Equipment,RA031,RECREATION,D
+310340,DIRECT_CONCORDANCE_UCC,true,true,"CDs, records, and audio tapes","Records,Cds,Audio Tapes",RA061,RECREATION,I
+310350,DIRECT_CONCORDANCE_UCC,true,true,Streaming and downloading audio,Streaming/Downloading Audio,RA061,RECREATION,I
+310400,DIRECT_CONCORDANCE_UCC,true,true,"Applications, games, and ringtones for handheld devices",Apps/Games/Ringtones For Devices,EE021,EDUCATION_COMMUNICATION,I
+310900,CPI_ADJUSTED_PUMD_UCC,false,true,,Access. For Electronic Equip.,RA090,RECREATION,D
+320111,DIRECT_CONCORDANCE_UCC,true,true,"Floor coverings, nonpermanent",Floor Coverings (Non-Perm.),HH011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320120,DIRECT_CONCORDANCE_UCC,true,true,Window coverings,Window Coverings,HH022,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320130,DIRECT_CONCORDANCE_UCC,true,true,Infants' equipment,Infants Equipment,GE013,OTHER_GOODS_SERVICES,D
+320140,DIRECT_CONCORDANCE_UCC,true,true,Laundry and cleaning equipment,Laundry And Cleaning Equip.,HN012,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320150,DIRECT_CONCORDANCE_UCC,true,true,Outdoor equipment,Barbeque Grills And Outdoor Equip,HM021,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320163,PUBLISHED_CE_UCC,true,false,Wall-to-wall carpet (replacement)(renter),,,,
+320220,PUBLISHED_CE_UCC,true,false,Lamps and lighting fixtures,,,,
+320221,DIRECT_CONCORDANCE_UCC,true,true,"Lamps, lighting fixtures, and ceiling fans",Lamps/Light Fixtures/Ceiling Fans,HL011,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320232,DIRECT_CONCORDANCE_UCC,true,true,Telephones and accessories,Telephones And Accessories,EE041,EDUCATION_COMMUNICATION,I
+320233,DIRECT_CONCORDANCE_UCC,true,true,Clocks and other household decorative items,Clocks And Other Hh Decor Items,HL012,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320310,PUBLISHED_CE_UCC,true,false,Plastic dinnerware,,,,
+320320,PUBLISHED_CE_UCC,true,false,China and other dinnerware,,,,
+320330,DIRECT_CONCORDANCE_UCC,true,true,Flatware,Flatware,HL032,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320340,PUBLISHED_CE_UCC,true,false,Glassware,,,,
+320345,DIRECT_CONCORDANCE_UCC,true,true,"Dinnerware, glassware, and serving pieces",Dishes/Cups/Glasses/Serving Piecs,HL031,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320350,PUBLISHED_CE_UCC,true,false,Silver serving pieces,,,,
+320360,PUBLISHED_CE_UCC,true,false,Other serving pieces,,,,
+320370,DIRECT_CONCORDANCE_UCC,true,true,Nonelectric cookware,Nonelectric Cookware,HL041,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320380,DIRECT_CONCORDANCE_UCC,true,true,Tableware and nonelectric kitchenware,Tableware/Non-Elec. Kitware,HL042,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320410,DIRECT_CONCORDANCE_UCC,true,true,Lawn and garden equipment,Lawn And Garden Equipment,HM021,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320420,DIRECT_CONCORDANCE_UCC,true,true,Power tools,Power Tools,HM012,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320430,DIRECT_CONCORDANCE_UCC,true,true,Other hardware,Other Hardware,HM013,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320511,DIRECT_CONCORDANCE_UCC,true,true,Electric floor cleaning equipment,Electric Floor Cleaning Equip,HK021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320512,DIRECT_CONCORDANCE_UCC,true,true,Sewing machines,Sewing Machines,RE021,RECREATION,I
+320521,DIRECT_CONCORDANCE_UCC,true,true,Small electric kitchen appliances,Small Electric Kitchen Appliances,HK022,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320522,DIRECT_CONCORDANCE_UCC,true,true,Portable heating and cooling equipment,Portable Heating/Cooling Equip,HK023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320611,DIRECT_CONCORDANCE_UCC,true,true,"Material for insulation, other maintenance, and repair",Constrct Mat-Rntr/Udr Cn/Sec Hm,HM013,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320612,DIRECT_CONCORDANCE_UCC,true,true,"Material for insulation, other maintenance, and repair",Construction Mat Ownd,HM013,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320613,PUBLISHED_CE_UCC,true,false,"Material for insulation, other maintenance, and repair",,,,
+320621,PUBLISHED_CE_UCC,true,false,Material for hard surface flooring,,,,
+320622,PUBLISHED_CE_UCC,true,false,"Materials for hard surface flooring, repair and",,,,
+320623,PUBLISHED_CE_UCC,true,false,Materials for hard surface flooring,,,,
+320624,DIRECT_CONCORDANCE_UCC,true,true,"Flooring installation, repair, and replacement",Flooring Inst/Rep/Repl Rntr,HH011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320625,DIRECT_CONCORDANCE_UCC,true,true,"Flooring installation, repair, and replacement",Flooring Inst/Rep/Repl Ownd,HH011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320626,PUBLISHED_CE_UCC,true,false,"Flooring installation, repair, and replacement",,,,
+320631,DIRECT_CONCORDANCE_UCC,true,true,Material for landscape maintenance,Lndscping Mat-Rntr/Udr Cn/Sc Hm,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320632,DIRECT_CONCORDANCE_UCC,true,true,Materials for landscaping maintenance,Landscaping Materials Ownd,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320633,PUBLISHED_CE_UCC,true,false,Materials for landscaping maintenance,,,,
+320901,DIRECT_CONCORDANCE_UCC,true,true,Office furniture for home use,Office Furniture Home Use,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320902,DIRECT_CONCORDANCE_UCC,true,true,Hand tools,Hand Tools,HM014,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320903,DIRECT_CONCORDANCE_UCC,true,true,Indoor plants and fresh flowers,"Indoor Plants, Fresh Flowers",HL021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+320904,DIRECT_CONCORDANCE_UCC,true,true,Closet and storage items,Closet And Storage Items,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+320905,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous household equipment and parts,Misc. Household Equip/Parts,HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+330110,PUBLISHED_CE_UCC,true,false,Soaps and detergents,,,,
+330119,DIRECT_CONCORDANCE_UCC,true,true,Laundry and cleaning products,Laundry And Cleaning Products,HN011,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+330210,PUBLISHED_CE_UCC,true,false,Other laundry cleaning products,,,,
+330310,DIRECT_CONCORDANCE_UCC,true,true,"Cleansing and toilet tissue, paper towels, and napkins",Paper Towels/Napkins/Toilet Tissu,HN021,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+330410,DIRECT_CONCORDANCE_UCC,true,true,"Stationery, stationery supplies, and gift wrap","Stationery, Giftwrap, Etc.",GE011,OTHER_GOODS_SERVICES,D
+330510,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous household products,Misc Household Products,HN031,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+330511,DIRECT_CONCORDANCE_UCC,true,true,Termite/pest control products,Mat For Termte/Pst Cntrl Maintce,HM022,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+330610,DIRECT_CONCORDANCE_UCC,true,true,Lawn and garden supplies,Lawn And Garden Supplies,HM022,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+340110,DIRECT_CONCORDANCE_UCC,true,true,Postage,Postage,EC011,EDUCATION_COMMUNICATION,D
+340120,DIRECT_CONCORDANCE_UCC,true,true,Delivery services,Delivery Services,EC021,EDUCATION_COMMUNICATION,D
+340210,PUBLISHED_CE_UCC,true,false,Babysitting and childcare,,,,
+340211,PUBLISHED_CE_UCC,true,false,Babysitting and child care in your own home,,,,
+340212,PUBLISHED_CE_UCC,true,false,Babysitting and child care in someone else's home,,,,
+340310,DIRECT_CONCORDANCE_UCC,true,true,Housekeeping services,Domestic Service,HP011,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340410,DIRECT_CONCORDANCE_UCC,true,true,Gardening and lawn care service,Gardening/Lawn Care Service,HP021,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340420,DIRECT_CONCORDANCE_UCC,true,true,Water softening services,Water Softening Service,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340421,DIRECT_CONCORDANCE_UCC,true,true,Water softening services (owner),Water Softening Service Ownd,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340422,DIRECT_CONCORDANCE_UCC,true,true,Water softening services (renter),Water Softening Service Rntr,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340510,DIRECT_CONCORDANCE_UCC,true,true,"Moving, storage, and freight","Moving, Storage,Freight",HP031,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340520,DIRECT_CONCORDANCE_UCC,true,true,"Household laundry and dry cleaning, sent out (nonclothing) not coin-operated","Hshld Lndry,Drycln Not Coin-Op",GD031,OTHER_GOODS_SERVICES,D
+340530,DIRECT_CONCORDANCE_UCC,true,true,Coin-operated household laundry and dry cleaning (nonclothing),"Coin-Op Hshld Lndry, Dry Cln",GD031,OTHER_GOODS_SERVICES,D
+340610,DIRECT_CONCORDANCE_UCC,true,true,"Repair of televisions, radio, and sound equipment",Repair Of Tv/Radio/Sound Equip,RA090,RECREATION,I
+340620,DIRECT_CONCORDANCE_UCC,true,true,"Appliance repair, including service center",Repair Of Household Appliances,HP041,HOUSEHOLD_FURNISHINGS_OPERATIONS,D
+340630,DIRECT_CONCORDANCE_UCC,true,true,"Reupholstering, furniture repair",Reupholstery Of Furniture,HP042,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340901,DIRECT_CONCORDANCE_UCC,true,true,"Repairs/rentals of lawn and garden equipment, hand or power tools, and other household equipment","Rental/Repair-Tools,Lawn/Garden",HM090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340902,DIRECT_CONCORDANCE_UCC,true,true,Rental of televisions,Rental Of Televisions,RA090,RECREATION,I
+340903,DIRECT_CONCORDANCE_UCC,true,true,Other home services,Misc. Home Services,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340904,DIRECT_CONCORDANCE_UCC,true,true,Rental of furniture,Rental Of Furniture,HJ090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340905,DIRECT_CONCORDANCE_UCC,true,true,"Rental of VCR, radio, and sound equipment",Rental Of Vcr/Radio/Sound Equip,RA090,RECREATION,I
+340906,DIRECT_CONCORDANCE_UCC,true,true,"Care for elderly, invalids, handicapped, etc.","Care Of Invalids, Elderly, Etc",MD031,MEDICAL_CARE,I
+340907,DIRECT_CONCORDANCE_UCC,true,true,Appliance rentals,Rental Of Household Equipment,HK090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340908,DIRECT_CONCORDANCE_UCC,true,true,Rental of office equipment for nonbusiness use,Rntl Off Equip Non-Bus Use,EE090,EDUCATION_COMMUNICATION,I
+340910,DIRECT_CONCORDANCE_UCC,true,true,Adult day care centers,Adult Day Care Centers,MD022,MEDICAL_CARE,I
+340911,DIRECT_CONCORDANCE_UCC,true,true,Management and upkeep services for security,Mngmt/Spec Ser/Security Ownd,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340912,PUBLISHED_CE_UCC,true,false,Management and upkeep services for security,,,,
+340913,PUBLISHED_CE_UCC,true,false,Repair of miscellaneous household equipment and furnishings,,,,
+340914,DIRECT_CONCORDANCE_UCC,true,true,Services for termite/pest control,Serv For Termt/Pst Cntrl,HP090,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+340915,PUBLISHED_CE_UCC,true,false,Home security system service fees,,,,
+350110,DIRECT_CONCORDANCE_UCC,true,true,Tenant's insurance,Renters Insurance,HD011,SHELTER,I
+360110,DIRECT_CONCORDANCE_UCC,true,true,Men's suits,Mens Suits,AA011,APPAREL,I
+360120,DIRECT_CONCORDANCE_UCC,true,true,Men's sportcoats and tailored jackets,Mens Sportcoats/Tailored Jackets,AA012,APPAREL,D
+360210,DIRECT_CONCORDANCE_UCC,true,true,Men's coats and jackets,Mens Coats And Jackets,AA013,APPAREL,D
+360311,PUBLISHED_CE_UCC,true,false,Men's underwear,,,,
+360312,PUBLISHED_CE_UCC,true,false,Men's hosiery,,,,
+360319,DIRECT_CONCORDANCE_UCC,true,true,"Men's underwear, hosiery, nightwear, and swimwear","Mens Underwear, Hosiery, Nightwea",AA021,APPAREL,D
+360320,PUBLISHED_CE_UCC,true,false,Men's nightwear,,,,
+360330,DIRECT_CONCORDANCE_UCC,true,true,Men's accessories,Mens Accessories,AA022,APPAREL,D
+360340,PUBLISHED_CE_UCC,true,false,Men's sweaters and vests,,,,
+360350,PUBLISHED_CE_UCC,true,false,Men's active sportswear,,,,
+360360,PUBLISHED_CE_UCC,true,false,Men's swimwear,,,,
+360410,PUBLISHED_CE_UCC,true,false,Men's shirts,,,,
+360420,DIRECT_CONCORDANCE_UCC,true,true,"Men's shirts, sweaters, and vests",Mens Sweaters/Shirts/Vests,AA033,APPAREL,D
+360513,DIRECT_CONCORDANCE_UCC,true,true,Men's pants and shorts,Mens Pants And Shorts,AA041,APPAREL,D
+360901,DIRECT_CONCORDANCE_UCC,true,true,Men's uniforms,Mens Uniforms,AA090,APPAREL,D
+360902,DIRECT_CONCORDANCE_UCC,true,true,Men's costumes,Mens Costumes,AA090,APPAREL,D
+370110,DIRECT_CONCORDANCE_UCC,true,true,Boys' coats and jackets,Boys Coats And Jackets,AB011,APPAREL,D
+370120,PUBLISHED_CE_UCC,true,false,Boys' sweaters,,,,
+370125,DIRECT_CONCORDANCE_UCC,true,true,Boys' shirts and sweaters,Boys Sweaters/Shirts/Vests,AB012,APPAREL,D
+370130,PUBLISHED_CE_UCC,true,false,Boys' shirts,,,,
+370211,PUBLISHED_CE_UCC,true,false,Boys' underwear,,,,
+370212,PUBLISHED_CE_UCC,true,false,Boys' nightwear,,,,
+370213,PUBLISHED_CE_UCC,true,false,Boys' hosiery,,,,
+370219,DIRECT_CONCORDANCE_UCC,true,true,"Boy's underwear, hosiery, nightwear, and swimwear","Boys Underwear, Nightwear, Hosier",AB013,APPAREL,D
+370220,DIRECT_CONCORDANCE_UCC,true,true,Boys' accessories,Boys Accessories,AB013,APPAREL,D
+370311,PUBLISHED_CE_UCC,true,false,"Boys' suits, sportcoats, and vests",,,,
+370314,PUBLISHED_CE_UCC,true,false,Boys' pants and shorts,,,,
+370319,DIRECT_CONCORDANCE_UCC,true,true,"Boy's suits, sportscoats, pants, and shorts","Boys Suits, Sport Coats, Pants, A",AB014,APPAREL,D
+370360,PUBLISHED_CE_UCC,true,false,Boys' swimwear,,,,
+370901,PUBLISHED_CE_UCC,true,false,Boys' uniforms and active sportswear,,,,
+370902,DIRECT_CONCORDANCE_UCC,true,true,Boys' costumes,Boys Costumes,AB090,APPAREL,D
+370903,DIRECT_CONCORDANCE_UCC,true,true,Boys' uniforms,Boys Uniforms,AB090,APPAREL,D
+370904,PUBLISHED_CE_UCC,true,false,Boys' active sportswear,,,,
+380110,DIRECT_CONCORDANCE_UCC,true,true,Women's coats and jackets,Womens Coats And Jackets,AC011,APPAREL,D
+380210,DIRECT_CONCORDANCE_UCC,true,true,Women's dresses,Womens Dresses,AC021,APPAREL,D
+380311,PUBLISHED_CE_UCC,true,false,Women's sportcoats and tailored jackets,,,,
+380312,PUBLISHED_CE_UCC,true,false,Women's vests and sweaters,,,,
+380313,PUBLISHED_CE_UCC,true,false,"Women's shirts, tops, blouses",,,,
+380315,PUBLISHED_CE_UCC,true,false,"Women's sweaters, shirts, tops, and vests",,,,
+380319,DIRECT_CONCORDANCE_UCC,true,true,Women's tops,Womens Tops,AC031,APPAREL,D
+380320,PUBLISHED_CE_UCC,true,false,Women's skirts,,,,
+380333,PUBLISHED_CE_UCC,true,false,Women's pants and shorts,,,,
+380339,DIRECT_CONCORDANCE_UCC,true,true,"Women's skirts, pants, and shorts","Womens Skirts, Pants, And Shorts",AC032,APPAREL,D
+380340,PUBLISHED_CE_UCC,true,false,Women's active sportswear,,,,
+380360,PUBLISHED_CE_UCC,true,false,Women's swimwear,,,,
+380410,PUBLISHED_CE_UCC,true,false,Women's sleepwear,,,,
+380420,PUBLISHED_CE_UCC,true,false,Women's undergarments,,,,
+380429,DIRECT_CONCORDANCE_UCC,true,true,"Women's undergarments, nightwear, and swimwear","Womens Undergarments, Nightwear,",AC041,APPAREL,D
+380430,DIRECT_CONCORDANCE_UCC,true,true,Women's hosiery,Womens Hosiery,AC042,APPAREL,D
+380510,DIRECT_CONCORDANCE_UCC,true,true,Women's suits,Womens Suits,AC033,APPAREL,D
+380901,DIRECT_CONCORDANCE_UCC,true,true,Women's accessories,Womens Accessories,AC042,APPAREL,D
+380902,PUBLISHED_CE_UCC,true,false,Women's uniforms,,,,
+380903,PUBLISHED_CE_UCC,true,false,Women's costumes,,,,
+380909,DIRECT_CONCORDANCE_UCC,true,true,Women's costumes and uniforms,Womens Costumes And Uniforms,AC090,APPAREL,D
+390110,DIRECT_CONCORDANCE_UCC,true,true,Girls' coats and jackets,Girls Coats And Jackets,AD011,APPAREL,D
+390120,DIRECT_CONCORDANCE_UCC,true,true,Girls' dresses and suits,"Girls Dresses, Suits",AD012,APPAREL,D
+390210,DIRECT_CONCORDANCE_UCC,true,true,"Girls' shirts, blouses, sweaters, and vests",Girls Shirts/Blouses/Sweaters,AD013,APPAREL,D
+390223,DIRECT_CONCORDANCE_UCC,true,true,"Girls' skirts, pants, and shorts","Girls Skirts, Pants, And Shorts",AD014,APPAREL,D
+390230,PUBLISHED_CE_UCC,true,false,Girls' active sportswear,,,,
+390310,PUBLISHED_CE_UCC,true,false,Girls' underwear and sleepwear,,,,
+390319,DIRECT_CONCORDANCE_UCC,true,true,"Girl's underwear, nightwear, hosiery, and swimwear","Girls Underwear, Nightwear, Hosie",AD016,APPAREL,D
+390321,PUBLISHED_CE_UCC,true,false,Girls' hosiery,,,,
+390322,DIRECT_CONCORDANCE_UCC,true,true,Girls' accessories,Girls Accessories,AD016,APPAREL,D
+390360,PUBLISHED_CE_UCC,true,false,Girls' swimwear,,,,
+390901,DIRECT_CONCORDANCE_UCC,true,true,Girls' uniforms,Girls Uniforms,AD090,APPAREL,D
+390902,DIRECT_CONCORDANCE_UCC,true,true,Girls' costumes,Girls Costumes,AD090,APPAREL,D
+400110,DIRECT_CONCORDANCE_UCC,true,true,Men's footwear,Mens Footwear,AE011,APPAREL,D
+400210,DIRECT_CONCORDANCE_UCC,true,true,Boys' footwear,Boys Footwear,AE021,APPAREL,D
+400220,DIRECT_CONCORDANCE_UCC,true,true,Girls' footwear,Girls Footwear,AE022,APPAREL,D
+400310,DIRECT_CONCORDANCE_UCC,true,true,Women's footwear,Womens Footwear,AE031,APPAREL,D
+410110,PUBLISHED_CE_UCC,true,false,"Infant coats, jackets, and snowsuits",,,,
+410119,DIRECT_CONCORDANCE_UCC,true,true,"Infant's and toddler's outerwear, dresses, nightwear, and accessories",Infants & Toddlers Outer/Play/Dre,AF011,APPAREL,D
+410120,PUBLISHED_CE_UCC,true,false,Infant dresses and outerwear,,,,
+410130,DIRECT_CONCORDANCE_UCC,true,true,Infant underwear,Infant Undergarments,AF012,APPAREL,D
+410140,PUBLISHED_CE_UCC,true,false,Infant nightwear and loungewear,,,,
+410901,PUBLISHED_CE_UCC,true,false,Infant accessories,,,,
+420110,PUBLISHED_CE_UCC,true,false,Material for making clothes,,,,
+420115,DIRECT_CONCORDANCE_UCC,true,true,"Material and supplies for sewing, needlework, and quilting (includes household items)",Sewing/Ndlwrk/Quilt Matrls/Items,RE021,RECREATION,I
+420120,PUBLISHED_CE_UCC,true,false,Sewing patterns and notions,,,,
+430110,DIRECT_CONCORDANCE_UCC,true,true,Watches,Watches,AG011,APPAREL,I
+430120,DIRECT_CONCORDANCE_UCC,true,true,Jewelry,Jewelry,AG021,APPAREL,I
+430130,DIRECT_CONCORDANCE_UCC,true,true,Luggage,Luggage,GE012,OTHER_GOODS_SERVICES,D
+440110,DIRECT_CONCORDANCE_UCC,true,true,Shoe repair and other shoe services,"Shoe Repair, Oth Shoe Service",GD041,OTHER_GOODS_SERVICES,I
+440120,DIRECT_CONCORDANCE_UCC,true,true,Coin-operated apparel laundry and dry cleaning,Coin-Op Apparel Ldry/Dry Clng,GD031,OTHER_GOODS_SERVICES,I
+440130,DIRECT_CONCORDANCE_UCC,true,true,"Alteration, repair, and tailoring of apparel and accessories","Alter/Repair Of Apparel, Access",GD042,OTHER_GOODS_SERVICES,I
+440140,DIRECT_CONCORDANCE_UCC,true,true,Clothing rental,Clothing Rental,GD042,OTHER_GOODS_SERVICES,I
+440150,DIRECT_CONCORDANCE_UCC,true,true,Watch and jewelry repair,Watch And Jewelry Repair,GD043,OTHER_GOODS_SERVICES,I
+440210,DIRECT_CONCORDANCE_UCC,true,true,Apparel laundry and dry cleaning not coin-operated,Apparel Lndry/Dry Clng N/Coin-Op,GD031,OTHER_GOODS_SERVICES,I
+440900,DIRECT_CONCORDANCE_UCC,true,true,Clothing storage,Clothing Storage Outside The Home,GD031,OTHER_GOODS_SERVICES,I
+450110,DIRECT_CONCORDANCE_UCC,true,true,New cars,New Cars,TA011,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+450116,CPI_ADJUSTED_PUMD_UCC,false,true,,Trade-In Allowance/New Cars,TA011,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+450210,DIRECT_CONCORDANCE_UCC,true,true,New trucks,New Trucks,TA011,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+450216,CPI_ADJUSTED_PUMD_UCC,false,true,,Trade-In Allow/New Trucks,TA011,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+450220,DIRECT_CONCORDANCE_UCC,true,true,New motorcycles,New Motorcycles,TA012,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+450310,PUBLISHED_CE_UCC,true,false,Car lease payments,,,,
+450313,PUBLISHED_CE_UCC,true,false,Cash downpayment (car lease),,,,
+450314,PUBLISHED_CE_UCC,true,false,Termination fee (car lease),,,,
+450350,DIRECT_CONCORDANCE_UCC,true,true,Car/truck lease payments,Car/Truck Lease Payments,TA031,TRANSPORT_SERVICES,I
+450351,PUBLISHED_CE_UCC,true,false,Extra fees for car/truck lease,,,,
+450352,DIRECT_CONCORDANCE_UCC,true,true,Trade in allowance for car/truck lease,Tradein Allow For Car/Truck Lease,TA031,TRANSPORT_SERVICES,I
+450353,DIRECT_CONCORDANCE_UCC,true,true,Cash down payment car/truck lease,Cash Dwnpymnt For Car/Truck Lease,TA031,TRANSPORT_SERVICES,I
+450354,DIRECT_CONCORDANCE_UCC,true,true,Termination fee for car/truck lease,Termntion Fee For Car/Truck Lease,TA031,TRANSPORT_SERVICES,I
+450410,PUBLISHED_CE_UCC,true,false,Truck lease payments,,,,
+450413,PUBLISHED_CE_UCC,true,false,Cash downpayment (truck lease),,,,
+450414,PUBLISHED_CE_UCC,true,false,Termination fee (truck lease),,,,
+450900,DIRECT_CONCORDANCE_UCC,true,true,New aircraft,Aircraft,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+460110,DIRECT_CONCORDANCE_UCC,true,true,Used cars,Used Cars,TA021,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+460901,DIRECT_CONCORDANCE_UCC,true,true,Used trucks,Used Trucks,TA021,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+460902,DIRECT_CONCORDANCE_UCC,true,true,Used motorcycles,Used Motorcycles,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+460903,DIRECT_CONCORDANCE_UCC,true,true,Used aircraft,Used Aircraft,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+470111,DIRECT_CONCORDANCE_UCC,true,true,Gasoline,Gasoline,TB011;TB012;TB013;TB021;TB022,MOTOR_FUEL,I
+470112,DIRECT_CONCORDANCE_UCC,true,true,Diesel fuel,Diesel Fuel,TB021,MOTOR_FUEL,I
+470113,DIRECT_CONCORDANCE_UCC,true,true,Gasoline on out of town trips,Gasoline On Out Of Town Trips,TB011;TB012;TB013;TB021;TB022,MOTOR_FUEL,I
+470114,PUBLISHED_CE_UCC,true,false,Alternative fuels,,,,
+470211,DIRECT_CONCORDANCE_UCC,true,true,Motor oil,Motoroil,TC022,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+470212,DIRECT_CONCORDANCE_UCC,true,true,Motor oil on out of town trips,Motor Oil On Out Of Town Trips,TC022,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+470220,DIRECT_CONCORDANCE_UCC,true,true,"Coolant, brake fluid, transmission fluid, and other additives",Coolant/Additives/Brk/Trns Fld,TC022,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+470311,PUBLISHED_CE_UCC,true,false,Electric vehicle charging,,,,
+480100,DIRECT_CONCORDANCE_UCC,true,true,"Vehicle parts, accessories, fluid excluding tires",Veh Parts/Acc/Fluids Excl Tires,TC021;TC022,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+480110,DIRECT_CONCORDANCE_UCC,true,true,"Tires - purchased, replaced, and installed",Tires Purchased/Replaced/Install,TC011,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+480212,PUBLISHED_CE_UCC,true,false,Vehicle products and cleaning services,,,,
+480213,DIRECT_CONCORDANCE_UCC,true,true,"Parts, equipment, and accessories",Parts/Equip/Accessories,TC021,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+480214,PUBLISHED_CE_UCC,true,false,Vehicle audio equipment,,,,
+480215,PUBLISHED_CE_UCC,true,false,Vehicle video equipment,,,,
+490000,PUBLISHED_CE_UCC,true,false,Miscellaneous auto repair and servicing,,,,
+490100,DIRECT_CONCORDANCE_UCC,true,true,Vehicle maintenance/repair excluding tire purchase,Vehicle Maint/Rep Excl Tire Purch,TD011;TD021;TD031,TRANSPORT_SERVICES,I
+490110,PUBLISHED_CE_UCC,true,false,Body work and painting,,,,
+490211,PUBLISHED_CE_UCC,true,false,"Clutch, transmission repair",,,,
+490212,PUBLISHED_CE_UCC,true,false,Drive shaft and rear-end repair,,,,
+490221,PUBLISHED_CE_UCC,true,false,"Brake work, including adjustments",,,,
+490231,PUBLISHED_CE_UCC,true,false,Repair to steering or front-end,,,,
+490232,PUBLISHED_CE_UCC,true,false,Repair to engine cooling system,,,,
+490300,PUBLISHED_CE_UCC,true,false,Vehicle or engine repairs,,,,
+490311,PUBLISHED_CE_UCC,true,false,Motor tune up,,,,
+490312,PUBLISHED_CE_UCC,true,false,"Lube, oil change, and oil filters",,,,
+490313,PUBLISHED_CE_UCC,true,false,"Front end alignment, wheel balance, and rotation",,,,
+490314,PUBLISHED_CE_UCC,true,false,Shock absorber replacement,,,,
+490316,PUBLISHED_CE_UCC,true,false,Gas tank repair and replacement,,,,
+490318,PUBLISHED_CE_UCC,true,false,Repair tires and other repair work,,,,
+490319,PUBLISHED_CE_UCC,true,false,Vehicle air conditioning repair,,,,
+490411,PUBLISHED_CE_UCC,true,false,Exhaust system repair,,,,
+490412,PUBLISHED_CE_UCC,true,false,Electrical system repair,,,,
+490413,PUBLISHED_CE_UCC,true,false,"Motor repair, replacement",,,,
+490900,DIRECT_CONCORDANCE_UCC,true,true,Auto repair service policy,Auto Repair Service Policy,TD090,TRANSPORT_SERVICES,I
+500110,DIRECT_CONCORDANCE_UCC,true,true,Vehicle insurance,Vehicle Insurance,TE011,TRANSPORT_SERVICES,I
+510110,PUBLISHED_CE_UCC,true,false,Automobile finance charges,,,,
+510115,CPI_ADJUSTED_PUMD_UCC,false,true,,Veh Registration Incl Prop Tax,TF011,TRANSPORT_SERVICES,I
+510901,PUBLISHED_CE_UCC,true,false,Truck finance charges,,,,
+510902,PUBLISHED_CE_UCC,true,false,Motorcycle and plane finance charges,,,,
+520110,PUBLISHED_CE_UCC,true,false,State and local vehicle registration,,,,
+520111,PUBLISHED_CE_UCC,true,false,"Vehicle registrations, state",,,,
+520112,PUBLISHED_CE_UCC,true,false,"Vehicle registrations, local",,,,
+520310,DIRECT_CONCORDANCE_UCC,true,true,Drivers' licenses,Drivers License,TF011,TRANSPORT_SERVICES,I
+520410,DIRECT_CONCORDANCE_UCC,true,true,Vehicle inspections,Vehicle Inspection,TD021,TRANSPORT_SERVICES,I
+520511,PUBLISHED_CE_UCC,true,false,Auto rental,,,,
+520512,PUBLISHED_CE_UCC,true,false,"Auto rental, out-of-town trips",,,,
+520516,DIRECT_CONCORDANCE_UCC,true,true,Auto/truck rental,Auto/Truck Rental,TA041,TRANSPORT_SERVICES,I
+520517,DIRECT_CONCORDANCE_UCC,true,true,Auto/truck rental on out of town trips,Auto/Truck Rental Out-Of-Town Trp,TA041,TRANSPORT_SERVICES,I
+520521,PUBLISHED_CE_UCC,true,false,Truck rental,,,,
+520522,PUBLISHED_CE_UCC,true,false,"Truck rental, out-of-town trips",,,,
+520531,DIRECT_CONCORDANCE_UCC,true,true,"Parking fees in home city, excluding residence",Prkng Fee In Hme City Excl Rsdnc,TF031,TRANSPORT_SERVICES,I
+520532,DIRECT_CONCORDANCE_UCC,true,true,Parking fees on out of town trips,"Parking Fees, Out-Of-Town Trip",TF031,TRANSPORT_SERVICES,I
+520541,DIRECT_CONCORDANCE_UCC,true,true,Tolls or electronic toll passes,Tolls Or Electronic Toll Passes,TF031,TRANSPORT_SERVICES,I
+520542,DIRECT_CONCORDANCE_UCC,true,true,Tolls on out of town trips,Tolls On Out-Of-Town Trips,TF031,TRANSPORT_SERVICES,I
+520550,DIRECT_CONCORDANCE_UCC,true,true,Towing charges,Towing Charges,TD021,TRANSPORT_SERVICES,I
+520560,PUBLISHED_CE_UCC,true,false,Global positioning services,,,,
+520901,DIRECT_CONCORDANCE_UCC,true,true,Docking and landing fees,Docking/Landing Fees,TF090,TRANSPORT_SERVICES,I
+520902,DIRECT_CONCORDANCE_UCC,true,true,Motorcycle rental,Motorcycle Rental,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+520903,DIRECT_CONCORDANCE_UCC,true,true,Aircraft rental,Aircraft Rental,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+520904,DIRECT_CONCORDANCE_UCC,true,true,Rental noncamper trailers,Rental Non-Camper Trailer,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+520905,DIRECT_CONCORDANCE_UCC,true,true,Motorcycle rental on out of town trips,Motorcycle Rental Out-Of-Town,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+520906,DIRECT_CONCORDANCE_UCC,true,true,Aircraft rental on out of town trips,Aircraft Rental/Out-Of-Town Tr,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+520907,DIRECT_CONCORDANCE_UCC,true,true,Boat and trailer rentals on out of town trips,Boat/Trailer Rent Out Of Town,RC090,RECREATION,I
+530110,DIRECT_CONCORDANCE_UCC,true,true,Airline fares,Airline Fares,TG011,TRANSPORT_SERVICES,I
+530210,DIRECT_CONCORDANCE_UCC,true,true,Intercity bus fares,Intercity Bus Fares,TG021,TRANSPORT_SERVICES,I
+530311,DIRECT_CONCORDANCE_UCC,true,true,Intracity mass transit fares,Intracity Mass Transit Fares,TG031,TRANSPORT_SERVICES,I
+530312,DIRECT_CONCORDANCE_UCC,true,true,Local transportation on out of town trips,Local Trans. Out Of Town Trips,TG031,TRANSPORT_SERVICES,I
+530411,DIRECT_CONCORDANCE_UCC,true,true,Taxi fares and limousine services on trips,Taxi Fares On Trips,TG032,TRANSPORT_SERVICES,I
+530412,DIRECT_CONCORDANCE_UCC,true,true,Taxi fares and limousine services,Taxi Fares And Limousine Service,TG032,TRANSPORT_SERVICES,I
+530510,DIRECT_CONCORDANCE_UCC,true,true,Intercity train fares,Intercity Train Fares,TG022,TRANSPORT_SERVICES,I
+530901,DIRECT_CONCORDANCE_UCC,true,true,Ship fares,Ship Fares,TG023,TRANSPORT_SERVICES,I
+530902,DIRECT_CONCORDANCE_UCC,true,true,School bus,School Bus,TG090,TRANSPORT_SERVICES,I
+540000,DIRECT_CONCORDANCE_UCC,true,true,Prescription drugs,Prescription Drugs,MF011,MEDICAL_CARE,I
+550110,DIRECT_CONCORDANCE_UCC,true,true,Eyeglasses and contact lenses,Eyeglasses And Contact Lenses,MC031,MEDICAL_CARE,I
+550210,DIRECT_CONCORDANCE_UCC,true,true,Nonprescription drugs,Over-The-Counter Drugs,MF021,MEDICAL_CARE,D
+550219,DIRECT_CONCORDANCE_UCC,true,true,Vitamins and supplements,Vitamins And Supplements,MF021,MEDICAL_CARE,D
+550310,DIRECT_CONCORDANCE_UCC,true,true,Topicals and dressings,Topicals And Dressings,MF021;MG011,MEDICAL_CARE,D
+550320,PUBLISHED_CE_UCC,true,false,Medical equipment for general use,,,,
+550330,PUBLISHED_CE_UCC,true,false,Supportive and convalescent medical equipment,,,,
+550340,DIRECT_CONCORDANCE_UCC,true,true,Hearing aids,Hearing Aids,MC041,MEDICAL_CARE,I
+550350,DIRECT_CONCORDANCE_UCC,true,true,Purchase/rental of supportive and convalescent medical equipment,Purch/Rental Support Med Equip,MG012;MG013;MG090,MEDICAL_CARE,I
+550410,PUBLISHED_CE_UCC,true,false,Nonprescription vitamins,,,,
+560110,DIRECT_CONCORDANCE_UCC,true,true,Physician's services,Physicians Services,MC011,MEDICAL_CARE,I
+560210,DIRECT_CONCORDANCE_UCC,true,true,Dental services,Dental Services,MC021,MEDICAL_CARE,I
+560310,DIRECT_CONCORDANCE_UCC,true,true,Eyecare services,Eyecare Services,MC031,MEDICAL_CARE,I
+560330,DIRECT_CONCORDANCE_UCC,true,true,Lab tests and x-rays,"Lab Tests, X-Rays",MC041,MEDICAL_CARE,I
+560400,PUBLISHED_CE_UCC,true,false,Service by professionals other than physician,,,,
+560410,DIRECT_CONCORDANCE_UCC,true,true,Non physician services inside the home,Non Physcns Servc Inside Home,MD031,MEDICAL_CARE,I
+560420,DIRECT_CONCORDANCE_UCC,true,true,Non physician services outside the home,Non Physcns Servc Outside Home,MC041,MEDICAL_CARE,I
+570111,DIRECT_CONCORDANCE_UCC,true,true,Hospital room and services,Hospital Rooms & Services,MD011,MEDICAL_CARE,I
+570220,DIRECT_CONCORDANCE_UCC,true,true,Care in convalescent or nursing home,Care In Convl Or Nursing Home,MD021,MEDICAL_CARE,I
+570230,DIRECT_CONCORDANCE_UCC,true,true,Other medical care services,Other Medical Care Service,MD011,MEDICAL_CARE,D
+570240,PUBLISHED_CE_UCC,true,false,Medical care in retirement community,,,,
+570901,DIRECT_CONCORDANCE_UCC,true,true,Rental of medical equipment,Rental Of Medical/Surgical Equip,MG090,MEDICAL_CARE,I
+570902,DIRECT_CONCORDANCE_UCC,true,true,Repair of medical equipment,Repair Of Medical Equipment,MG090,MEDICAL_CARE,D
+570903,DIRECT_CONCORDANCE_UCC,true,true,Rental of supportive and convalescent medical equipment,Rental Of Suportive/Conval Equip,MG090,MEDICAL_CARE,I
+580111,PUBLISHED_CE_UCC,true,false,Traditional fee for service health plan (not BCBS),,,,
+580112,PUBLISHED_CE_UCC,true,false,Traditional fee for service health plan (BCBS),,,,
+580113,PUBLISHED_CE_UCC,true,false,Preferred provider health plan (not BCBS),,,,
+580114,PUBLISHED_CE_UCC,true,false,Preferred provider health plan (BCBS),,,,
+580115,DIRECT_CONCORDANCE_UCC,true,true,Fee for service health plan (not BCBS),Fee For Serv Hlth Pln (No Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580116,DIRECT_CONCORDANCE_UCC,true,true,Fee for service health plan (BCBS),Fee For Serv Hlth Pln (Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580311,DIRECT_CONCORDANCE_UCC,true,true,Health maintenance organization (not BCBS),Hlth Maint. Org (No Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580312,DIRECT_CONCORDANCE_UCC,true,true,Health maintenance organization (BCBS),Hlth Maint. Org (Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580400,PUBLISHED_CE_UCC,true,false,Long term care insurance,,,,
+580401,DIRECT_CONCORDANCE_UCC,true,true,Long term care insurance (not BCBS),Long Term Care Ins (No Bcbs),MC041;MD021;MD022;MD031;ME041,MEDICAL_CARE,I
+580402,DIRECT_CONCORDANCE_UCC,true,true,Long term care insurance (BCBS),Long Term Care Ins (Bcbs),MC041;MD021;MD022;MD031;ME041,MEDICAL_CARE,I
+580411,DIRECT_CONCORDANCE_UCC,true,true,Dental care insurance (not BCBS),Long Term Care Ins (Bcbs),MC021;ME011,MEDICAL_CARE,I
+580412,DIRECT_CONCORDANCE_UCC,true,true,Dental care insurance (BCBS),Dental Care Ins (Bcbs),MC021;ME011,MEDICAL_CARE,I
+580421,DIRECT_CONCORDANCE_UCC,true,true,Prescription drug insurance (not BCBS),Prescript Drug Ins (No Bcbs),ME011;MF011,MEDICAL_CARE,I
+580422,DIRECT_CONCORDANCE_UCC,true,true,Prescription drug insurance (BCBS),Prescript Drug Ins (Bcbs),ME011;MF011,MEDICAL_CARE,I
+580431,DIRECT_CONCORDANCE_UCC,true,true,Vision care insurance (not BCBS),Vision Care Ins (No Bcbs),MC031;ME011,MEDICAL_CARE,I
+580432,DIRECT_CONCORDANCE_UCC,true,true,Vision care insurance (BCBS),Vision Care Ins (Bcbs),MC031;ME011,MEDICAL_CARE,I
+580441,DIRECT_CONCORDANCE_UCC,true,true,Other single service insurance (not BCBS),Oth Sngle Srvc Ins (No Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580442,DIRECT_CONCORDANCE_UCC,true,true,Other single service insurance (BCBS),Oth Sngle Srvc Ins (Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580901,DIRECT_CONCORDANCE_UCC,true,true,Medicare payments,Medicare Payments,MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580903,DIRECT_CONCORDANCE_UCC,true,true,Commercial medicare supplement (not BCBS),Coml Medicare Supplemnt (No Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580904,DIRECT_CONCORDANCE_UCC,true,true,Commercial medicare supplement (BCBS),Coml Medicare Supplement (Bcbs),MC011;MC021;MC031;MC041;MD011;MD021;MD031;ME011;MF011;MG013,MEDICAL_CARE,I
+580905,PUBLISHED_CE_UCC,true,false,Other health insurance (not BCBS),,,,
+580906,PUBLISHED_CE_UCC,true,false,Other health insurance (BCBS),,,,
+580907,DIRECT_CONCORDANCE_UCC,true,true,Medicare prescription drug premiums,Medicare Pres. Drug Premiums,ME041;MF011,MEDICAL_CARE,I
+580908,PUBLISHED_CE_UCC,true,false,Medicaid premiums,,,,
+580909,PUBLISHED_CE_UCC,true,false,Tricare/military premiums,,,,
+580910,PUBLISHED_CE_UCC,true,false,Children's Health Insurance Program (CHIP) premiums,,,,
+590110,PUBLISHED_CE_UCC,true,false,Newspapers,,,,
+590210,PUBLISHED_CE_UCC,true,false,Magazines,,,,
+590220,PUBLISHED_CE_UCC,true,false,Books through book clubs,,,,
+590230,DIRECT_CONCORDANCE_UCC,true,true,"Books, digital books, or book subscriptions","Books, Digital Books, Book Subscr",RG022,RECREATION,I
+590310,DIRECT_CONCORDANCE_UCC,true,true,"Newspaper, magazine by subscription",Magazine/Newspaper Subscription,RG012,RECREATION,I
+590410,DIRECT_CONCORDANCE_UCC,true,true,"Newspaper, magazine non-subscription",Magazine/Newspaper Single Copy,RG011,RECREATION,I
+590900,DIRECT_CONCORDANCE_UCC,true,true,Newsletters,Newsletters,RG090,RECREATION,D
+600110,DIRECT_CONCORDANCE_UCC,true,true,Outboard motors,Outboard Motor,RC011,RECREATION,I
+600121,DIRECT_CONCORDANCE_UCC,true,true,Boats without motor and boat trailers,Boat W/O Motor/Boat Trailers,RC012,RECREATION,I
+600122,DIRECT_CONCORDANCE_UCC,true,true,Trailer and other attachable campers,Trail/Oth Attachable Campers,RC012,RECREATION,I
+600132,DIRECT_CONCORDANCE_UCC,true,true,Purchase of boats with motor,Purchase Of Boat With Motor,RC011,RECREATION,I
+600133,DIRECT_CONCORDANCE_UCC,true,true,Purchase of boats and trailers,Purchase of Boats/Trailers,RC011;RC012,RECREATION,I
+600141,DIRECT_CONCORDANCE_UCC,true,true,Purchase of motorized campers,Purchase Of Motor Home,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+600142,DIRECT_CONCORDANCE_UCC,true,true,Purchase of other vehicles,Purchase Of Other Vehicle,RC011,RECREATION,I
+600151,DIRECT_CONCORDANCE_UCC,true,true,Purchase of motor homes and campers,"Purch Motor Home/Camper, fin.",RC012;TA090,,I
+600153,CPI_ADJUSTED_PUMD_UCC,false,true,,Trade Allow Motor Home/Camper,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+600210,DIRECT_CONCORDANCE_UCC,true,true,"Athletic gear, game tables, and exercise equipment",General Sport/Excercise Equip,RC021,RECREATION,I
+600310,DIRECT_CONCORDANCE_UCC,true,true,Bicycles,Bicycles,RC013,RECREATION,I
+600311,DIRECT_CONCORDANCE_UCC,true,true,Bike and E-scooter sharing or rental,Bike-Sharing/E-Scooters,TG031,TRANSPORT_SERVICES,I
+600315,PUBLISHED_CE_UCC,true,false,Scooters and other single-rider transportation,,,,
+600410,DIRECT_CONCORDANCE_UCC,true,true,Camping equipment,Camping Equipment,RC023,RECREATION,D
+600420,DIRECT_CONCORDANCE_UCC,true,true,Hunting and fishing equipment,"Hunting, Fishing Equipment",RC023,RECREATION,D
+600430,DIRECT_CONCORDANCE_UCC,true,true,Winter sports equipment,Winter Sport Equipment,RC021,RECREATION,I
+600901,DIRECT_CONCORDANCE_UCC,true,true,Water sports equipment,Water Sport Equipment,RC022,RECREATION,I
+600902,DIRECT_CONCORDANCE_UCC,true,true,Other sports equipment,Other Sport Equipment,RC021,RECREATION,I
+600903,DIRECT_CONCORDANCE_UCC,true,true,Global positioning system devices,Global Positioning System Device,EE042,EDUCATION_COMMUNICATION,D
+610110,DIRECT_CONCORDANCE_UCC,true,true,"Toys, games, arts and crafts, and tricycles",Toys Games Arts Crafts Tricycles,RE011,RECREATION,D
+610120,DIRECT_CONCORDANCE_UCC,true,true,Playground equipment,Playground Equipment,RE011,RECREATION,I
+610130,DIRECT_CONCORDANCE_UCC,true,true,Musical instruments and accessories,Music Instruments/Accessories,RE031,RECREATION,I
+610140,PUBLISHED_CE_UCC,true,false,Stamp and coin collecting,,,,
+610210,DIRECT_CONCORDANCE_UCC,true,true,Film,Film,RD011,RECREATION,I
+610220,DIRECT_CONCORDANCE_UCC,true,true,Other photographic supplies,Other Photographic Supplies,RD011,RECREATION,D
+610230,DIRECT_CONCORDANCE_UCC,true,true,Photographic equipment,Photographic Equipment,RD012,RECREATION,I
+610310,DIRECT_CONCORDANCE_UCC,true,true,Pet food,Pet Food,RB011,RECREATION,D
+610320,DIRECT_CONCORDANCE_UCC,true,true,"Pet purchase, supplies, and medicine",Pet-Purchase/Supplies/Medicine,RB012,RECREATION,I
+610900,PUBLISHED_CE_UCC,true,false,Recreation expenses on out of town trips,,,,
+610901,DIRECT_CONCORDANCE_UCC,true,true,Fireworks,Fireworks,RE090,RECREATION,D
+610902,DIRECT_CONCORDANCE_UCC,true,true,Souvenirs,Souvenirs,RE090,RECREATION,D
+610903,DIRECT_CONCORDANCE_UCC,true,true,Visual goods,Visual Goods,RE090,RECREATION,D
+620111,DIRECT_CONCORDANCE_UCC,true,true,"Social, recreation, and health club memberships",Social/Recre/Civic Club Membrshp,RF011,RECREATION,I
+620112,DIRECT_CONCORDANCE_UCC,true,true,Credit card memberships,Credit Card Memberships,GD051,OTHER_GOODS_SERVICES,I
+620113,PUBLISHED_CE_UCC,true,false,Automobile service clubs,,,,
+620114,DIRECT_CONCORDANCE_UCC,true,true,Automobile service clubs and GPS services,Auto Service Clubs/Gps Services,TF032,TRANSPORT_SERVICES,I
+620115,DIRECT_CONCORDANCE_UCC,true,true,Shopping club membership fees,Shopping Club Memb Fees,RF011,RECREATION,I
+620121,DIRECT_CONCORDANCE_UCC,true,true,Fees for participant sports,Fees For Participant Sports,RF011,RECREATION,D
+620122,DIRECT_CONCORDANCE_UCC,true,true,Participant sports on out of town trips,Partic. Sports Out-Of-Town Tri,RF011,RECREATION,I
+620211,PUBLISHED_CE_UCC,true,false,"Movie, theater, amusement parks, and other",,,,
+620212,DIRECT_CONCORDANCE_UCC,true,true,Movie and other admissions on out of town trips,"Movie, Oth Adm. Out-Of-Town",RF021,RECREATION,I
+620213,DIRECT_CONCORDANCE_UCC,true,true,"Plays, theater, operas, and concerts",Tkts To Play/Theatr/Opera/Concert,RF021,RECREATION,I
+620214,PUBLISHED_CE_UCC,true,false,"Movies, parks, museums",,,,
+620215,DIRECT_CONCORDANCE_UCC,true,true,Tickets to movies,Tickets To Movies,RF021,RECREATION,I
+620216,DIRECT_CONCORDANCE_UCC,true,true,Tickets to parks or museums,Tkts To Parks Or Museums,RF021,RECREATION,I
+620221,DIRECT_CONCORDANCE_UCC,true,true,Admission to sporting events,Admission To Sporting Events,RF022,RECREATION,I
+620222,DIRECT_CONCORDANCE_UCC,true,true,Admission to sports events on out of town trips,Adm To Sprts Events Out-Of-Tow,RF022,RECREATION,I
+620310,DIRECT_CONCORDANCE_UCC,true,true,Fees for recreational lessons,Fees For Recreational Lessons,RF031,RECREATION,I
+620320,DIRECT_CONCORDANCE_UCC,true,true,Photographer fees,Photographer Fees,RD021,RECREATION,I
+620330,DIRECT_CONCORDANCE_UCC,true,true,Photo processing,Film Processing,RD022,RECREATION,I
+620410,DIRECT_CONCORDANCE_UCC,true,true,Pet services,Pet Services,RB021,RECREATION,I
+620420,DIRECT_CONCORDANCE_UCC,true,true,Vet services,Vet Services,RB022,RECREATION,D
+620510,CPI_ADJUSTED_PUMD_UCC,false,true,,Admissions Misc,RF021,RECREATION,D
+620610,CPI_ADJUSTED_PUMD_UCC,false,true,,Misc. Entertainment Services,RF090,RECREATION,D
+620710,CPI_ADJUSTED_PUMD_UCC,false,true,,Camp Fees,RF090,RECREATION,D
+620810,CPI_ADJUSTED_PUMD_UCC,false,true,,Ren/Rep Sp/Phot/Equp/Passp,RF090,RECREATION,D
+620903,DIRECT_CONCORDANCE_UCC,true,true,Other entertainment services on out of town trips,"Oth Ent Serv, Out-Of-Town Trip",RF090,RECREATION,I
+620904,DIRECT_CONCORDANCE_UCC,true,true,Rental and repair of musical instruments,Rent/Rep Music Instruments,RE090,RECREATION,I
+620905,DIRECT_CONCORDANCE_UCC,true,true,Repair and rental of photographic equipment,Rent/Rep Photo Equip,RD090,RECREATION,I
+620906,DIRECT_CONCORDANCE_UCC,true,true,Rental of boats,Rental Of Boat,RC090,RECREATION,I
+620908,DIRECT_CONCORDANCE_UCC,true,true,Rental and repair of miscellaneous sports equipment,Rent/Repair Of Misc Sports Equ,RC090,RECREATION,I
+620909,DIRECT_CONCORDANCE_UCC,true,true,Rental of campers on out of town trips,Rental Camper On Trips,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+620910,DIRECT_CONCORDANCE_UCC,true,true,Rental of boats and trailers,Rental of Boats and Trailers,RC090;TA090,,I
+620912,DIRECT_CONCORDANCE_UCC,true,true,"Rental of video cassettes, tapes, films, and discs",Rntl Video Cass/Tapes/Discs/Films,RA042,RECREATION,D
+620913,DIRECT_CONCORDANCE_UCC,true,true,Pinball and electronic video games,Pinball/Electronic Video Games,RF090,RECREATION,D
+620915,CPI_ADJUSTED_PUMD_UCC,false,true,,Sport Veh Rental,RF090,RECREATION,D
+620916,PUBLISHED_CE_UCC,true,false,Rental of computer and video game hardware and software,,,,
+620917,DIRECT_CONCORDANCE_UCC,true,true,Rental of video hardware/accessories,Rental Of Video Hardwr/Accessor,RE090,RECREATION,I
+620918,DIRECT_CONCORDANCE_UCC,true,true,Rental of video software,Rental Of Video Software,RA042,RECREATION,I
+620919,DIRECT_CONCORDANCE_UCC,true,true,Rental of other vehicles on out of town trips,Rental Other Vehicles On Trips,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+620921,DIRECT_CONCORDANCE_UCC,true,true,Rental of motorized campers,Rental Of Motor Home,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+620922,DIRECT_CONCORDANCE_UCC,true,true,Rental of other recreational vehicles,Rental Of Other Rvs,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+620924,DIRECT_CONCORDANCE_UCC,true,true,"Rental of RVs, campers, and other vehicles","Rental RVs, Camper, Other Vehicle",TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+620925,PUBLISHED_CE_UCC,true,false,Miscellaneous fees,,,,
+620926,PUBLISHED_CE_UCC,true,false,Lotteries and pari-mutuel losses,,,,
+620930,DIRECT_CONCORDANCE_UCC,true,true,Online gaming services,Online Gaming Services,RF011,RECREATION,D
+630110,DIRECT_CONCORDANCE_UCC,true,true,Cigarettes,Cigarettes,GA011,OTHER_GOODS_SERVICES,I
+630210,DIRECT_CONCORDANCE_UCC,true,true,Other tobacco products,Other Tobacco Products,GA021,OTHER_GOODS_SERVICES,I
+630220,DIRECT_CONCORDANCE_UCC,true,true,Smoking accessories,Smoking Accessories,GA090,OTHER_GOODS_SERVICES,D
+630900,PUBLISHED_CE_UCC,true,false,Marijuana,,,,
+640110,PUBLISHED_CE_UCC,true,false,Haircare products,,,,
+640119,DIRECT_CONCORDANCE_UCC,true,true,Products for the hair,Products For The Hair,GB011,OTHER_GOODS_SERVICES,D
+640120,PUBLISHED_CE_UCC,true,false,Nonelectric articles for hair,,,,
+640130,DIRECT_CONCORDANCE_UCC,true,true,Wigs and hairpieces,Wigs And Hairpieces,GB090,OTHER_GOODS_SERVICES,I
+640210,PUBLISHED_CE_UCC,true,false,Oral hygiene products and articles,,,,
+640219,DIRECT_CONCORDANCE_UCC,true,true,Nonelectric dental and shaving products,Nonelectric Dental And Shaving Pr,GB012,OTHER_GOODS_SERVICES,D
+640220,PUBLISHED_CE_UCC,true,false,Shaving needs,,,,
+640310,DIRECT_CONCORDANCE_UCC,true,true,"Cosmetics, perfume, and bath preparations","Cosmetics, Perfume, Bath Prep",GB021,OTHER_GOODS_SERVICES,D
+640410,DIRECT_CONCORDANCE_UCC,true,true,"Deodorants, feminine hygiene, and miscellaneous personal care","Deod,Fem Hyg, Misc. Pers. Care",GB013,OTHER_GOODS_SERVICES,D
+640420,DIRECT_CONCORDANCE_UCC,true,true,Electric personal care appliances,Electric Personal Care Appliances,GB014,OTHER_GOODS_SERVICES,I
+640430,DIRECT_CONCORDANCE_UCC,true,true,Adult diapers,Adult Diapers,GB013,OTHER_GOODS_SERVICES,D
+650310,DIRECT_CONCORDANCE_UCC,true,true,Personal care services,Pers. Care Serv.,GC011,OTHER_GOODS_SERVICES,I
+650900,DIRECT_CONCORDANCE_UCC,true,true,Repair of personal care appliances,Repair Of Pers. Care App.,GB090,OTHER_GOODS_SERVICES,D
+660000,PUBLISHED_CE_UCC,true,false,"School supplies, etc., unspecified",,,,
+660001,DIRECT_CONCORDANCE_UCC,true,true,"Educational books, supplies, and other expenditures",Educational Books/Supl/Oth Exp,EA011;EA012;EA090;EB090,EDUCATION_COMMUNICATION,I
+660110,PUBLISHED_CE_UCC,true,false,"School books, supplies, equipment for college",,,,
+660115,PUBLISHED_CE_UCC,true,false,School books for college,,,,
+660210,PUBLISHED_CE_UCC,true,false,"School books, supplies, equipment for elementary, high school",,,,
+660215,PUBLISHED_CE_UCC,true,false,School books for elementary and high schools,,,,
+660310,PUBLISHED_CE_UCC,true,false,Encyclopedias and other sets of reference books,,,,
+660410,PUBLISHED_CE_UCC,true,false,"School books, supplies, equipment for vocational and technical schools",,,,
+660415,PUBLISHED_CE_UCC,true,false,School books for vocational and technical schools,,,,
+660901,PUBLISHED_CE_UCC,true,false,"School books, supplies, equipment for day care, nursery",,,,
+660902,PUBLISHED_CE_UCC,true,false,"School books, supplies, equipment for other schools",,,,
+660903,PUBLISHED_CE_UCC,true,false,School books for day cares and nurseries,,,,
+660905,PUBLISHED_CE_UCC,true,false,School books for other schools,,,,
+660906,PUBLISHED_CE_UCC,true,false,School supplies and equipment,,,,
+670110,DIRECT_CONCORDANCE_UCC,true,true,College tuition,College Tuition,EB011,EDUCATION_COMMUNICATION,I
+670210,DIRECT_CONCORDANCE_UCC,true,true,Elementary and high school tuition,Elem./H.S. Tuition,EB021,EDUCATION_COMMUNICATION,I
+670310,PUBLISHED_CE_UCC,true,false,"Day care centers, nurseries, and preschools",,,,
+670320,DIRECT_CONCORDANCE_UCC,true,true,"Babysitting, childcare, daycare, preschool",Babysit/Chldcare/Daycare/Prsch,EB031,EDUCATION_COMMUNICATION,I
+670410,DIRECT_CONCORDANCE_UCC,true,true,Vocational and technical school tuition,Voc/ Tech School Tuition,EB041,EDUCATION_COMMUNICATION,I
+670901,PUBLISHED_CE_UCC,true,false,Other schools' tuition,,,,
+670902,PUBLISHED_CE_UCC,true,false,Other school expenses including rentals,,,,
+670903,DIRECT_CONCORDANCE_UCC,true,true,Test preparation and tutoring services,Test Prep/Tutoring Services,EB090,EDUCATION_COMMUNICATION,I
+671000,PUBLISHED_CE_UCC,true,false,Prepaid tuition,,,,
+680110,DIRECT_CONCORDANCE_UCC,true,true,Legal fees,Legal Fees,GD011,OTHER_GOODS_SERVICES,I
+680140,DIRECT_CONCORDANCE_UCC,true,true,Funeral expenses,Funeral Expense,GD021,OTHER_GOODS_SERVICES,I
+680210,DIRECT_CONCORDANCE_UCC,true,true,Safe deposit box rental,Safe Deposit Box Rental,GD051,OTHER_GOODS_SERVICES,I
+680220,DIRECT_CONCORDANCE_UCC,true,true,"Checking accounts, other bank service charges",Check Accts / Oth Bank Serv Chgs,GD051,OTHER_GOODS_SERVICES,I
+680310,PUBLISHED_CE_UCC,true,false,Live entertainment for catered affairs,,,,
+680320,DIRECT_CONCORDANCE_UCC,true,true,Rental of party supplies for catered affairs,Rental Of Party Supp Cat Affairs,FV051,FOOD,I
+680901,DIRECT_CONCORDANCE_UCC,true,true,"Cemetery lots, vaults, and maintenance fees","Cemetery Lots,Vaults,Maint Fees",GD021,OTHER_GOODS_SERVICES,I
+680902,DIRECT_CONCORDANCE_UCC,true,true,Accounting fees,Accounting Fees,GD052,OTHER_GOODS_SERVICES,I
+680903,DIRECT_CONCORDANCE_UCC,true,true,Miscellaneous personal services,Misc. Pers. Services,GD090,OTHER_GOODS_SERVICES,D
+680904,DIRECT_CONCORDANCE_UCC,true,true,Dating services,Dating Services,GD090,OTHER_GOODS_SERVICES,I
+680905,DIRECT_CONCORDANCE_UCC,true,true,Vacation clubs,Vacation Clubs,RF011,RECREATION,I
+690111,DIRECT_CONCORDANCE_UCC,true,true,Computers and computer hardware for nonbusiness use,Compter/Compter Hrdwar N-Bus Use,EE011,EDUCATION_COMMUNICATION,I
+690112,PUBLISHED_CE_UCC,true,false,Computer software and accessories for nonbusiness use,,,,
+690113,DIRECT_CONCORDANCE_UCC,true,true,Repair of computer systems for nonbusiness use,"Repair-Cmptr,Cmptr Sys N-B",EE090,EDUCATION_COMMUNICATION,I
+690114,DIRECT_CONCORDANCE_UCC,true,true,Computer information services (internet),Computer Information Services,EE031,EDUCATION_COMMUNICATION,I
+690115,PUBLISHED_CE_UCC,true,false,Personal digital assistants,,,,
+690116,DIRECT_CONCORDANCE_UCC,true,true,Internet services away from home,Internet Services Away From Home,EE031,EDUCATION_COMMUNICATION,I
+690117,DIRECT_CONCORDANCE_UCC,true,true,Portable memory,Portable Memory,EE021,EDUCATION_COMMUNICATION,I
+690118,DIRECT_CONCORDANCE_UCC,true,true,Digital book readers,Digital Book Readers,EE011,EDUCATION_COMMUNICATION,I
+690119,DIRECT_CONCORDANCE_UCC,true,true,Computer software,Computer Software,EE021,EDUCATION_COMMUNICATION,I
+690120,DIRECT_CONCORDANCE_UCC,true,true,Computer accessories,Computer Accessories,EE011,EDUCATION_COMMUNICATION,D
+690210,PUBLISHED_CE_UCC,true,false,Telephone answering devices,,,,
+690230,DIRECT_CONCORDANCE_UCC,true,true,Business equipment for home use,Typwrits/Oth Off Mach Non-Bus Use,EE042,EDUCATION_COMMUNICATION,I
+690241,PUBLISHED_CE_UCC,true,false,Smoke alarms (renter),,,,
+690242,PUBLISHED_CE_UCC,true,false,Smoke alarms (owned home),,,,
+690243,PUBLISHED_CE_UCC,true,false,Smoke alarms (owned vacation),,,,
+690244,DIRECT_CONCORDANCE_UCC,true,true,Other household appliances (renter),Oth Hh Appl Rntr,HK023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+690245,DIRECT_CONCORDANCE_UCC,true,true,Other household appliances (owned home),Oth Hh Appl Ownd,HK023,HOUSEHOLD_FURNISHINGS_OPERATIONS,I
+690310,DIRECT_CONCORDANCE_UCC,true,true,Installation of computers,Installation For Computers,EE011,EDUCATION_COMMUNICATION,I
+690320,DIRECT_CONCORDANCE_UCC,true,true,Installation of televisions,Installation For Tvs,RA011,RECREATION,I
+690330,DIRECT_CONCORDANCE_UCC,true,true,Installation of satellite television equipment,Installation Satellite Tv Equip,RA031,RECREATION,I
+690340,DIRECT_CONCORDANCE_UCC,true,true,Installation of sound systems,Installation Of Sound Systems,RA051,RECREATION,I
+690350,DIRECT_CONCORDANCE_UCC,true,true,Installation of other video equipment or sound systems,Install Of Other Video/Sound Syst,RA031,RECREATION,I
+700110,PUBLISHED_CE_UCC,true,false,"Life, endowment, annuity, and other personal insurance",,,,
+710110,PUBLISHED_CE_UCC,true,false,Finance charges excluding mortgage and vehicle,,,,
+790420,DIRECT_CONCORDANCE_UCC,true,true,"Alcoholic beverages at restaurants, taverns",Alcohol At Restaurants Etc,FX011,ALCOHOLIC_BEVERAGES,D
+790430,PUBLISHED_CE_UCC,true,false,School lunches,,,,
+790600,PUBLISHED_CE_UCC,true,false,Expenses for other properties,,,,
+790610,PUBLISHED_CE_UCC,true,false,"Contractors labor and materials, supplies CU obtained, appliances provided by contractor, and other property",,,,
+790611,PUBLISHED_CE_UCC,true,false,"Dishwasher, disposal, and range hood capital improvement (other property)",,,,
+790620,PUBLISHED_CE_UCC,true,false,Management services and improvements of other properties,,,,
+790630,PUBLISHED_CE_UCC,true,false,Special assessments (other property),,,,
+790640,PUBLISHED_CE_UCC,true,false,"Property management, security, parking (other property)",,,,
+790690,PUBLISHED_CE_UCC,true,false,Construction materials for jobs not started,,,,
+790710,PUBLISHED_CE_UCC,true,false,Purchase price of property (other property),,,,
+790730,PUBLISHED_CE_UCC,true,false,Closing costs purchase of property (other property),,,,
+790810,PUBLISHED_CE_UCC,true,false,Sale price of property or trade-in amount (other property),,,,
+790830,PUBLISHED_CE_UCC,true,false,Total expenses in sale of property (other property),,,,
+790910,PUBLISHED_CE_UCC,true,false,Special lump sum mortgage payments (other property),,,,
+790915,PUBLISHED_CE_UCC,true,false,Late fee mortgage pay (other),,,,
+790920,PUBLISHED_CE_UCC,true,false,Reduction of mortgage principal (other property),,,,
+790930,PUBLISHED_CE_UCC,true,false,Original loan amount (mortgage obtained during interview quarter) (other property),,,,
+790940,PUBLISHED_CE_UCC,true,false,"Reduction mortgage principal, home equity loan (other property)",,,,
+790950,PUBLISHED_CE_UCC,true,false,"Original loan amount, home equity loan (loan obtained during interview quarter) (other property)",,,,
+800111,PUBLISHED_CE_UCC,true,false,Alimony expenditures,,,,
+800121,PUBLISHED_CE_UCC,true,false,Child support expenditures,,,,
+800700,DIRECT_CONCORDANCE_UCC,true,true,Meals as pay,Meals As Pay,FV051,FOOD,I
+800710,DIRECT_CONCORDANCE_UCC,true,true,Rent as pay,Rent As Pay,HA011,SHELTER,I
+800721,PUBLISHED_CE_UCC,true,false,Estimated market value of owned home,,,,
+800804,PUBLISHED_CE_UCC,true,false,Support for college students,,,,
+800811,PUBLISHED_CE_UCC,true,false,"Gift to non-CU members of stocks, bonds, and mutual funds",,,,
+800821,PUBLISHED_CE_UCC,true,false,Cash contributions to charities and other organizations,,,,
+800831,PUBLISHED_CE_UCC,true,false,Cash contributions to churches and other religious organizations,,,,
+800841,PUBLISHED_CE_UCC,true,false,Cash contribution to educational institutions,,,,
+800851,PUBLISHED_CE_UCC,true,false,Cash contribution to political organizations,,,,
+800861,PUBLISHED_CE_UCC,true,false,Other cash gifts,,,,
+800910,PUBLISHED_CE_UCC,true,false,Deductions for government retirement,,,,
+800920,PUBLISHED_CE_UCC,true,false,Deductions for railroad retirement,,,,
+800931,PUBLISHED_CE_UCC,true,false,Deductions for private pensions,,,,
+800932,PUBLISHED_CE_UCC,true,false,Non-payroll deposit to retirement plans,,,,
+800940,PUBLISHED_CE_UCC,true,false,Deductions for Social Security,,,,
+810101,PUBLISHED_CE_UCC,true,false,Purchase price of property (owned home),,,,
+810102,PUBLISHED_CE_UCC,true,false,Purchase price of property (owned vacation),,,,
+810301,PUBLISHED_CE_UCC,true,false,Closing costs purchase of property (owned home),,,,
+810302,PUBLISHED_CE_UCC,true,false,Closing costs on purchase of property (owned vacation),,,,
+820101,PUBLISHED_CE_UCC,true,false,Sale price of property or trade-in amount (owned home),,,,
+820102,PUBLISHED_CE_UCC,true,false,Sale price of property or trade-in amount (owned vacation),,,,
+820202,PUBLISHED_CE_UCC,true,false,Mortgage principal held after sale of real estate (owned vacation),,,,
+820301,PUBLISHED_CE_UCC,true,false,Total expenses in sale of property (owned home),,,,
+820302,PUBLISHED_CE_UCC,true,false,Total expenses in sale of property (owned vacation),,,,
+830101,PUBLISHED_CE_UCC,true,false,Special lump sum mortgage payment (owned home),,,,
+830102,PUBLISHED_CE_UCC,true,false,Special lump sum mortgage payment (owned vacation),,,,
+830111,PUBLISHED_CE_UCC,true,false,Late fee mortgage pay (owned home),,,,
+830112,PUBLISHED_CE_UCC,true,false,Late fee mortgage pay (owned vacation),,,,
+830201,PUBLISHED_CE_UCC,true,false,Reduction of mortgage principal (owned home),,,,
+830202,PUBLISHED_CE_UCC,true,false,Reduction of mortgage principal (owned vacation),,,,
+830203,PUBLISHED_CE_UCC,true,false,"Reduction of mortgage principal, home equity loan (owned home)",,,,
+830204,PUBLISHED_CE_UCC,true,false,"Reduction mortgage principal, home equity loan (owned vacation)",,,,
+830301,PUBLISHED_CE_UCC,true,false,Original loan amount (mortgage obtained during interview quarter) (owned home),,,,
+830302,PUBLISHED_CE_UCC,true,false,Original loan amount (mortgage obtained during interview quarter) (owned vacation),,,,
+830303,PUBLISHED_CE_UCC,true,false,"Original loan amount, home equity loan (loan obtained during interview quarter) (owned home)",,,,
+830304,PUBLISHED_CE_UCC,true,false,"Original loan amount, home equity loan (loan obtained during interview quarter) (owned vacation)",,,,
+840101,PUBLISHED_CE_UCC,true,false,Special assessments (owned home),,,,
+840102,PUBLISHED_CE_UCC,true,false,Special assessments (owned vacation),,,,
+850100,PUBLISHED_CE_UCC,true,false,Reduction of vehicle loan principal,,,,
+850200,PUBLISHED_CE_UCC,true,false,Vehicle principal balance (loan obtained during interview quarter),,,,
+850300,PUBLISHED_CE_UCC,true,false,Other vehicle finance charges,,,,
+860100,PUBLISHED_CE_UCC,true,false,Sale of automobiles,,,,
+860200,PUBLISHED_CE_UCC,true,false,"Sale of trucks, including vans",,,,
+860301,PUBLISHED_CE_UCC,true,false,Sale of motor camper,,,,
+860302,PUBLISHED_CE_UCC,true,false,Sale of other vehicles,,,,
+860400,PUBLISHED_CE_UCC,true,false,Sale of trailer type and other attachable campers,,,,
+860405,DIRECT_CONCORDANCE_UCC,true,true,Sale of campers and motor homes,Disp Camp/Motor Home/RV,TA090,TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,I
+860500,PUBLISHED_CE_UCC,true,false,Sale of motorcycles,,,,
+860600,PUBLISHED_CE_UCC,true,false,"Sale of boats, with motors",,,,
+860700,PUBLISHED_CE_UCC,true,false,"Sale of boats, without motors and boat trailers",,,,
+860701,DIRECT_CONCORDANCE_UCC,true,true,Sale of trailers and boats,Disp Rrailer/Boat,RC011,RECREATION,I
+860800,PUBLISHED_CE_UCC,true,false,Sale of aircraft,,,,
+880110,PUBLISHED_CE_UCC,true,false,"Interest paid, home equity line of credit",,,,
+880120,PUBLISHED_CE_UCC,true,false,"Principal paid, home equity line of credit (owned home)",,,,
+880210,PUBLISHED_CE_UCC,true,false,"Interest paid, home equity line of credit (other property)",,,,
+880220,PUBLISHED_CE_UCC,true,false,"Principal paid, home equity line of credit (other property)",,,,
+880310,PUBLISHED_CE_UCC,true,false,"Interest paid, home equity line of credit",,,,
+880320,PUBLISHED_CE_UCC,true,false,"Principal paid, home equity line of credit (owned vacation)",,,,
+900000,PUBLISHED_CE_UCC,true,false,Wages and salaries,,,,
+900002,PUBLISHED_CE_UCC,true,false,Occupational expenses,,,,
+900010,PUBLISHED_CE_UCC,true,false,Net business income,,,,
+900020,PUBLISHED_CE_UCC,true,false,Net farm income,,,,
+900030,PUBLISHED_CE_UCC,true,false,Social Security and railroad retirement income,,,,
+900040,PUBLISHED_CE_UCC,true,false,Pensions and annuities,,,,
+900050,PUBLISHED_CE_UCC,true,false,"Dividends, royalties, estates, trusts",,,,
+900060,PUBLISHED_CE_UCC,true,false,Roomer and boarder income,,,,
+900070,PUBLISHED_CE_UCC,true,false,Other rental income,,,,
+900080,PUBLISHED_CE_UCC,true,false,Interest,,,,
+900090,PUBLISHED_CE_UCC,true,false,Supplemental Security Income,,,,
+900100,PUBLISHED_CE_UCC,true,false,Unemployment compensation,,,,
+900110,PUBLISHED_CE_UCC,true,false,Workers'' compensation and veterans'' benefits,,,,
+900120,PUBLISHED_CE_UCC,true,false,Public assistance,,,,
+900131,PUBLISHED_CE_UCC,true,false,Child support payments,,,,
+900132,PUBLISHED_CE_UCC,true,false,Other regular contributions including alimony,,,,
+900140,PUBLISHED_CE_UCC,true,false,Other income,,,,
+900150,PUBLISHED_CE_UCC,true,false,Supplementary Nutrition Assistance Program (SNAP),,,,
+900160,PUBLISHED_CE_UCC,true,false,Self-employment income,,,,
+900170,PUBLISHED_CE_UCC,true,false,"Retirement, survivors, and disability income",,,,
+900180,PUBLISHED_CE_UCC,true,false,Interest and dividends,,,,
+900190,PUBLISHED_CE_UCC,true,false,Net room/rental income,,,,
+900200,PUBLISHED_CE_UCC,true,false,"Royalty, estate, and trust income",,,,
+900210,PUBLISHED_CE_UCC,true,false,Other regular income,,,,
+900220,PUBLISHED_CE_UCC,true,false,Lump sum payment received,,,,
+910000,PUBLISHED_CE_UCC,true,false,Lump sum receipts,,,,
+910010,PUBLISHED_CE_UCC,true,false,"Money from sale of household furnishings, etc.",,,,
+910020,PUBLISHED_CE_UCC,true,false,Refund from overpayment on Social Security,,,,
+910030,PUBLISHED_CE_UCC,true,false,Refunds from insurance policies,,,,
+910040,PUBLISHED_CE_UCC,true,false,Refunds from property taxes,,,,
+910041,PUBLISHED_CE_UCC,true,false,Lump sum child support payment,,,,
+910042,PUBLISHED_CE_UCC,true,false,Monthly transit subsidy,,,,
+910050,PUBLISHED_CE_UCC,true,false,Estimated monthly rental value of owned home,,,,
+910101,PUBLISHED_CE_UCC,true,false,Estimated monthly rental value of vacation home not available for rent,,,,
+910102,PUBLISHED_CE_UCC,true,false,Estimated monthly rental value of vacation home available for rent,,,,
+910103,PUBLISHED_CE_UCC,true,false,Estimated annual rental value of timeshare,,,,
+910104,CPI_ADJUSTED_PUMD_UCC,false,true,,Rental Equivalence Of Owned Home,HC011,SHELTER,I
+910105,CPI_ADJUSTED_PUMD_UCC,false,true,,Rent Equiv Vac Home Not Avail Rnt,HC090,SHELTER,I
+910106,CPI_ADJUSTED_PUMD_UCC,false,true,,Rent Equiv Vac Home Avail For Rnt,HC090,SHELTER,I
+910107,CPI_ADJUSTED_PUMD_UCC,false,true,,Rental Equivalence For Timeshares,HC090,SHELTER,I
+920010,PUBLISHED_CE_UCC,true,false,Market value of all savings accounts,,,,
+920020,PUBLISHED_CE_UCC,true,false,Market value of all checking accounts,,,,
+920030,PUBLISHED_CE_UCC,true,false,Market value of all U.S. savings bonds,,,,
+920040,PUBLISHED_CE_UCC,true,false,Market value of all securities,,,,
+920050,PUBLISHED_CE_UCC,true,false,Educational savings account,,,,
+950001,PUBLISHED_CE_UCC,true,false,Federal income tax refunds,,,,
+950002,PUBLISHED_CE_UCC,true,false,Federal income tax deducted,,,,
+950003,PUBLISHED_CE_UCC,true,false,Additional federal income tax paid,,,,
+950004,PUBLISHED_CE_UCC,true,false,Federal income tax (imputed),,,,
+950011,PUBLISHED_CE_UCC,true,false,State and local income tax refunds,,,,
+950012,PUBLISHED_CE_UCC,true,false,State and local income tax deducted,,,,
+950013,PUBLISHED_CE_UCC,true,false,Additional state and local income tax paid,,,,
+950014,PUBLISHED_CE_UCC,true,false,State and local income taxes (imputed),,,,
+950021,PUBLISHED_CE_UCC,true,false,Other taxes,,,,
+950022,PUBLISHED_CE_UCC,true,false,Personal property taxes,,,,
+950023,PUBLISHED_CE_UCC,true,false,Other tax refunds,,,,
+950024,PUBLISHED_CE_UCC,true,false,Vehicle personal property taxes,,,,
+950040,PUBLISHED_CE_UCC,true,false,Stimulus payment,,,,
+980010,PUBLISHED_CE_UCC,true,false,Number of People in CU,,,,
+980020,PUBLISHED_CE_UCC,true,false,Age of reference person,,,,
+980030,PUBLISHED_CE_UCC,true,false,Number of Earners,,,,
+980040,PUBLISHED_CE_UCC,true,false,Vehicles (owned),,,,
+980050,PUBLISHED_CE_UCC,true,false,Number of Children under 18,,,,
+980060,PUBLISHED_CE_UCC,true,false,Adults 65 and older,,,,
+980070,PUBLISHED_CE_UCC,true,false,"Income After Taxes (unimputed), not including meals/rent as pay (2010-2013)",,,,
+980071,PUBLISHED_CE_UCC,true,false,"Income after taxes, not including meals/rent as pay",,,,
+980210,PUBLISHED_CE_UCC,true,false,Percent Men reference persons,,,,
+980220,PUBLISHED_CE_UCC,true,false,Percent Women reference persons,,,,
+980230,PUBLISHED_CE_UCC,true,false,Percent Homeowner with mortgage,,,,
+980240,PUBLISHED_CE_UCC,true,false,Percent Homeowner without mortgage,,,,
+980260,PUBLISHED_CE_UCC,true,false,Percent Renter,,,,
+980270,PUBLISHED_CE_UCC,true,false,Percent Black or African American,,,,
+980281,PUBLISHED_CE_UCC,true,false,White,,,,
+980282,PUBLISHED_CE_UCC,true,false,Asian,,,,
+980283,PUBLISHED_CE_UCC,true,false,All other races not including Black or African-American,,,,
+980285,PUBLISHED_CE_UCC,true,false,Percent Hispanic or Latino,,,,
+980286,PUBLISHED_CE_UCC,true,false,Percent Not Hispanic or Latino,,,,
+980290,PUBLISHED_CE_UCC,true,false,Percent Elementary (1-8),,,,
+980300,PUBLISHED_CE_UCC,true,false,Percent High school (9-12),,,,
+980310,PUBLISHED_CE_UCC,true,false,Percent College,,,,
+980320,PUBLISHED_CE_UCC,true,false,Percent Never attended school and other,,,,
+980330,PUBLISHED_CE_UCC,true,false,At least one vehicle owned,,,,
+980340,PUBLISHED_CE_UCC,true,false,At least one vehicle leased,,,,
+980350,PUBLISHED_CE_UCC,true,false,At least one vehicle owned or leased,,,,
+980360,PUBLISHED_CE_UCC,true,false,Vehicles (leased),,,,
+990900,PUBLISHED_CE_UCC,true,false,"Rental and installation of dishwashers, range hoods, and garbage disposals",,,,
+990920,PUBLISHED_CE_UCC,true,false,"Materials for additions, finishing basements, and remodeling rooms",,,,
+990930,PUBLISHED_CE_UCC,true,false,"Materials to finish basements, remodel rooms, or build patios or walkways",,,,
+990940,PUBLISHED_CE_UCC,true,false,Material for finishing basements and remodeling rooms,,,,
+990950,PUBLISHED_CE_UCC,true,false,Labor and materials for dwellings under construction and additions,,,,

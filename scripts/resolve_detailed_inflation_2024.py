@@ -39,6 +39,11 @@ from dmi_research.detailed_inflation.audit import run_audit  # noqa: E402
 from dmi_research.detailed_inflation.concordance import (  # noqa: E402
     DEFAULT_CONCORDANCE_PATH,
 )
+from dmi_research.detailed_inflation.provenance import (  # noqa: E402
+    UccProvenanceClass,
+    build_ucc_provenance,
+    write_provenance_csv,
+)
 from dmi_research.detailed_inflation.resolution import (  # noqa: E402
     ALL_CU,
     build_resolution,
@@ -52,7 +57,14 @@ from dmi_research.detailed_inflation.semantics import (  # noqa: E402
     build_semantic_validation,
     write_semantic_validation_csv,
 )
-from dmi_research.detailed_inflation.sources import TARGET_YEAR  # noqa: E402
+from dmi_research.detailed_inflation.sources import (  # noqa: E402
+    TARGET_YEAR,
+    load_items,
+)
+from dmi_research.detailed_inflation.taxonomy import (  # noqa: E402
+    load_eli_resolver,
+    load_taxonomy,
+)
 
 DEFAULT_OUTPUT_DIR = Path("data/research/detailed_inflation/milestone_2")
 
@@ -77,7 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _print_report(resolution, sem, registry, written) -> None:
+def _print_report(resolution, sem, provenance, registry, written) -> None:
     summary = resolution.summary
     print("Detailed Inflation Substrate v0.1 — Milestone 2 scope resolution")
     print(f"  exceptions resolved:   {summary['exception_count']}")
@@ -144,6 +156,17 @@ def _print_report(resolution, sem, registry, written) -> None:
     unexplained = sem["elis_without_bls_description_unexplained"]
     print(f"    undescribed & unexplained: {len(unexplained)}")
 
+    print("\n  UCC provenance classes (cx.item is not the whole CPI universe):")
+    for member in UccProvenanceClass:
+        print(f"    {member.value:24s} {provenance.counts[member.value]:4d}")
+    hidden = provenance.by_class(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC)
+    print(
+        f"    {len(hidden)} concordance UCC(s) are absent from cx.item and would "
+        f"be invisible to a cx.item-keyed pipeline:"
+    )
+    for row in hidden:
+        print(f"      {row.ucc}  {row.dmi_node or '-':36s} {row.concordance_title}")
+
     proposed = [r.rule_id for r in registry.rules if r.review_status is ReviewStatus.PROPOSED]
     print(f"\n  Shelter-coupled rules still PROPOSED ({len(proposed)}):")
     for rule_id in proposed:
@@ -182,6 +205,11 @@ def main(argv: list | None = None) -> int:
         basis=audit.basis, mappings=audit.mappings, registry=registry
     )
     semantic_rows, semantic_summary = build_semantic_validation()
+    provenance = build_ucc_provenance(
+        audit.concordance,
+        load_items(args.items),
+        resolver=load_eli_resolver(load_taxonomy()),
+    )
 
     written: list = []
     if not args.dry_run:
@@ -192,8 +220,14 @@ def main(argv: list | None = None) -> int:
                 args.output_dir / "eli_node_semantic_validation.csv",
             )
         )
+        written.append(
+            write_provenance_csv(
+                provenance,
+                args.output_dir / "ucc_provenance_classes_2024.csv",
+            )
+        )
 
-    _print_report(resolution, semantic_summary, registry, written)
+    _print_report(resolution, semantic_summary, provenance, registry, written)
 
     checks = resolution.summary["rule_suppression_declared_vs_computed"]
     if any(not c["agrees"] for c in checks.values()):

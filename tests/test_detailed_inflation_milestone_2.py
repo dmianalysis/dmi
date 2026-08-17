@@ -15,6 +15,7 @@ Attribution: source data are published by the U.S. Bureau of Labor Statistics.
 from __future__ import annotations
 
 import ast
+import csv
 import json
 import tempfile
 import unittest
@@ -23,11 +24,23 @@ from pathlib import Path
 from tests.detailed_inflation_fixtures import (
     EXTERNAL_SOURCES,
     external_sources_available,
+    write_concordance,
 )
 
 from dmi_research.detailed_inflation.audit import ResearchFirewallError, run_audit
 from dmi_research.detailed_inflation.basis import Basis, ReconciliationResult
-from dmi_research.detailed_inflation.concordance import load_concordance
+from dmi_research.detailed_inflation.concordance import (
+    DEFAULT_CONCORDANCE_PATH,
+    load_concordance,
+)
+from dmi_research.detailed_inflation.provenance import (
+    UccProvenanceClass,
+    UccProvenanceError,
+    build_ucc_provenance,
+    classify_ucc_provenance,
+    load_provenance_classes,
+    verify_against_registry,
+)
 from dmi_research.detailed_inflation.resolution import (
     ALL_CU,
     POPULATIONS,
@@ -54,6 +67,7 @@ from dmi_research.detailed_inflation.semantics import (
     build_semantic_validation,
     load_eli_descriptions,
 )
+from dmi_research.detailed_inflation.sources import load_items
 from dmi_research.detailed_inflation.taxonomy import (
     MappingStatus,
     load_eli_resolver,
@@ -630,6 +644,302 @@ class TestStructuralEvidence(unittest.TestCase):
                 self.assertIsNone(
                     unresolved, f"{name} cites {reference}: {unresolved}"
                 )
+
+
+class TestUccProvenanceClasses(unittest.TestCase):
+    """The published CE item file is not the whole CPI-relevant UCC universe.
+
+    Milestone 1 keyed its basis on ``cx.item`` and treated a missing UCC as
+    fatal. That is right for the basis, but the concordance names 17 UCCs
+    ``cx.item`` does not contain, and every one resolves to a live DMI node.
+    These tests hold the classification to its two sources so the omission
+    cannot be reintroduced silently.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = load_provenance_classes()
+        cls.concordance = load_concordance()
+        cls.roster = cls.registry["cpi_adjusted_pumd_uccs"]["roster"]
+        cls.correspondence = cls.registry["shelter_rental_equivalence_correspondence"]
+
+    def test_classes_partition_the_union(self):
+        """Derived from synthetic inputs: one class each, nothing dropped."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp),
+                [
+                    ("010119", "FA011", "In both", "Flour"),
+                    ("999999", "FA011", "Concordance only", "Flour"),
+                ],
+            )
+            concordance = load_concordance(path)
+
+        # "FOODTOTL" is an aggregate rollup, not a UCC, and must not be counted.
+        report = classify_ucc_provenance(
+            concordance, ["010119", "020219", "FOODTOTL"]
+        )
+        classes = {row.ucc: row.provenance_class for row in report.rows}
+        self.assertEqual(
+            classes,
+            {
+                "010119": UccProvenanceClass.DIRECT_CONCORDANCE_UCC,
+                "020219": UccProvenanceClass.PUBLISHED_CE_UCC,
+                "999999": UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC,
+            },
+        )
+        self.assertEqual(report.counts["published_ce_universe"], 2)
+        self.assertEqual(report.counts["union"], 3)
+        self.assertEqual(
+            sum(report.counts[member.value] for member in UccProvenanceClass),
+            report.counts["union"],
+            "the three classes must exhaust the union with no double counting",
+        )
+
+    def test_pinned_counts_are_internally_consistent(self):
+        """The pinned counts must add up before they are compared to anything."""
+        counts = self.registry["counts"]
+        self.assertEqual(
+            counts["DIRECT_CONCORDANCE_UCC"] + counts["PUBLISHED_CE_UCC"],
+            counts["published_ce_universe"],
+        )
+        self.assertEqual(
+            counts["DIRECT_CONCORDANCE_UCC"] + counts["CPI_ADJUSTED_PUMD_UCC"],
+            counts["concordance_universe"],
+        )
+        self.assertEqual(
+            counts["published_ce_universe"] + counts["CPI_ADJUSTED_PUMD_UCC"],
+            counts["union"],
+        )
+
+    def test_pumd_roster_is_well_formed(self):
+        counts = self.registry["counts"]
+        self.assertEqual(len(self.roster), counts["CPI_ADJUSTED_PUMD_UCC"])
+        reasons = set(self.registry["cpi_adjusted_pumd_uccs"]["reason_scale"])
+        seen = set()
+        for item in self.roster:
+            self.assertRegex(item["ucc"], r"^[0-9]{6}$")
+            self.assertNotIn(item["ucc"], seen, "duplicate roster entry")
+            seen.add(item["ucc"])
+            self.assertTrue(item["elis"], f"{item['ucc']} names no ELI")
+            self.assertTrue(item["dmi_node"], f"{item['ucc']} names no DMI node")
+            self.assertIn(
+                item["reason"],
+                reasons,
+                f"{item['ucc']} uses a reason outside the declared scale",
+            )
+            self.assertTrue(item["note"], f"{item['ucc']} carries no note")
+
+    def test_roster_is_drawn_from_the_pinned_concordance(self):
+        """Every roster member must really be a concordance UCC.
+
+        This half of the claim needs no external file, so it is checked even
+        where ``cx.item`` is unavailable.
+        """
+        for item in self.roster:
+            entry = self.concordance.get(item["ucc"])
+            self.assertIsNotNone(
+                entry, f"{item['ucc']} is not in the pinned concordance at all"
+            )
+            self.assertEqual(tuple(item["elis"]), entry.elis)
+            self.assertEqual(item["concordance_title"], entry.ucc_title)
+            self.assertEqual(item["ce_source"], entry.ce_source)
+
+    def test_shelter_correspondence_sits_on_the_right_side_of_each_universe(self):
+        """The amendment's premise, checked rather than assumed.
+
+        The CPI concordance uses 910104-910107; the 9100xx/9101xx addenda it
+        does not use are the published counterparts. If a published counterpart
+        turned up in the concordance, it would not be a counterpart at all.
+        """
+        pairs = self.correspondence["pairs"]
+        self.assertEqual(len(pairs), 4)
+        for pair in pairs:
+            normative = pair["cpi_adjusted_pumd_ucc"]
+            published = pair["published_ce_ucc"]
+            entry = self.concordance.get(normative)
+            self.assertIsNotNone(
+                entry, f"{normative} must be a concordance UCC to be the input"
+            )
+            self.assertIn(pair["eli"], entry.elis)
+            self.assertIsNone(
+                self.concordance.get(published),
+                f"{published} is claimed to be a published-only counterpart, "
+                f"but the concordance maps it",
+            )
+            self.assertIn(
+                normative,
+                {item["ucc"] for item in self.roster},
+                f"{normative} must also appear in the PUMD roster",
+            )
+
+    def test_shelter_correspondence_is_labelled_inference_not_bls_mapping(self):
+        """The user's instruction: high-confidence DMI inference, not BLS mapping."""
+        self.assertEqual(self.correspondence["claim_type"], "DMI_INFERENCE")
+        self.assertTrue(self.correspondence["explicit_warning"])
+        self.assertEqual(
+            self.correspondence["normative_input_class"],
+            UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC.value,
+        )
+        self.assertTrue(self.correspondence["normative_input_rationale"])
+
+    def test_published_addenda_anomaly_is_recorded_not_hidden(self):
+        """910103 is titled 'annual' where its three siblings say 'monthly'.
+
+        The anomaly must stay visible and must not be quietly presented as a
+        blocker on Track A, because 910107 is the normative input.
+        """
+        anomaly = self.correspondence["published_addenda_anomaly"]
+        self.assertEqual(anomaly["status"], "UNRESOLVED")
+        self.assertEqual(anomaly["ucc"], "910103")
+        self.assertFalse(anomaly["blocking"])
+        self.assertTrue(anomaly["why_not_blocking"])
+
+        titles = {
+            pair["published_ce_ucc"]: pair["published_title"].lower()
+            for pair in self.correspondence["pairs"]
+        }
+        self.assertIn("annual", titles["910103"])
+        for ucc in ("910050", "910101", "910102"):
+            self.assertIn("monthly", titles[ucc])
+            self.assertNotIn("annual", titles[ucc])
+
+    def test_count_drift_is_rejected(self):
+        """A changed concordance vintage must error, not reclassify in silence."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp), [("010119", "FA011", "In both", "Flour")]
+            )
+            report = classify_ucc_provenance(load_concordance(path), ["010119"])
+
+        with self.assertRaises(UccProvenanceError):
+            verify_against_registry(report, self.registry)
+
+    def test_classification_authorizes_no_expenditure(self):
+        """§5: this artifact is descriptive and must say so."""
+        consumer = self.registry["consumer_of_this_artifact"]
+        self.assertIn("authorizes no expenditure", consumer["note"])
+        self.assertEqual(self.registry["status"], "RESEARCH_ONLY")
+
+    @unittest.skipUnless(external_sources_available(), "needs BLS cx.item")
+    def test_derived_partition_matches_the_registry(self):
+        """The whole claim, end to end, against the authoritative item file."""
+        report = build_ucc_provenance(
+            self.concordance,
+            load_items(EXTERNAL_SOURCES["items"]),
+            resolver=load_eli_resolver(load_taxonomy()),
+        )
+        for key, expected in self.registry["counts"].items():
+            if isinstance(expected, int):
+                self.assertEqual(report.counts[key], expected, f"count {key}")
+        self.assertEqual(
+            sorted(report.uccs_in(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC)),
+            sorted(item["ucc"] for item in self.roster),
+        )
+
+    @unittest.skipUnless(external_sources_available(), "needs BLS cx.item")
+    def test_every_hidden_ucc_resolves_to_a_live_dmi_node(self):
+        """Nothing in this class is safely ignorable.
+
+        If some of the 17 resolved nowhere, omitting them would be defensible.
+        None of them does.
+        """
+        report = build_ucc_provenance(
+            self.concordance,
+            load_items(EXTERNAL_SOURCES["items"]),
+            resolver=load_eli_resolver(load_taxonomy()),
+        )
+        for row in report.by_class(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC):
+            self.assertTrue(
+                row.dmi_node, f"{row.ucc} would be dropped with no node to miss"
+            )
+
+    @unittest.skipUnless(external_sources_available(), "needs BLS cx.item")
+    def test_published_shelter_counterparts_match_cx_item_titles(self):
+        """The recorded titles, and the annual/monthly anomaly, come from source."""
+        items = load_items(EXTERNAL_SOURCES["items"])
+        published = {}
+        for (_subcategory, code), record in items.items():
+            published.setdefault(code, record.item_text)
+
+        for pair in self.correspondence["pairs"]:
+            ucc = pair["published_ce_ucc"]
+            self.assertIn(ucc, published, f"{ucc} is not published in cx.item")
+            self.assertEqual(
+                published[ucc],
+                pair["published_title"],
+                f"{ucc} title drifted from cx.item",
+            )
+            self.assertNotIn(
+                pair["cpi_adjusted_pumd_ucc"],
+                published,
+                "a CPI_ADJUSTED_PUMD_UCC must be absent from cx.item by definition",
+            )
+
+
+class TestConcordanceSourceColumn(unittest.TestCase):
+    """The CE SOURCE column, documented and held to its documentation.
+
+    The column was carried through the loader from Milestone 1 without ever
+    being defined. A field nobody can interpret is a field that will eventually
+    be interpreted wrongly, so the definition now lives in the provenance
+    sidecar and the data is checked against it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.concordance = load_concordance()
+        cls.block = cls.concordance.provenance["ce_source_column"]
+
+    def test_every_documented_code_is_defined(self):
+        self.assertEqual(set(self.block["codes"]), {"I", "D"})
+        for code, definition in self.block["codes"].items():
+            self.assertTrue(definition, f"code {code} has no definition")
+        self.assertEqual(self.block["bls_column_name"], "CE SOURCE")
+
+    def test_no_ucc_uses_an_undocumented_source_code(self):
+        documented = set(self.block["codes"])
+        for entry in self.concordance.entries.values():
+            self.assertIn(
+                entry.ce_source,
+                documented,
+                f"{entry.ucc} carries CE SOURCE {entry.ce_source!r}, which the "
+                f"provenance sidecar does not define",
+            )
+
+    def test_ce_source_is_single_valued_per_ucc(self):
+        """The loader keeps the first value seen; that is only safe if unique.
+
+        ``load_concordance`` collapses 624 rows to 507 UCCs with ``setdefault``
+        on this column. Were a UCC to carry both I and D, one would be silently
+        discarded, so the invariant is checked against the raw rows rather than
+        against the collapsed result, which could not reveal the conflict.
+        """
+        by_ucc: dict = {}
+        with open(DEFAULT_CONCORDANCE_PATH, encoding="utf-8", newline="") as handle:
+            for row in csv.DictReader(handle, delimiter="\t"):
+                by_ucc.setdefault(row["ucc"], set()).add(row["ce_source"])
+        conflicts = {ucc: sorted(v) for ucc, v in by_ucc.items() if len(v) > 1}
+        self.assertEqual(conflicts, {})
+        self.assertTrue(self.block["single_valued_per_ucc"])
+
+    def test_observed_counts_match_the_artifact(self):
+        expected = self.block["observed_counts"]["distinct_uccs"]
+        actual: dict = {}
+        for entry in self.concordance.entries.values():
+            actual[entry.ce_source] = actual.get(entry.ce_source, 0) + 1
+        self.assertEqual(actual, expected)
+
+    def test_shelter_inputs_are_interview_codes(self):
+        """The sidecar's stated reason for carrying the column at all."""
+        for ucc in ("910104", "910105", "910106", "910107"):
+            self.assertEqual(self.concordance.get(ucc).ce_source, "I")
+
+    def test_unverified_url_says_so(self):
+        """bls.gov refused the fetch, so the field must not imply verification."""
+        provenance = self.concordance.provenance
+        self.assertTrue(provenance["source_page_url"].startswith("https://www.bls.gov/"))
+        self.assertIn("403", provenance["source_page_url_note"])
 
 
 class TestSemanticValidation(unittest.TestCase):
