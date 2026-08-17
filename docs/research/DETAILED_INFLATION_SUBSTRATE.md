@@ -9,6 +9,13 @@ weights, acquires no CPI data, and produces no DMI release.
 
 ---
 
+**Superseded in part.** The 58 unmapped UCCs this milestone leaves
+`UNRESOLVED` are given explicit scope treatments in
+[Milestone 2](DETAILED_INFLATION_MILESTONE_2.md), which reduces the
+unexplained share of the detailed basis from 19.4052% to 0.1602%. The
+Milestone-1 artifacts under `data/research/detailed_inflation/audit_2024/` are
+unchanged and remain the historical record.
+
 ## 1. Purpose
 
 The Detailed Inflation Substrate is an exploration of whether a household

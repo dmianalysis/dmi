@@ -247,6 +247,16 @@ class EliNodeResolver:
     def known_prefixes(self) -> frozenset[str]:
         return frozenset(self._prefix_map)
 
+    @property
+    def overrides(self) -> dict[str, str]:
+        """Read-only copy of the exact-ELI overrides.
+
+        Milestone 2 section 15 reports the resolution method (``PREFIX`` or
+        ``OVERRIDE``) for every ELI, which requires knowing which ELIs were
+        resolved by an override.
+        """
+        return dict(self._overrides)
+
 
 def load_eli_resolver(
     nodes: dict[str, ComputationNode], path: Path = ELI_MAP_PATH

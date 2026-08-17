@@ -1,0 +1,40 @@
+{
+  "artifact_id": "cpi_eli_descriptions_v0_1",
+  "attribution": "ELI codes, titles, definitions and major group assignments are published by the U.S. Bureau of Labor Statistics.",
+  "bls_major_group_counts": {
+    "Apparel": 35,
+    "Education and communication": 16,
+    "Food and beverages": 74,
+    "Housing": 56,
+    "Medical care": 13,
+    "Other goods and services": 19,
+    "Recreation": 33,
+    "Transportation": 27
+  },
+  "code_corrections": [
+    {
+      "classification": "DMI correction of an apparent BLS publication inconsistency. Not a BLS-authored change.",
+      "code_as_published": "HA01",
+      "code_used": "HA011",
+      "eli_name": "Rent of primary residence",
+      "reason": "Appendix 2 prints the 4-character item stratum code HA01. The pinned CE-CPI concordance and the CPI item structure both use the 5-character ELI HA011 for this item, and HA011 is the only HA-prefixed ELI reachable from the concordance. The row is retained under the corrected code so that the shelter ELI is not silently lost; the code as published is preserved in the source_code_as_published column."
+    }
+  ],
+  "eli_count": 273,
+  "milestone": "Detailed Inflation Substrate v0.1, Milestone 2",
+  "normalization_note": "Rows are retained where column 'Code' is a well-formed 5-character ELI (two letters then three digits), after applying the documented code_corrections. Definition whitespace is collapsed to single spaces. No other transformation is applied and no content row is dropped.",
+  "normalized_artifact": "cpi_eli_descriptions_v0_1.tsv",
+  "publication": "Handbook of Methods, Consumer Price Index, Appendix 2: Content of CPI Entry Level Items",
+  "publisher": "U.S. Bureau of Labor Statistics",
+  "rows_excluded": 3,
+  "rows_excluded_detail": "The workbook title row, the header row, and the trailing 'Source: U.S. Bureau of Labor Statistics.' row. No content row is excluded.",
+  "source_bytes": 76710,
+  "source_file_name": "cpi-eli-descriptions-hom-appendix2.xlsx",
+  "source_page_url": "https://www.bls.gov/cpi/additional-resources/entry-level-item-descriptions.htm",
+  "source_sha256": "40d13c0b61b84749919bcc8a5f92c77b7a5368fe250ed4a1c5c0c90eba0e662f",
+  "source_sheet": "webfile",
+  "source_workbook_url": "https://www.bls.gov/cpi/additional-resources/entry-level-item-descriptions.xlsx",
+  "status": "RESEARCH_ONLY",
+  "usage_note": "Supplies the BLS-authored ELI title and BLS major expenditure grouping required by Milestone 2 section 15. BLS publishes 8 major groups; the DMI taxonomy has 14 computation nodes, so BLS major group to DMI node is many-to-one and is not itself a BLS product.",
+  "version": "0.1.0"
+}

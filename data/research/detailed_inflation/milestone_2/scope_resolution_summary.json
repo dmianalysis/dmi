@@ -1,0 +1,218 @@
+{
+  "core_dmi": "WITHDRAWN_AND_UNIMPLEMENTED",
+  "exception_count": 58,
+  "index_computed": false,
+  "milestone": "Detailed Inflation Substrate v0.1, Milestone 2",
+  "pending_shelter_work": [
+    "Track-A rental-equivalence rule for owner-occupied shelter is not finalized. Four shelter-coupled rules remain PROPOSED.",
+    "PUMD annual-weighting and quintile procedure must be validated against published 2024 LB01 LABSTAT benchmarks before the 910104-910107 aggregates are computed.",
+    "shelter_cpi_track_2024.csv, shelter_payments_track_2024.csv and shelter_concept_comparison_2024.csv are not produced by this run."
+  ],
+  "reconciliation": [
+    {
+      "ce_observed_basis": 6836520.0,
+      "out_of_scope": 1182268.0,
+      "population": "All Consumer Units",
+      "residual": 0.0,
+      "retained": 5509878.0,
+      "suppressed_leaf_count": 19,
+      "suppressed_upper_bound": 122.5,
+      "suppressed_upper_bound_pct_of_basis": 0.001792,
+      "transformed": 133423.0,
+      "unresolved": 10951.0
+    },
+    {
+      "ce_observed_basis": 688872.0,
+      "out_of_scope": 71451.0,
+      "population": "Q1",
+      "residual": 0.0,
+      "retained": 608613.0,
+      "suppressed_leaf_count": 38,
+      "suppressed_upper_bound": 108.0,
+      "suppressed_upper_bound_pct_of_basis": 0.015678,
+      "transformed": 7986.0,
+      "unresolved": 822.0
+    },
+    {
+      "ce_observed_basis": 959951.0,
+      "out_of_scope": 123339.0,
+      "population": "Q2",
+      "residual": 0.0,
+      "retained": 822976.0,
+      "suppressed_leaf_count": 31,
+      "suppressed_upper_bound": 111.5,
+      "suppressed_upper_bound_pct_of_basis": 0.011615,
+      "transformed": 12444.0,
+      "unresolved": 1192.0
+    },
+    {
+      "ce_observed_basis": 1223874.0,
+      "out_of_scope": 191558.0,
+      "population": "Q3",
+      "residual": 0.0,
+      "retained": 1010302.0,
+      "suppressed_leaf_count": 33,
+      "suppressed_upper_bound": 111.5,
+      "suppressed_upper_bound_pct_of_basis": 0.00911,
+      "transformed": 20195.0,
+      "unresolved": 1819.0
+    },
+    {
+      "ce_observed_basis": 1572916.0,
+      "out_of_scope": 272796.0,
+      "population": "Q4",
+      "residual": 0.0,
+      "retained": 1262320.0,
+      "suppressed_leaf_count": 30,
+      "suppressed_upper_bound": 113.0,
+      "suppressed_upper_bound_pct_of_basis": 0.007184,
+      "transformed": 35033.0,
+      "unresolved": 2767.0
+    },
+    {
+      "ce_observed_basis": 2390913.0,
+      "out_of_scope": 523122.0,
+      "population": "Q5",
+      "residual": 0.0,
+      "retained": 1805671.0,
+      "suppressed_leaf_count": 25,
+      "suppressed_upper_bound": 118.5,
+      "suppressed_upper_bound_pct_of_basis": 0.004956,
+      "transformed": 57769.0,
+      "unresolved": 4351.0
+    }
+  ],
+  "replacement_accounting": {
+    "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1": {
+      "concept_difference": null,
+      "pending_reason": "The replacement rental-equivalence amount is not computed in this run. It depends on the Track-A shelter rule, which is held until the PUMD annual-weighting and quintile procedure has been validated against published 2024 LB01 LABSTAT benchmarks. Spec section 19.2 does not expect the removed and replacement amounts to be equal, so neither may be inferred from the other.",
+      "removed_owner_outlay": {
+        "All Consumer Units": {
+          "observed_removed_expenditure": 12620.0,
+          "suppressed_cell_count": 1
+        },
+        "Q1": {
+          "observed_removed_expenditure": 451.0,
+          "suppressed_cell_count": 8
+        },
+        "Q2": {
+          "observed_removed_expenditure": 1221.0,
+          "suppressed_cell_count": 4
+        },
+        "Q3": {
+          "observed_removed_expenditure": 1314.0,
+          "suppressed_cell_count": 6
+        },
+        "Q4": {
+          "observed_removed_expenditure": 5347.0,
+          "suppressed_cell_count": 2
+        },
+        "Q5": {
+          "observed_removed_expenditure": 4291.0,
+          "suppressed_cell_count": 2
+        }
+      },
+      "replacement_expenditure": null,
+      "status": "PENDING"
+    }
+  },
+  "rule_suppression_declared_vs_computed": {
+    "OS_CPI_CAPITAL_IMPROVEMENT_v0_1": {
+      "agrees": true,
+      "computed": "MATERIAL",
+      "declared": "MATERIAL"
+    },
+    "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1": {
+      "agrees": true,
+      "computed": "IMMATERIAL",
+      "declared": "IMMATERIAL"
+    },
+    "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "OS_CPI_VEHICLE_FINANCE_CHARGES_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1": {
+      "agrees": true,
+      "computed": "IMMATERIAL",
+      "declared": "IMMATERIAL"
+    },
+    "TR_EV_CHARGING_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "TR_TRIP_FOOD_ALCOHOL_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "TR_VEHICLE_REGISTRATION_FEES_v0_1": {
+      "agrees": true,
+      "computed": "NONE",
+      "declared": "NONE"
+    },
+    "UNRESOLVED_v0_2": {
+      "agrees": true,
+      "computed": "IMMATERIAL",
+      "declared": "IMMATERIAL"
+    }
+  },
+  "status": "RESEARCH_ONLY",
+  "suppression_status_counts": {
+    "IMMATERIAL": 23,
+    "NONE": 35
+  },
+  "suppression_thresholds_pct": {
+    "basis_share": 0.05,
+    "rule_unobserved_share": 25.0
+  },
+  "track_a_status_counts": {
+    "OUT_OF_SCOPE": 26,
+    "TRANSFORMED": 21,
+    "UNRESOLVED": 11
+  },
+  "track_b_retained_expenditure": {
+    "All Consumer Units": {
+      "observed_expenditure": 1137534.0,
+      "suppressed_cell_count": 2
+    },
+    "Q1": {
+      "observed_expenditure": 69066.0,
+      "suppressed_cell_count": 12
+    },
+    "Q2": {
+      "observed_expenditure": 117957.0,
+      "suppressed_cell_count": 7
+    },
+    "Q3": {
+      "observed_expenditure": 182599.0,
+      "suppressed_cell_count": 10
+    },
+    "Q4": {
+      "observed_expenditure": 260875.0,
+      "suppressed_cell_count": 4
+    },
+    "Q5": {
+      "observed_expenditure": 507039.0,
+      "suppressed_cell_count": 4
+    }
+  },
+  "track_b_treatment_counts": {
+    "EXCLUDE_CAPITAL_ACQUISITION": 4,
+    "NOT_APPLICABLE": 11,
+    "RETAIN_CURRENT_PAYMENT": 33,
+    "UNRESOLVED": 10
+  },
+  "weights_normalized": false
+}
