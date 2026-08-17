@@ -34,20 +34,29 @@ from dmi_research.detailed_inflation.concordance import (
     load_concordance,
 )
 from dmi_research.detailed_inflation.provenance import (
+    PROVENANCE_CSV_COLUMNS,
+    CpiAdjustmentStatus,
+    PublicationReason,
+    PumdMembership,
     UccProvenanceClass,
     UccProvenanceError,
     build_ucc_provenance,
     classify_ucc_provenance,
+    concordance_only_evidence,
     load_provenance_classes,
     verify_against_registry,
 )
 from dmi_research.detailed_inflation.resolution import (
     ALL_CU,
     POPULATIONS,
+    RECONCILIATION_BUCKETS,
     RESOLUTION_CSV_COLUMNS,
     ResolutionError,
+    ResolutionState,
+    TrackADisposition,
     build_resolution,
     build_suppression_bounds,
+    track_a_disposition,
     write_artifacts,
 )
 from dmi_research.detailed_inflation.scope_rules import (
@@ -108,6 +117,26 @@ def _unresolved_citation(reference):
             )
             return f"{part} is not defined there (found {defined})"
     return None
+
+
+def _resolve_registry_citation(reference):
+    """Return the record a ``file.json :: dotted.path`` citation names, or None.
+
+    Provenance evidence cites another pinned registry rather than a test, so the
+    citation is resolved by walking the JSON. A pointer that merely looks
+    plausible reads exactly like a checked one, which is the whole risk of
+    grading a claim VERIFIED on the strength of a reference.
+    """
+    module, _, dotted = (part.strip() for part in reference.partition("::"))
+    path = REPO_ROOT / module
+    if not dotted or not path.is_file():
+        return None
+    node = json.loads(path.read_text(encoding="utf-8"))
+    for part in dotted.split("."):
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
 
 
 #: Milestone 1 found 58 exception UCCs carrying this much All-CU expenditure
@@ -660,7 +689,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
     def setUpClass(cls):
         cls.registry = load_provenance_classes()
         cls.concordance = load_concordance()
-        cls.roster = cls.registry["cpi_adjusted_pumd_uccs"]["roster"]
+        cls.roster = cls.registry["concordance_only_uccs"]["roster"]
         cls.correspondence = cls.registry["shelter_rental_equivalence_correspondence"]
 
     def test_classes_partition_the_union(self):
@@ -685,7 +714,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
             {
                 "010119": UccProvenanceClass.DIRECT_CONCORDANCE_UCC,
                 "020219": UccProvenanceClass.PUBLISHED_CE_UCC,
-                "999999": UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC,
+                "999999": UccProvenanceClass.CONCORDANCE_ONLY_UCC,
             },
         )
         self.assertEqual(report.counts["published_ce_universe"], 2)
@@ -704,18 +733,18 @@ class TestUccProvenanceClasses(unittest.TestCase):
             counts["published_ce_universe"],
         )
         self.assertEqual(
-            counts["DIRECT_CONCORDANCE_UCC"] + counts["CPI_ADJUSTED_PUMD_UCC"],
+            counts["DIRECT_CONCORDANCE_UCC"] + counts["CONCORDANCE_ONLY_UCC"],
             counts["concordance_universe"],
         )
         self.assertEqual(
-            counts["published_ce_universe"] + counts["CPI_ADJUSTED_PUMD_UCC"],
+            counts["published_ce_universe"] + counts["CONCORDANCE_ONLY_UCC"],
             counts["union"],
         )
 
-    def test_pumd_roster_is_well_formed(self):
+    def test_concordance_only_roster_is_well_formed(self):
         counts = self.registry["counts"]
-        self.assertEqual(len(self.roster), counts["CPI_ADJUSTED_PUMD_UCC"])
-        reasons = set(self.registry["cpi_adjusted_pumd_uccs"]["reason_scale"])
+        self.assertEqual(len(self.roster), counts["CONCORDANCE_ONLY_UCC"])
+        scales = self.registry["evidence_scales"]
         seen = set()
         for item in self.roster:
             self.assertRegex(item["ucc"], r"^[0-9]{6}$")
@@ -723,12 +752,24 @@ class TestUccProvenanceClasses(unittest.TestCase):
             seen.add(item["ucc"])
             self.assertTrue(item["elis"], f"{item['ucc']} names no ELI")
             self.assertTrue(item["dmi_node"], f"{item['ucc']} names no DMI node")
-            self.assertIn(
-                item["reason"],
-                reasons,
-                f"{item['ucc']} uses a reason outside the declared scale",
-            )
             self.assertTrue(item["note"], f"{item['ucc']} carries no note")
+            # Each of the three claims must be stated, and stated on its own
+            # declared scale. A roster entry that simply omitted one would let
+            # the reader supply the missing value from the class name, which is
+            # the inference this split exists to block.
+            for field in (
+                "publication_reason",
+                "pumd_membership",
+                "cpi_adjustment_status",
+            ):
+                self.assertIn(
+                    field, item, f"{item['ucc']} does not state {field}"
+                )
+                self.assertIn(
+                    item[field],
+                    scales[field],
+                    f"{item['ucc']} uses a {field} outside the declared scale",
+                )
 
     def test_roster_is_drawn_from_the_pinned_concordance(self):
         """Every roster member must really be a concordance UCC.
@@ -755,7 +796,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
         pairs = self.correspondence["pairs"]
         self.assertEqual(len(pairs), 4)
         for pair in pairs:
-            normative = pair["cpi_adjusted_pumd_ucc"]
+            normative = pair["concordance_only_ucc"]
             published = pair["published_ce_ucc"]
             entry = self.concordance.get(normative)
             self.assertIsNotNone(
@@ -770,7 +811,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
             self.assertIn(
                 normative,
                 {item["ucc"] for item in self.roster},
-                f"{normative} must also appear in the PUMD roster",
+                f"{normative} must also appear in the concordance-only roster",
             )
 
     def test_shelter_correspondence_is_labelled_inference_not_bls_mapping(self):
@@ -779,7 +820,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
         self.assertTrue(self.correspondence["explicit_warning"])
         self.assertEqual(
             self.correspondence["normative_input_class"],
-            UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC.value,
+            UccProvenanceClass.CONCORDANCE_ONLY_UCC.value,
         )
         self.assertTrue(self.correspondence["normative_input_rationale"])
 
@@ -833,7 +874,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
             if isinstance(expected, int):
                 self.assertEqual(report.counts[key], expected, f"count {key}")
         self.assertEqual(
-            sorted(report.uccs_in(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC)),
+            sorted(report.uccs_in(UccProvenanceClass.CONCORDANCE_ONLY_UCC)),
             sorted(item["ucc"] for item in self.roster),
         )
 
@@ -849,7 +890,7 @@ class TestUccProvenanceClasses(unittest.TestCase):
             load_items(EXTERNAL_SOURCES["items"]),
             resolver=load_eli_resolver(load_taxonomy()),
         )
-        for row in report.by_class(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC):
+        for row in report.by_class(UccProvenanceClass.CONCORDANCE_ONLY_UCC):
             self.assertTrue(
                 row.dmi_node, f"{row.ucc} would be dropped with no node to miss"
             )
@@ -871,10 +912,323 @@ class TestUccProvenanceClasses(unittest.TestCase):
                 f"{ucc} title drifted from cx.item",
             )
             self.assertNotIn(
-                pair["cpi_adjusted_pumd_ucc"],
+                pair["concordance_only_ucc"],
                 published,
-                "a CPI_ADJUSTED_PUMD_UCC must be absent from cx.item by definition",
+                "a CONCORDANCE_ONLY_UCC must be absent from cx.item by definition",
             )
+
+
+class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
+    """Source-file membership, PUMD availability and CPI adjustment are three
+    separate claims and must be separately gradeable.
+
+    The class was called ``CPI_ADJUSTED_PUMD_UCC``. Membership of it was
+    established purely by set difference: in the concordance, absent from
+    ``cx.item``. That evidence supports neither "is in the PUMD" nor "the CPI
+    adjusts it", yet the name asserted both, so any consumer reading the class
+    inherited two unverified claims for free.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = load_provenance_classes()
+        cls.concordance = load_concordance()
+        cls.roster = cls.registry["concordance_only_uccs"]["roster"]
+        cls.evidence = concordance_only_evidence(cls.registry)
+
+    def test_the_class_names_only_what_set_membership_shows(self):
+        """The rename, and the reason for it, are both on the record."""
+        self.assertEqual(
+            UccProvenanceClass.CONCORDANCE_ONLY_UCC.value, "CONCORDANCE_ONLY_UCC"
+        )
+        self.assertEqual(
+            {member.value for member in UccProvenanceClass},
+            {
+                "DIRECT_CONCORDANCE_UCC",
+                "PUBLISHED_CE_UCC",
+                "CONCORDANCE_ONLY_UCC",
+            },
+        )
+        scope = self.registry["scope_of_the_classification"]
+        self.assertTrue(scope["what_it_proves"])
+        self.assertTrue(scope["what_it_does_not_prove"])
+        self.assertIn("CPI_ADJUSTED_PUMD_UCC", scope["naming_history"])
+
+    def test_the_three_claims_are_graded_on_declared_scales(self):
+        """A claim with no scale cannot be audited."""
+        scales = self.registry["evidence_scales"]
+        self.assertTrue(scales["note"])
+        self.assertEqual(
+            set(scales) - {"note"},
+            {"pumd_membership", "cpi_adjustment_status", "publication_reason"},
+        )
+        for field, enum in (
+            ("pumd_membership", PumdMembership),
+            ("cpi_adjustment_status", CpiAdjustmentStatus),
+            ("publication_reason", PublicationReason),
+        ):
+            self.assertEqual(
+                set(scales[field]),
+                {member.value for member in enum},
+                f"{field} scale drifted from the code",
+            )
+            for value, definition in scales[field].items():
+                self.assertTrue(definition, f"{field}/{value} is undefined")
+
+    def test_pumd_membership_is_not_inferred_from_the_class(self):
+        """The core requirement: membership does not imply PUMD availability.
+
+        If the roster asserted VERIFIED across the board, the split would be
+        cosmetic. Exactly one of the 17 carries a cited observation.
+        """
+        verified = [
+            item["ucc"]
+            for item in self.roster
+            if item["pumd_membership"] == PumdMembership.VERIFIED.value
+        ]
+        not_verified = [
+            item["ucc"]
+            for item in self.roster
+            if item["pumd_membership"] == PumdMembership.NOT_VERIFIED.value
+        ]
+        self.assertEqual(len(verified) + len(not_verified), len(self.roster))
+        self.assertTrue(
+            not_verified,
+            "if every concordance-only UCC were PUMD-verified, the old name "
+            "would have been accurate and this split unnecessary",
+        )
+        self.assertEqual(
+            len(verified),
+            1,
+            "exactly one concordance-only UCC carries a cited PUMD observation; "
+            "if this grows, check that each new citation resolves",
+        )
+        for ucc in verified:
+            evidence = self.evidence[ucc]["pumd_membership_evidence"]
+            self.assertTrue(evidence["observation"], f"{ucc} cites no observation")
+            # The citation must land on a real registry record, not merely look
+            # like one. A VERIFIED grade rests entirely on this pointer.
+            target = _resolve_registry_citation(evidence["citation"])
+            self.assertIsNotNone(
+                target,
+                f"{ucc} PUMD evidence cites {evidence['citation']}, which does "
+                f"not resolve",
+            )
+            self.assertIn(ucc, json.dumps(target))
+            # And the grade must not overstate what the citation supports.
+            self.assertFalse(evidence["reproduced_by_test"])
+            self.assertTrue(evidence["reproducibility_caveat"])
+
+    def test_unverified_pumd_membership_is_not_a_claim_of_absence(self):
+        """NOT_VERIFIED must read as silence, not as a negative finding."""
+        scales = self.registry["evidence_scales"]["pumd_membership"]
+        self.assertIn("does not claim either way", scales["NOT_VERIFIED"])
+        for item in self.roster:
+            if item["pumd_membership"] != PumdMembership.NOT_VERIFIED.value:
+                continue
+            self.assertNotIn(
+                "pumd_membership_evidence",
+                item,
+                f"{item['ucc']} is NOT_VERIFIED yet carries evidence",
+            )
+
+    def test_cpi_adjustment_inferences_are_labelled_as_dmi_readings(self):
+        """An INFERRED status must say whose inference it is.
+
+        The four shelter inputs are the only ones asserted at all, and only as a
+        DMI reading of BLS titles. A BLS statement would be VERIFIED, and none
+        is claimed.
+        """
+        inferred = [
+            item
+            for item in self.roster
+            if item["cpi_adjustment_status"] == CpiAdjustmentStatus.INFERRED.value
+        ]
+        self.assertTrue(inferred, "the fixture must exercise an inferred status")
+        for item in inferred:
+            evidence = item["cpi_adjustment_evidence"]
+            self.assertEqual(evidence["claim_type"], "DMI_INFERENCE")
+            self.assertTrue(evidence["basis"])
+            self.assertTrue(
+                evidence["limit"], f"{item['ucc']} states no limit on the inference"
+            )
+        self.assertFalse(
+            [
+                item["ucc"]
+                for item in self.roster
+                if item["cpi_adjustment_status"] == CpiAdjustmentStatus.VERIFIED.value
+            ],
+            "no BLS statement of a CPI adjustment has been located, so nothing "
+            "may be recorded as VERIFIED",
+        )
+
+    def test_ce_source_is_not_treated_as_pumd_evidence(self):
+        """CE SOURCE = I names the instrument, not the microdata dictionary.
+
+        This was the tempting shortcut: all four shelter inputs are Interview
+        codes, so it would be easy to read 'I' as proof of PUMD reachability.
+        """
+        note = self.registry["concordance_only_uccs"]["ce_source_is_not_pumd_evidence"]
+        self.assertTrue(note)
+        shelter = {"910104", "910105", "910106", "910107"}
+        for item in self.roster:
+            if item["ucc"] not in shelter:
+                continue
+            self.assertEqual(item["ce_source"], "I")
+            self.assertEqual(
+                item["pumd_membership"],
+                PumdMembership.NOT_VERIFIED.value,
+                f"{item['ucc']} is an Interview code, which is not evidence of "
+                f"PUMD membership",
+            )
+            self.assertTrue(item["pumd_membership_note"])
+
+    def test_shelter_provenance_keeps_both_sides_on_the_right_side(self):
+        """§B: the concordance inputs and the published counterparts.
+
+        Restated here against the class enum rather than the correspondence
+        block, so a rename in one place cannot drift from the other.
+        """
+        correspondence = self.registry["shelter_rental_equivalence_correspondence"]
+        result = correspondence["structural_result"]
+        self.assertEqual(
+            sorted(result["concordance_only"]),
+            ["910104", "910105", "910106", "910107"],
+        )
+        self.assertEqual(
+            sorted(result["published_ce"]),
+            ["910050", "910101", "910102", "910103"],
+        )
+        self.assertTrue(result["note"])
+        roster_uccs = {item["ucc"] for item in self.roster}
+        for ucc in result["concordance_only"]:
+            self.assertIn(ucc, roster_uccs)
+            self.assertIsNotNone(self.concordance.get(ucc))
+        for ucc in result["published_ce"]:
+            self.assertNotIn(ucc, roster_uccs)
+            self.assertIsNone(self.concordance.get(ucc))
+
+    def test_the_csv_surfaces_all_three_claims_beside_the_class(self):
+        """A consumer reading the artifact must see the evidence, not infer it."""
+        for column in (
+            "provenance_class",
+            "publication_reason",
+            "pumd_membership",
+            "cpi_adjustment_status",
+        ):
+            self.assertIn(column, PROVENANCE_CSV_COLUMNS)
+
+    def test_absent_evidence_defaults_to_the_weakest_reading(self):
+        """Silence must not be resolved in either direction.
+
+        A concordance-only UCC with no registry record is unverified and unknown,
+        never verified and never a claim of absence.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp),
+                [
+                    ("010119", "FA011", "In both", "Flour"),
+                    ("999999", "FA011", "Concordance only", "Flour"),
+                ],
+            )
+            report = classify_ucc_provenance(load_concordance(path), ["010119"])
+
+        rows = {row.ucc: row for row in report.rows}
+        hidden = rows["999999"]
+        self.assertIs(hidden.provenance_class, UccProvenanceClass.CONCORDANCE_ONLY_UCC)
+        self.assertIs(hidden.pumd_membership, PumdMembership.NOT_VERIFIED)
+        self.assertIs(hidden.cpi_adjustment_status, CpiAdjustmentStatus.UNKNOWN)
+        self.assertIs(hidden.publication_reason, PublicationReason.UNDOCUMENTED)
+        # A published UCC has no non-publication to explain.
+        self.assertIs(
+            rows["010119"].publication_reason, PublicationReason.NOT_APPLICABLE
+        )
+
+    def test_evidence_never_alters_the_partition(self):
+        """The class is structural, so supplying evidence cannot move a UCC."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_concordance(
+                Path(tmp),
+                [
+                    ("010119", "FA011", "In both", "Flour"),
+                    ("999999", "FA011", "Concordance only", "Flour"),
+                ],
+            )
+            concordance = load_concordance(path)
+
+        without = classify_ucc_provenance(concordance, ["010119"])
+        with_evidence = classify_ucc_provenance(
+            concordance,
+            ["010119"],
+            evidence={
+                "999999": {
+                    "pumd_membership": PumdMembership.VERIFIED.value,
+                    "cpi_adjustment_status": CpiAdjustmentStatus.VERIFIED.value,
+                    "publication_reason": PublicationReason.PUBFLAG_1.value,
+                }
+            },
+        )
+        self.assertEqual(without.counts, with_evidence.counts)
+        self.assertEqual(
+            [row.provenance_class for row in without.rows],
+            [row.provenance_class for row in with_evidence.rows],
+        )
+        graded = next(row for row in with_evidence.rows if row.ucc == "999999")
+        self.assertIs(graded.pumd_membership, PumdMembership.VERIFIED)
+
+    def test_the_overclaiming_name_is_gone_from_active_use(self):
+        """Repo-wide sweep. The old name may survive only as migration prose.
+
+        Renaming the enum member is not enough: a stale key in an artifact, a
+        doc table or a test fixture would keep the discredited claim in
+        circulation. Occurrences are therefore allowed only where the text is
+        explaining that the name was wrong.
+        """
+        allowed = {
+            Path("dmi_research/detailed_inflation/provenance.py"),
+            Path("registry/research/ucc_provenance_classes_v0_1.json"),
+            Path("tests/test_detailed_inflation_milestone_2.py"),
+            Path("docs/research/DETAILED_INFLATION_MILESTONE_2.md"),
+        }
+        searched = 0
+        offenders = []
+        for pattern in ("*.py", "*.json", "*.md", "*.csv", "*.tsv", "*.yml", "*.yaml"):
+            for path in REPO_ROOT.rglob(pattern):
+                if any(
+                    part in {".git", ".venv", "node_modules", "__pycache__"}
+                    for part in path.parts
+                ):
+                    continue
+                try:
+                    text = path.read_text(encoding="utf-8")
+                except (UnicodeDecodeError, OSError):
+                    continue
+                searched += 1
+                if "CPI_ADJUSTED_PUMD" not in text and "cpi_adjusted_pumd" not in text:
+                    continue
+                relative = path.relative_to(REPO_ROOT)
+                if relative not in allowed:
+                    offenders.append(str(relative))
+        self.assertGreater(searched, 50, "the sweep did not actually read the repo")
+        self.assertEqual(
+            [], sorted(offenders), "the overclaiming name is still in active use"
+        )
+
+    def test_the_migration_prose_explains_the_rename(self):
+        """An allowed occurrence must be an explanation, not a leftover.
+
+        Whitelisting a file is only defensible if the text there says why the
+        name was withdrawn.
+        """
+        module = (
+            REPO_ROOT / "dmi_research/detailed_inflation/provenance.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("CPI_ADJUSTED_PUMD_UCC", module)
+        self.assertIn("An earlier version of this module called", module)
+        history = self.registry["scope_of_the_classification"]["naming_history"]
+        self.assertIn("CPI_ADJUSTED_PUMD_UCC", history)
+        self.assertIn("renames it CONCORDANCE_ONLY_UCC", history)
 
 
 class TestConcordanceSourceColumn(unittest.TestCase):
@@ -1022,6 +1376,181 @@ class TestSuppressionBounds(unittest.TestCase):
         self.assertIsNone(bound.upper_bound)
 
 
+class TestTrackADispositionModel(unittest.TestCase):
+    """A proposed disposition must not be representable as an effective one.
+
+    These tests need no BLS extract. They are about the shape of the data model,
+    and the original defect was a shape error: ``m2_track_a_status`` was assigned
+    ``rule.final_status`` unconditionally, so the registry's *argument* about
+    where shelter expenditure belongs was recorded as a *decision* that it was
+    already there.
+    """
+
+    RESOLUTION_SOURCE = REPO_ROOT / "dmi_research/detailed_inflation/resolution.py"
+
+    def _disposition(self, **overrides):
+        base = {
+            "proposed_status": MappingStatus.OUT_OF_SCOPE,
+            "effective_status": MappingStatus.OUT_OF_SCOPE,
+            "resolution_state": ResolutionState.EFFECTIVE,
+            "review_status": ReviewStatus.ACCEPTED,
+        }
+        base.update(overrides)
+        return TrackADisposition(**base)
+
+    def test_an_accepted_rule_is_in_force(self):
+        disposition = self._disposition()
+        self.assertIs(disposition.effective_status, MappingStatus.OUT_OF_SCOPE)
+        self.assertTrue(disposition.is_effective)
+
+    def test_a_proposed_status_cannot_be_recorded_as_effective(self):
+        """The exact defect, now unconstructable.
+
+        A PROPOSED rule proposing OUT_OF_SCOPE is precisely the shelter case.
+        Building the disposition that the old code built must raise.
+        """
+        with self.assertRaises(ResolutionError) as caught:
+            self._disposition(review_status=ReviewStatus.PROPOSED)
+        self.assertIn("ACCEPTED", str(caught.exception))
+
+    def test_a_pending_disposition_holds_nothing_in_force(self):
+        disposition = self._disposition(
+            effective_status=MappingStatus.UNRESOLVED,
+            resolution_state=ResolutionState.PENDING,
+            review_status=ReviewStatus.PROPOSED,
+        )
+        self.assertIs(disposition.proposed_status, MappingStatus.OUT_OF_SCOPE)
+        self.assertIs(disposition.effective_status, MappingStatus.UNRESOLVED)
+        self.assertFalse(disposition.is_effective)
+
+    def test_a_pending_disposition_must_actually_propose_something(self):
+        """PENDING and OPEN are not interchangeable.
+
+        Without this, a rule that decided nothing could be filed as "blocked on
+        a prerequisite", which would understate the genuinely open gap.
+        """
+        with self.assertRaises(ResolutionError) as caught:
+            self._disposition(
+                proposed_status=MappingStatus.UNRESOLVED,
+                effective_status=MappingStatus.UNRESOLVED,
+                resolution_state=ResolutionState.PENDING,
+                review_status=ReviewStatus.PROPOSED,
+            )
+        self.assertIn("OPEN", str(caught.exception))
+
+    def test_an_open_disposition_must_propose_nothing(self):
+        with self.assertRaises(ResolutionError) as caught:
+            self._disposition(
+                effective_status=MappingStatus.UNRESOLVED,
+                resolution_state=ResolutionState.OPEN,
+                review_status=ReviewStatus.OPEN,
+            )
+        self.assertIn("PENDING, not OPEN", str(caught.exception))
+
+    def test_a_not_in_force_disposition_cannot_carry_a_live_effective_status(self):
+        with self.assertRaises(ResolutionError) as caught:
+            self._disposition(
+                resolution_state=ResolutionState.PENDING,
+                review_status=ReviewStatus.PROPOSED,
+            )
+        self.assertIn("must be UNRESOLVED", str(caught.exception))
+
+    def test_unresolved_can_never_be_effective(self):
+        """UNRESOLVED is the absence of a disposition, not a destination."""
+        with self.assertRaises(ResolutionError):
+            self._disposition(
+                proposed_status=MappingStatus.UNRESOLVED,
+                effective_status=MappingStatus.UNRESOLVED,
+            )
+
+    def test_the_gate_maps_every_review_status_correctly(self):
+        """Spec section 5.4, over the pinned registry rather than a fixture."""
+        registry = load_scope_rules()
+        for rule in registry.rules:
+            disposition = track_a_disposition(rule)
+            self.assertIs(disposition.proposed_status, rule.final_status)
+            if rule.final_status is MappingStatus.UNRESOLVED:
+                self.assertIs(disposition.resolution_state, ResolutionState.OPEN)
+            elif rule.is_applicable:
+                self.assertIs(disposition.resolution_state, ResolutionState.EFFECTIVE)
+                self.assertIs(disposition.effective_status, rule.final_status)
+            else:
+                self.assertIs(disposition.resolution_state, ResolutionState.PENDING)
+                self.assertIs(disposition.effective_status, MappingStatus.UNRESOLVED)
+
+    def test_no_status_is_effective_without_an_applicable_accepted_rule(self):
+        """The converse, stated as its own claim.
+
+        Iterating the registry and checking each rule's mapping is not the same
+        as checking that nothing else can become effective. This asserts the
+        second: an effective disposition implies an applicable ACCEPTED rule.
+        """
+        registry = load_scope_rules()
+        effective = [r for r in registry.rules if track_a_disposition(r).is_effective]
+        self.assertTrue(effective, "the fixture must exercise at least one live rule")
+        for rule in effective:
+            self.assertIs(rule.review_status, ReviewStatus.ACCEPTED)
+            self.assertTrue(rule.is_applicable)
+        for rule in registry.rules:
+            if rule.review_status is not ReviewStatus.ACCEPTED:
+                self.assertFalse(
+                    track_a_disposition(rule).is_effective,
+                    f"{rule.rule_id} is {rule.review_status.value} yet in force",
+                )
+
+    def test_final_status_is_only_read_through_the_disposition_gate(self):
+        """No second code path may promote ``final_status`` to an effective one.
+
+        The invariants above constrain :class:`TrackADisposition`, but they say
+        nothing about a caller that bypasses it. The defect was exactly such a
+        bypass, so this parses the module and requires every read of
+        ``rule.final_status`` to sit inside ``track_a_disposition``, which cannot
+        return an effective status without consulting the review state.
+        """
+        tree = ast.parse(self.RESOLUTION_SOURCE.read_text(encoding="utf-8"))
+        gate = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "track_a_disposition"
+        )
+        inside_gate = {
+            id(node)
+            for node in ast.walk(gate)
+            if isinstance(node, ast.Attribute) and node.attr == "final_status"
+        }
+        self.assertTrue(inside_gate, "the gate no longer reads final_status at all")
+
+        stray = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Attribute)
+            and node.attr == "final_status"
+            and id(node) not in inside_gate
+        ]
+        self.assertEqual(
+            [],
+            [f"line {node.lineno}" for node in stray],
+            "final_status is read outside track_a_disposition; an effective "
+            "status may only be derived where the review status is checked",
+        )
+
+    def test_the_resolution_row_exposes_no_ambiguous_status_field(self):
+        """The old name is gone, not merely deprecated.
+
+        ``m2_track_a_status`` never said whose claim it carried. Leaving it in
+        place as an alias would let existing consumers keep reading a proposed
+        status as an effective one, which is the whole defect.
+        """
+        self.assertNotIn("m2_track_a_status", RESOLUTION_CSV_COLUMNS)
+        for field in (
+            "proposed_track_a_status",
+            "effective_track_a_status",
+            "review_status",
+            "resolution_state",
+        ):
+            self.assertIn(field, RESOLUTION_CSV_COLUMNS)
+
+
 @unittest.skipUnless(
     external_sources_available(),
     "Authoritative BLS CE extracts are not present; see the research README.",
@@ -1067,7 +1596,10 @@ class TestResolution(unittest.TestCase):
                 "q4_expenditure",
                 "q5_expenditure",
                 "m1_status",
-                "m2_track_a_status",
+                "proposed_track_a_status",
+                "effective_track_a_status",
+                "review_status",
+                "resolution_state",
                 "track_a_rule_id",
                 "track_a_node",
                 "track_b_treatment",
@@ -1105,7 +1637,15 @@ class TestResolution(unittest.TestCase):
         recon = next(
             r for r in self.resolution.reconciliations if r.population == ALL_CU
         )
-        exception_total = recon.transformed + recon.out_of_scope + recon.unresolved
+        # Every bucket except ``retained`` holds exception expenditure, and only
+        # exception expenditure. Summing the four is the same claim the old
+        # three-bucket sum made, now that pending shelter rules are carried
+        # separately instead of being folded into an accepted bucket.
+        exception_total = sum(
+            getattr(recon, bucket)
+            for bucket in RECONCILIATION_BUCKETS
+            if bucket != "retained"
+        )
         self.assertAlmostEqual(exception_total, EXPECTED_EXCEPTION_ALL_CU, places=1)
 
     def test_suppressed_cells_are_blank_not_zero(self):
@@ -1197,6 +1737,376 @@ class TestResolution(unittest.TestCase):
         for forbidden in ("data/outputs/milestone_2", "deploy/data/outputs"):
             with self.assertRaises(ResearchFirewallError):
                 write_artifacts(self.resolution, self.registry, Path(forbidden))
+
+
+@unittest.skipUnless(
+    external_sources_available(),
+    "Authoritative BLS CE extracts are not present; see the research README.",
+)
+class TestProposedDispositionsDoNotEnterTheAccounting(unittest.TestCase):
+    """Section 19.1 over the pinned extracts, on the effective statuses only.
+
+    The four shelter-coupled rules propose to exclude or transform roughly a
+    sixth of the detailed basis. Until their PUMD prerequisite is met, none of
+    that may appear as an accepted exclusion or an accepted transformation.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.audit = run_audit(
+            series_path=EXTERNAL_SOURCES["series"],
+            data_path=EXTERNAL_SOURCES["data"],
+            items_path=EXTERNAL_SOURCES["items"],
+            aspects_path=EXTERNAL_SOURCES["aspects"],
+        )
+        cls.registry = load_scope_rules()
+        cls.resolution = build_resolution(
+            basis=cls.audit.basis,
+            mappings=cls.audit.mappings,
+            registry=cls.registry,
+        )
+        cls.all_cu = next(
+            r for r in cls.resolution.reconciliations if r.population == ALL_CU
+        )
+
+    def _observed(self, rows, population=ALL_CU):
+        return sum(
+            row.expenditure_by_population[population] or 0.0
+            for row in rows
+        )
+
+    def _rows_of(self, rule_id):
+        return [r for r in self.resolution.rows if r.track_a_rule_id == rule_id]
+
+    def test_every_row_states_both_claims(self):
+        for row in self.resolution.rows:
+            rule = self.registry.rule_by_id(row.track_a_rule_id)
+            self.assertIs(row.proposed_track_a_status, rule.final_status)
+            self.assertEqual(row.review_status, rule.review_status.value)
+            if rule.is_applicable and rule.final_status is not MappingStatus.UNRESOLVED:
+                self.assertIs(row.effective_track_a_status, rule.final_status)
+                self.assertIs(row.resolution_state, ResolutionState.EFFECTIVE)
+            else:
+                self.assertIs(
+                    row.effective_track_a_status,
+                    MappingStatus.UNRESOLVED,
+                    f"{row.ucc} is governed by a rule that is not in force",
+                )
+
+    def test_proposed_shelter_rules_are_pending_not_accepted(self):
+        """The defect, at the row level, over every affected UCC."""
+        proposed = [
+            r
+            for r in self.registry.rules
+            if r.review_status is ReviewStatus.PROPOSED
+        ]
+        self.assertEqual(len(proposed), 4, "the four shelter rules are the fixture")
+        for rule in proposed:
+            for row in self._rows_of(rule.rule_id):
+                self.assertIs(row.resolution_state, ResolutionState.PENDING)
+                self.assertIsNot(
+                    row.effective_track_a_status, MappingStatus.OUT_OF_SCOPE
+                )
+                self.assertIsNot(
+                    row.effective_track_a_status, MappingStatus.TRANSFORMED
+                )
+
+    def test_pending_and_open_are_distinguished(self):
+        """A blocked disposition and an absent one are different facts."""
+        pending = {
+            r.ucc for r in self.resolution.rows
+            if r.resolution_state is ResolutionState.PENDING
+        }
+        open_rows = {
+            r.ucc for r in self.resolution.rows
+            if r.resolution_state is ResolutionState.OPEN
+        }
+        self.assertEqual(pending & open_rows, set())
+        self.assertTrue(pending, "the fixture must exercise the pending bucket")
+        self.assertTrue(open_rows, "the fixture must exercise the open bucket")
+        for ucc in open_rows:
+            rule = self.registry.rule_for(ucc)
+            self.assertIs(rule.final_status, MappingStatus.UNRESOLVED)
+        for ucc in pending:
+            rule = self.registry.rule_for(ucc)
+            self.assertIsNot(rule.final_status, MappingStatus.UNRESOLVED)
+
+    def test_five_buckets_reconcile_in_every_population(self):
+        """The accounting identity, restated over the corrected buckets."""
+        self.assertEqual(len(self.resolution.reconciliations), len(POPULATIONS))
+        for recon in self.resolution.reconciliations:
+            self.assertAlmostEqual(
+                recon.sum_of_buckets,
+                recon.ce_observed_basis,
+                places=6,
+                msg=f"{recon.population} does not reconcile",
+            )
+            self.assertAlmostEqual(recon.residual, 0.0, places=6)
+
+    def test_each_bucket_holds_exactly_its_rows(self):
+        """Bucket totals are not free parameters.
+
+        Each is reproduced here from the rows themselves, so a bucket cannot be
+        made to balance by moving expenditure into the wrong one.
+        """
+        expected = {
+            "accepted_transformed": [
+                r for r in self.resolution.rows
+                if r.resolution_state is ResolutionState.EFFECTIVE
+                and r.effective_track_a_status is MappingStatus.TRANSFORMED
+            ],
+            "accepted_out_of_scope": [
+                r for r in self.resolution.rows
+                if r.resolution_state is ResolutionState.EFFECTIVE
+                and r.effective_track_a_status is MappingStatus.OUT_OF_SCOPE
+            ],
+            "pending_proposed": [
+                r for r in self.resolution.rows
+                if r.resolution_state is ResolutionState.PENDING
+            ],
+            "unresolved_open": [
+                r for r in self.resolution.rows
+                if r.resolution_state is ResolutionState.OPEN
+            ],
+        }
+        for population in POPULATIONS:
+            recon = next(
+                r for r in self.resolution.reconciliations if r.population == population
+            )
+            for bucket, rows in expected.items():
+                self.assertAlmostEqual(
+                    getattr(recon, bucket),
+                    self._observed(rows, population),
+                    places=6,
+                    msg=f"{population}/{bucket}",
+                )
+
+    def test_accepted_buckets_exclude_all_proposed_expenditure(self):
+        """The literal claim: what is proposed is not counted as accepted.
+
+        The three PROPOSED exclusion rules argue for a large exclusion. The
+        accepted out-of-scope total must equal the ACCEPTED exclusions alone,
+        with none of that argued amount folded in.
+        """
+        accepted_exclusions = [
+            row
+            for rule in self.registry.rules
+            if rule.is_applicable and rule.final_status is MappingStatus.OUT_OF_SCOPE
+            for row in self._rows_of(rule.rule_id)
+        ]
+        self.assertAlmostEqual(
+            self.all_cu.accepted_out_of_scope,
+            self._observed(accepted_exclusions),
+            places=6,
+        )
+        proposed_exclusions = [
+            row
+            for rule in self.registry.rules
+            if not rule.is_applicable
+            and rule.final_status is MappingStatus.OUT_OF_SCOPE
+            for row in self._rows_of(rule.rule_id)
+        ]
+        argued = self._observed(proposed_exclusions)
+        self.assertGreater(argued, 0.0, "the fixture must exercise a proposed exclusion")
+        self.assertAlmostEqual(
+            self.all_cu.pending_proposed - argued,
+            self._observed(
+                [
+                    row
+                    for rule in self.registry.rules
+                    if not rule.is_applicable
+                    and rule.final_status is MappingStatus.TRANSFORMED
+                    for row in self._rows_of(rule.rule_id)
+                ]
+            ),
+            places=6,
+        )
+
+    def test_pending_expenditure_is_material_and_reported(self):
+        """A pending bucket that were empty would prove nothing.
+
+        The point of the correction is that the pending share is large: it must
+        be visible in the artifact rather than absorbed into accepted buckets.
+        """
+        self.assertGreater(
+            self.all_cu.pct_of_basis("pending_proposed"),
+            self.all_cu.pct_of_basis("accepted_transformed")
+            + self.all_cu.pct_of_basis("accepted_out_of_scope"),
+            "the pending share is larger than the effective one; if this ever "
+            "reverses, check that the shelter rules were legitimately accepted",
+        )
+
+    def test_headline_is_arithmetically_consistent_with_the_reconciliation(self):
+        headline = self.resolution.summary["headline"]
+        for recon in self.resolution.reconciliations:
+            entry = headline["by_population"][recon.population]
+            self.assertAlmostEqual(
+                entry["ce_observed_basis"], round(recon.ce_observed_basis, 1), places=1
+            )
+            for bucket in RECONCILIATION_BUCKETS:
+                if bucket == "retained":
+                    self.assertNotIn(bucket, entry)
+                    continue
+                self.assertAlmostEqual(
+                    entry[bucket]["expenditure"], round(getattr(recon, bucket), 1),
+                    places=1,
+                )
+            # The four derived quantities must be the sums they claim to be.
+            self.assertAlmostEqual(
+                entry["effective_now"]["expenditure"],
+                entry["accepted_transformed"]["expenditure"]
+                + entry["accepted_out_of_scope"]["expenditure"],
+                places=1,
+            )
+            self.assertAlmostEqual(
+                entry["with_a_proposed_disposition"]["expenditure"],
+                entry["effective_now"]["expenditure"]
+                + entry["pending_proposed"]["expenditure"],
+                places=1,
+            )
+            self.assertAlmostEqual(
+                entry["milestone_1_unexplained"]["expenditure"],
+                entry["with_a_proposed_disposition"]["expenditure"]
+                + entry["unresolved_open"]["expenditure"],
+                places=1,
+            )
+
+    def test_headline_does_not_claim_the_gap_is_closed(self):
+        """Section 2 prose must not read the open share as the whole remainder.
+
+        Reporting only the fall from 19.4052% to 0.1602% would imply Track A is
+        settled. The statement has to name the pending share in the same breath.
+        """
+        statement = self.resolution.summary["headline"]["statement"]
+        all_cu = self.resolution.summary["headline"]["by_population"][ALL_CU]
+        pending = all_cu["pending_proposed"]["pct_of_basis"]
+        self.assertIn(f"{pending:.4f}%", statement)
+        self.assertIn("not yet effective", statement)
+        self.assertIn(
+            f"{all_cu['unresolved_open']['pct_of_basis']:.4f}%", statement
+        )
+        self.assertIn(
+            f"{all_cu['milestone_1_unexplained']['pct_of_basis']:.4f}%", statement
+        )
+
+    def test_summary_reports_proposed_and_effective_counts_separately(self):
+        summary = self.resolution.summary
+        self.assertNotIn("track_a_status_counts", summary)
+        proposed = summary["track_a_proposed_status_counts"]
+        effective = summary["track_a_effective_status_counts"]
+        states = summary["resolution_state_counts"]
+        self.assertEqual(sum(proposed.values()), EXPECTED_EXCEPTION_COUNT)
+        self.assertEqual(sum(effective.values()), EXPECTED_EXCEPTION_COUNT)
+        self.assertEqual(sum(states.values()), EXPECTED_EXCEPTION_COUNT)
+        # If the two count sets were identical the distinction would be vacuous.
+        self.assertNotEqual(proposed, effective)
+        self.assertEqual(
+            effective["UNRESOLVED"],
+            states["PENDING"] + states["OPEN"],
+            "everything not in force must read as UNRESOLVED in effect",
+        )
+
+    def test_replacement_accounting_agrees_with_the_effective_model(self):
+        """Section 19.2 may not report a removal that has not happened."""
+        block = self.resolution.replacement_accounting[
+            "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1"
+        ]
+        self.assertEqual(block["status"], ResolutionState.PENDING.value)
+        self.assertEqual(block["review_status"], ReviewStatus.PROPOSED.value)
+        self.assertEqual(block["proposed_track_a_status"], "TRANSFORMED")
+        self.assertEqual(block["effective_track_a_status"], "UNRESOLVED")
+        self.assertIsNone(block["replacement_expenditure"])
+        self.assertTrue(block["removed_outlay_is_still_in_the_basis"])
+        # And the outlay it describes is genuinely still counted, in pending.
+        removed = block["removed_owner_outlay"][ALL_CU][
+            "observed_removed_expenditure"
+        ]
+        rows = self._rows_of("RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1")
+        self.assertAlmostEqual(removed, self._observed(rows), places=1)
+        self.assertLessEqual(removed, self.all_cu.pending_proposed + 1e-6)
+
+    def test_unresolved_ledger_lists_open_rows_only(self):
+        """A pending shelter UCC is not a research lead.
+
+        Its effective status is UNRESOLVED too, so a ledger keyed on the
+        effective status alone would silently grow from the 11 genuinely
+        undecided codes to all 44 not in force.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            written = write_artifacts(
+                self.resolution, self.registry, Path(tmp) / "research"
+            )
+            ledger = next(p for p in written if p.name.startswith("unresolved_ledger"))
+            with ledger.open(encoding="utf-8") as handle:
+                uccs = [row["ucc"] for row in csv.DictReader(handle)]
+        self.assertEqual(
+            sorted(uccs),
+            sorted(
+                r.ucc
+                for r in self.resolution.rows
+                if r.resolution_state is ResolutionState.OPEN
+            ),
+        )
+        self.assertNotIn(
+            "220311",
+            uccs,
+            "a pending shelter UCC must not be listed as an open research lead",
+        )
+
+    def test_making_an_accepted_exclusion_proposed_moves_it_out_of_accepted(self):
+        """Mutation test: the accounting must be sensitive to review status.
+
+        Under the original defect this assertion was unreachable, because
+        ``rule.final_status`` was written into the accounting whatever the review
+        status said. Flipping one ACCEPTED exclusion to PROPOSED must move its
+        expenditure from ``accepted_out_of_scope`` into ``pending_proposed``,
+        leaving the basis untouched.
+        """
+        target = "OS_CPI_CAPITAL_IMPROVEMENT_v0_1"
+        baseline = self._observed(self._rows_of(target))
+        self.assertGreater(baseline, 0.0)
+
+        def mutate(payload):
+            for rule in payload["rules"]:
+                if rule["rule_id"] == target:
+                    rule["review_status"] = "PROPOSED"
+                    rule["review_blocker"] = (
+                        "synthetic blocker introduced by the mutation test"
+                    )
+                    return
+            raise AssertionError(f"{target} is no longer in the registry")
+
+        path = _mutated_registry(mutate)
+        try:
+            mutated = build_resolution(
+                basis=self.audit.basis,
+                mappings=self.audit.mappings,
+                registry=load_scope_rules(path),
+            )
+        finally:
+            path.unlink()
+
+        after = next(r for r in mutated.reconciliations if r.population == ALL_CU)
+        self.assertAlmostEqual(
+            after.accepted_out_of_scope,
+            self.all_cu.accepted_out_of_scope - baseline,
+            places=6,
+            msg="a PROPOSED rule is still being counted as an accepted exclusion",
+        )
+        self.assertAlmostEqual(
+            after.pending_proposed,
+            self.all_cu.pending_proposed + baseline,
+            places=6,
+        )
+        self.assertAlmostEqual(after.residual, 0.0, places=6)
+        self.assertAlmostEqual(
+            after.ce_observed_basis, self.all_cu.ce_observed_basis, places=6
+        )
+        # The rule still argues for exclusion; only its force has changed.
+        for row in mutated.rows:
+            if row.track_a_rule_id == target:
+                self.assertIs(row.proposed_track_a_status, MappingStatus.OUT_OF_SCOPE)
+                self.assertIs(row.resolution_state, ResolutionState.PENDING)
 
 
 if __name__ == "__main__":

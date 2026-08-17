@@ -1,25 +1,31 @@
 {
   "artifact_id": "ucc_provenance_classes_v0_1",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "status": "RESEARCH_ONLY",
   "milestone": "Detailed Inflation Substrate v0.1, Milestone 2",
-  "description": "A research classification of Consumer Expenditure UCCs by which BLS universe they belong to. Milestone 1 built its accounting basis from the published CE item file cx.item and treated a UCC absent from that file as a fatal error. That is correct for the basis but wrong as a general assumption, because the CPI's own UCC->ELI concordance names 17 UCCs that cx.item does not contain. Any future code that assumes cx.item enumerates every UCC the CPI uses will silently omit them. This artifact makes the two universes and their overlap explicit and named so that assumption cannot be made by accident.",
-  "attribution": "cx.item and the UCC->ELI concordance are publications of the U.S. Bureau of Labor Statistics. The three class names below are DMI research vocabulary, not BLS terminology.",
+  "description": "A research classification of Consumer Expenditure UCCs by which BLS source file they appear in. Milestone 1 built its accounting basis from the published CE item file cx.item and treated a UCC absent from that file as a fatal error. That is correct for the basis but wrong as a general assumption, because the CPI's own UCC->ELI concordance names 17 UCCs that cx.item does not contain. Any future code that assumes cx.item enumerates every UCC the CPI uses will silently omit them. This artifact makes the two universes and their overlap explicit and named so that assumption cannot be made by accident.",
+  "scope_of_the_classification": {
+    "what_it_proves": "The class of a UCC is a statement about BLS source-file membership and nothing else. CONCORDANCE_ONLY_UCC means exactly: the UCC appears in the pinned CE->CPI concordance and does not appear in the published cx.item universe.",
+    "what_it_does_not_prove": "The class does not establish that a UCC is available in the CE Public Use Microdata, does not establish that the CPI applies any adjustment to it, and does not establish why BLS declines to publish an aggregate for it. Those are three separate evidence claims, recorded in separate fields per UCC (pumd_membership, cpi_adjustment_status, publication_reason) and defaulted to NOT_VERIFIED or UNKNOWN rather than inferred from the class.",
+    "naming_history": "Version 0.1.0 of this artifact named the third class CPI_ADJUSTED_PUMD_UCC. That name asserted PUMD availability and CPI adjustment, neither of which the set-membership derivation supports. Version 0.2.0 renames it CONCORDANCE_ONLY_UCC, which is what the derivation actually shows, and moves the two asserted properties into evidence fields where they can carry their own status."
+  },
+  "attribution": "cx.item and the UCC->ELI concordance are publications of the U.S. Bureau of Labor Statistics. The three class names below, the evidence scales, and every inference recorded in this file are DMI research vocabulary and DMI research claims, not BLS terminology and not BLS findings.",
   "derivation": {
     "note": "The class of a UCC is derived, never hand-assigned. It follows from set membership in two pinned or authoritative BLS files, so it cannot drift from the sources and cannot encode a preference.",
     "published_universe": "The set of six-digit numeric item_code values in the BLS LABSTAT CE item file cx.item. Non-numeric codes are aggregate rollups, not UCCs, and are excluded.",
     "concordance_universe": "The set of UCCs in registry/research/ucc_eli_concordance_2024_v0_1.tsv, the pinned August-2026 CE->CPI concordance.",
-    "rule": "in cx.item and in concordance -> DIRECT_CONCORDANCE_UCC; in cx.item only -> PUBLISHED_CE_UCC; in concordance only -> CPI_ADJUSTED_PUMD_UCC. The three classes partition the union of the two universes exactly: every UCC has one class and no UCC has two."
+    "rule": "in cx.item and in concordance -> DIRECT_CONCORDANCE_UCC; in cx.item only -> PUBLISHED_CE_UCC; in concordance only -> CONCORDANCE_ONLY_UCC. The three classes partition the union of the two universes exactly: every UCC has one class and no UCC has two."
   },
   "classes": {
     "PUBLISHED_CE_UCC": {
       "definition": "Published in cx.item but absent from the CE->CPI concordance. The CPI does not draw a weight directly from this UCC. It may still be usable as a published-source validation or provenance counterpart to a code the CPI does use.",
       "caution": "Presence in this class is not evidence that the CPI excludes the concept. The concept may reach the CPI through a different UCC, or through a special adjustment factor BLS does not publish. Milestone 2 section 5.2 forbids inferring scope from the absence of a concordance row."
     },
-    "CPI_ADJUSTED_PUMD_UCC": {
-      "definition": "Named by the CE->CPI concordance but absent from the published CE item file. These exist in the CE microdata and/or in the CPI's internal weighting inputs, but BLS does not publish an annual expenditure aggregate for them in LABSTAT.",
+    "CONCORDANCE_ONLY_UCC": {
+      "definition": "Named by the CE->CPI concordance and absent from the published CE item file cx.item. That is the whole content of the class: a membership difference between two BLS files.",
       "caution": "This is the class that breaks the cx.item-is-everything assumption. A pipeline keyed on cx.item will not see these UCCs at all, and will therefore under-count the CPI-relevant universe without raising any error. Every one of the 17 resolves to a live DMI computation node, so none of them is safely ignorable.",
-      "expenditure_note": "No published LABSTAT aggregate exists for these UCCs, so an amount for any of them must come from PUMD microdata under a documented and benchmark-validated weighting procedure, not from cx.data."
+      "does_not_imply": "Membership does not imply the UCC is present in the CE Public Use Microdata, does not imply the CPI adjusts it, and does not imply any particular reason for non-publication. Read pumd_membership, cpi_adjustment_status and publication_reason on the roster entry instead of inferring any of the three from the class.",
+      "expenditure_note": "No published LABSTAT aggregate exists for these UCCs, so an amount for any of them would have to come from a source other than cx.data, under a documented and benchmark-validated procedure. This artifact identifies no such source and authorizes no such amount."
     },
     "DIRECT_CONCORDANCE_UCC": {
       "definition": "Present in both universes: published in cx.item and mapped by the concordance. This is the ordinary case and the only class for which a published annual aggregate and a CPI destination are both available without further inference.",
@@ -31,16 +37,30 @@
     "published_ce_universe": 998,
     "concordance_universe": 507,
     "DIRECT_CONCORDANCE_UCC": 490,
-    "CPI_ADJUSTED_PUMD_UCC": 17,
+    "CONCORDANCE_ONLY_UCC": 17,
     "PUBLISHED_CE_UCC": 508,
     "union": 1015
   },
-  "cpi_adjusted_pumd_uccs": {
-    "note": "The complete roster of concordance UCCs absent from cx.item, with the DMI node each resolves to. The classification itself is structural and fully evidenced by the two files. The *reason* BLS does not publish a given code is a separate claim: it is documented only where a BLS or CE microdata source states it, and marked UNDOCUMENTED otherwise. An undocumented reason does not weaken the classification, which does not depend on knowing why.",
-    "reason_scale": {
-      "PUBFLAG_1": "The CE microdata marks the UCC 'Not published'. Cited where a source states it.",
-      "UNDOCUMENTED": "No BLS statement of the reason for non-publication was located. The structural classification stands; the explanation is not claimed."
+  "evidence_scales": {
+    "note": "Three properties are commonly asserted about a concordance-only UCC and none of them follows from the classification. Each is graded on its own scale so that an absence of evidence is visible as such rather than filled in by the class name.",
+    "pumd_membership": {
+      "VERIFIED": "A committed DMI research record cites a specific observation of this UCC in CE Public Use Microdata or in the published PUMD data dictionary. The citation is named on the roster entry.",
+      "NOT_VERIFIED": "No such observation is cited. The UCC may or may not be in PUMD; this file does not claim either way. This is the default and applies to 16 of the 17."
     },
+    "cpi_adjustment_status": {
+      "VERIFIED": "BLS documentation states that the CPI applies a specific adjustment to this UCC. Not asserted for any UCC in this file.",
+      "INFERRED": "The BLS-published concordance title or ELI destination describes an imputed or equivalence concept rather than a recorded out-of-pocket outlay, so an adjustment relative to reported expenditure is implied by the concept. This is a DMI reading of BLS titles, not a BLS statement.",
+      "UNKNOWN": "Nothing in the pinned sources speaks to whether the CPI adjusts this UCC. This is the default."
+    },
+    "publication_reason": {
+      "PUBFLAG_1": "The CE microdata marks the UCC 'Not published'. Cited where a source states it.",
+      "UNDOCUMENTED": "No BLS statement of the reason for non-publication was located. The structural classification stands; the explanation is not claimed.",
+      "NOT_APPLICABLE": "The UCC is published in cx.item, so there is no non-publication to explain. Applies to the two published classes, not to this roster."
+    }
+  },
+  "concordance_only_uccs": {
+    "note": "The complete roster of concordance UCCs absent from cx.item, with the DMI node each resolves to. The classification itself is structural and fully evidenced by the two files. The reason BLS does not publish a given code, whether the code is reachable in PUMD, and whether the CPI adjusts it are three further claims, each carried in its own field and each defaulting to not-claimed. None of them weakens the classification, which does not depend on any of them.",
+    "ce_source_is_not_pumd_evidence": "The concordance's CE SOURCE column records which instrument collected the item, Interview or Diary. It is a BLS statement about collection, not about the PUMD data dictionary, so CE SOURCE = I is not evidence of PUMD membership and is never read as such here.",
     "roster": [
       {
         "ucc": "270905",
@@ -48,7 +68,9 @@
         "elis": ["HP090"],
         "dmi_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Maps to an unsampled residual ELI. Not one of the 58 Milestone-1 exceptions, because it never enters the cx.item-derived basis."
       },
       {
@@ -57,7 +79,9 @@
         "elis": ["RA042"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -66,7 +90,9 @@
         "elis": ["RA041"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -75,7 +101,9 @@
         "elis": ["RA090"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -84,7 +112,9 @@
         "elis": ["TA011"],
         "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "A trade-in allowance offsets the gross purchase price rather than adding to outlay. Its sign convention in CPI weighting is not established here, so it must not be summed as ordinary positive expenditure without evidence."
       },
       {
@@ -93,7 +123,9 @@
         "elis": ["TA011"],
         "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "See 450116. Sign convention unestablished."
       },
       {
@@ -102,7 +134,15 @@
         "elis": ["TF011"],
         "dmi_node": "TRANSPORT_SERVICES",
         "ce_source": "I",
-        "reason": "PUBFLAG_1",
+        "publication_reason": "PUBFLAG_1",
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "registry/research/ce_cpi_scope_rules_v0_1.json :: structural_evidence.VEHICLE_REGISTRATION_COMBINE_IDENTITY",
+          "observation": "UCC 510115 is observed on 4785 records of the 2024 CE Interview MTBI files, where it equals 520110 + 950024 on all 4785.",
+          "reproduced_by_test": false,
+          "reproducibility_caveat": "The 2024 Interview MTBI files are not distributed with this repository, so the observation is an asserted DMI research finding rather than a check this repository re-runs. It is recorded as VERIFIED because a specific observation is cited, not because the citation is locally reproducible."
+        },
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "The COMBINE destination of TR_VEHICLE_REGISTRATION_FEES_v0_1. Its absence from cx.item is expected, not an error, which is precisely why the rule reconstructs it from the two published components 520110 and 950024 instead of reading it."
       },
       {
@@ -111,7 +151,9 @@
         "elis": ["TA090"],
         "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "See 450116. Sign convention unestablished."
       },
       {
@@ -120,7 +162,9 @@
         "elis": ["RF021"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -129,7 +173,9 @@
         "elis": ["RF090"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -138,7 +184,9 @@
         "elis": ["RF090"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -147,7 +195,9 @@
         "elis": ["RF090"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -156,7 +206,9 @@
         "elis": ["RF090"],
         "dmi_node": "RECREATION",
         "ce_source": "D",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "cpi_adjustment_status": "UNKNOWN",
         "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy."
       },
       {
@@ -165,7 +217,15 @@
         "elis": ["HC011"],
         "dmi_node": "SHELTER",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_membership_note": "No committed DMI record cites an observation of 910104 in PUMD or in the PUMD data dictionary. The concordance's CE SOURCE = I says the item is Interview-collected, which is not the same claim.",
+        "cpi_adjustment_status": "INFERRED",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title is 'Rental Equivalence Of Owned Home' and the ELI destination is HC011, 'Owners' Equivalent Rent Of Primary Residence'. Both name an imputed equivalence concept rather than a recorded outlay, so the amount cannot be a plain sum of reported expenditure.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "BLS has not been located stating what adjustment is applied or how it is computed. The inference is that some imputation exists, not what it is."
+        },
         "note": "The Track-A rental-equivalence input for owner-occupied primary residence. Maps to HC011, Owners' Equivalent Rent Of Primary Residence, which is a sampled ELI."
       },
       {
@@ -174,7 +234,15 @@
         "elis": ["HC090"],
         "dmi_node": "SHELTER",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_membership_note": "See 910104. CE SOURCE = I is a statement about the collection instrument, not about PUMD membership.",
+        "cpi_adjustment_status": "INFERRED",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
         "note": "Secondary-residence rental equivalence. Maps to the unsampled residual HC090."
       },
       {
@@ -183,7 +251,15 @@
         "elis": ["HC090"],
         "dmi_node": "SHELTER",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_membership_note": "See 910104. CE SOURCE = I is a statement about the collection instrument, not about PUMD membership.",
+        "cpi_adjustment_status": "INFERRED",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
         "note": "Secondary-residence rental equivalence. Maps to the unsampled residual HC090."
       },
       {
@@ -192,7 +268,15 @@
         "elis": ["HC090"],
         "dmi_node": "SHELTER",
         "ce_source": "I",
-        "reason": "UNDOCUMENTED",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_membership_note": "See 910104. CE SOURCE = I is a statement about the collection instrument, not about PUMD membership.",
+        "cpi_adjustment_status": "INFERRED",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
         "note": "Timeshare rental equivalence. Maps to the unsampled residual HC090."
       }
     ]
@@ -201,15 +285,20 @@
     "claim_type": "DMI_INFERENCE",
     "evidence_strength": "MODERATE",
     "description": "cx.item publishes four owner rental-equivalence addenda under subcategory TITLEOFI that correspond, concept for concept and in the same order, to the four rental-equivalence UCCs the concordance uses. The correspondence is conceptual and ordinal, not a BLS-authored crosswalk.",
-    "explicit_warning": "BLS does not publish a one-to-one crosswalk between these two sets, and none is asserted here. This block is recorded so the published series can serve as a validation counterpart to a PUMD-derived amount. It must not be used to substitute a published amount for the CPI-adjusted amount, nor to infer one from the other.",
-    "normative_input_class": "CPI_ADJUSTED_PUMD_UCC",
-    "normative_input_rationale": "910104-910107 are the Track-A inputs because they are the codes the CPI concordance actually uses. Their published counterparts 910050 and 910101-910103 are validation and provenance sources only, and no Track-A amount may be taken from them.",
+    "explicit_warning": "BLS does not publish a one-to-one crosswalk between these two sets, and none is asserted here. Every pair below is a DMI inference from matching concept names and matching order. This block is recorded so the published series can serve as a validation counterpart to an amount derived elsewhere. It must not be used to substitute a published amount for the concordance-side amount, nor to infer one from the other.",
+    "structural_result": {
+      "concordance_only": ["910104", "910105", "910106", "910107"],
+      "published_ce": ["910050", "910101", "910102", "910103"],
+      "note": "This split is pure source-file membership and is recomputed on every run. It says nothing about PUMD availability for the concordance-only four; each of them carries pumd_membership = NOT_VERIFIED on its roster entry."
+    },
+    "normative_input_class": "CONCORDANCE_ONLY_UCC",
+    "normative_input_rationale": "910104-910107 are the Track-A inputs because they are the codes the CPI concordance actually uses. Their published counterparts 910050 and 910101-910103 are validation and provenance sources only, and no Track-A amount may be taken from them. This says which codes the CPI reads; it does not say that any amount for them is currently obtainable.",
     "pairs": [
       {
         "concept": "Owner-occupied primary residence",
         "published_ce_ucc": "910050",
         "published_title": "Estimated monthly rental value of owned home",
-        "cpi_adjusted_pumd_ucc": "910104",
+        "concordance_only_ucc": "910104",
         "concordance_title": "Rental Equivalence Of Owned Home",
         "eli": "HC011"
       },
@@ -217,7 +306,7 @@
         "concept": "Vacation home not available for rent",
         "published_ce_ucc": "910101",
         "published_title": "Estimated monthly rental value of vacation home not available for rent",
-        "cpi_adjusted_pumd_ucc": "910105",
+        "concordance_only_ucc": "910105",
         "concordance_title": "Rent Equiv Vac Home Not Avail Rnt",
         "eli": "HC090"
       },
@@ -225,7 +314,7 @@
         "concept": "Vacation home available for rent",
         "published_ce_ucc": "910102",
         "published_title": "Estimated monthly rental value of vacation home available for rent",
-        "cpi_adjusted_pumd_ucc": "910106",
+        "concordance_only_ucc": "910106",
         "concordance_title": "Rent Equiv Vac Home Avail For Rnt",
         "eli": "HC090"
       },
@@ -233,7 +322,7 @@
         "concept": "Timeshare",
         "published_ce_ucc": "910103",
         "published_title": "Estimated annual rental value of timeshare",
-        "cpi_adjusted_pumd_ucc": "910107",
+        "concordance_only_ucc": "910107",
         "concordance_title": "Rental Equivalence For Timeshares",
         "eli": "HC090"
       }
@@ -249,7 +338,7 @@
     }
   },
   "consumer_of_this_artifact": {
-    "note": "This classification is descriptive. It authorizes no expenditure amount and changes no Milestone-1 or Milestone-2 result. In particular it does not entitle any CPI_ADJUSTED_PUMD_UCC to enter a DMI weight: the four shelter codes remain gated behind the PUMD annual-weighting and quintile procedure being validated against published 2024 LB01 LABSTAT benchmarks.",
+    "note": "This classification is descriptive. It authorizes no expenditure amount and changes no Milestone-1 or Milestone-2 result. In particular it does not entitle any CONCORDANCE_ONLY_UCC to enter a DMI weight: the four shelter codes remain gated behind the PUMD annual-weighting and quintile procedure being validated against published 2024 LB01 LABSTAT benchmarks, and their PUMD availability is itself not verified here.",
     "basis_behaviour_unchanged": "build_basis still raises on a cx.series UCC missing from cx.item. That check is about the published basis and remains correct. This artifact documents that the published basis is not the whole CPI-relevant universe."
   }
 }

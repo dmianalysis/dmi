@@ -96,9 +96,39 @@ def _print_report(resolution, sem, provenance, registry, written) -> None:
     print(f"  index computed:        {summary['index_computed']}")
     print(f"  weights normalized:    {summary['weights_normalized']}")
 
-    print("\n  Track A final status:")
-    for key, count in sorted(summary["track_a_status_counts"].items()):
-        print(f"    {key:16s} {count:3d}")
+    print("\n  Track A disposition (proposed is not the same claim as effective):")
+    print(f"    {'status':16s} {'proposed':>9s} {'effective':>10s}")
+    statuses = sorted(
+        set(summary["track_a_proposed_status_counts"])
+        | set(summary["track_a_effective_status_counts"])
+    )
+    for key in statuses:
+        print(
+            f"    {key:16s} "
+            f"{summary['track_a_proposed_status_counts'].get(key, 0):9d} "
+            f"{summary['track_a_effective_status_counts'].get(key, 0):10d}"
+        )
+    print("    resolution state:")
+    for key, count in sorted(summary["resolution_state_counts"].items()):
+        print(f"      {key:14s} {count:3d}")
+
+    print("\n  Headline (All Consumer Units, % of observed CE basis):")
+    all_cu = summary["headline"]["by_population"][ALL_CU]
+    for label, key in (
+        ("left unexplained by Milestone 1", "milestone_1_unexplained"),
+        ("now has a proposed disposition", "with_a_proposed_disposition"),
+        ("accepted, transformed", "accepted_transformed"),
+        ("accepted, out of scope", "accepted_out_of_scope"),
+        ("effective in force overall", "effective_now"),
+        ("PENDING proposed shelter rules", "pending_proposed"),
+        ("still open, no disposition", "unresolved_open"),
+    ):
+        block = all_cu[key]
+        print(
+            f"    {label:32s} {block['expenditure']:12,.0f} $M  "
+            f"{block['pct_of_basis']:8.4f}%"
+        )
+    print(f"    {summary['headline']['statement']}")
 
     print("\n  Track B treatment (section 7, payments concept):")
     for key, count in sorted(summary["track_b_treatment_counts"].items()):
@@ -129,9 +159,12 @@ def _print_report(resolution, sem, provenance, registry, written) -> None:
     for row in summary["reconciliation"]:
         print(
             f"    {row['population']:20s} basis {row['ce_observed_basis']:12,.0f}  "
-            f"= retained {row['retained']:12,.0f} + transformed "
-            f"{row['transformed']:9,.0f} + out-of-scope {row['out_of_scope']:11,.0f} "
-            f"+ unresolved {row['unresolved']:8,.0f}   residual {row['residual']:+.6f}"
+            f"= retained {row['retained']:12,.0f} "
+            f"+ accepted-transformed {row['accepted_transformed']:9,.0f} "
+            f"+ accepted-out-of-scope {row['accepted_out_of_scope']:9,.0f} "
+            f"+ pending-proposed {row['pending_proposed']:11,.0f} "
+            f"+ unresolved-open {row['unresolved_open']:8,.0f}   "
+            f"residual {row['residual']:+.6f}"
         )
     print(
         "    suppressed expenditure is bounded from published BLS parents at no "
@@ -159,13 +192,21 @@ def _print_report(resolution, sem, provenance, registry, written) -> None:
     print("\n  UCC provenance classes (cx.item is not the whole CPI universe):")
     for member in UccProvenanceClass:
         print(f"    {member.value:24s} {provenance.counts[member.value]:4d}")
-    hidden = provenance.by_class(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC)
+    hidden = provenance.by_class(UccProvenanceClass.CONCORDANCE_ONLY_UCC)
     print(
         f"    {len(hidden)} concordance UCC(s) are absent from cx.item and would "
-        f"be invisible to a cx.item-keyed pipeline:"
+        f"be invisible to a cx.item-keyed pipeline. The class is source-file "
+        f"membership only; PUMD availability and CPI adjustment are separate "
+        f"claims and are shown per UCC:"
     )
     for row in hidden:
-        print(f"      {row.ucc}  {row.dmi_node or '-':36s} {row.concordance_title}")
+        print(
+            f"      {row.ucc}  {row.dmi_node or '-':36s} "
+            f"pumd={row.pumd_membership.value:12s} "
+            f"cpi_adj={row.cpi_adjustment_status.value:8s} "
+            f"why_unpublished={row.publication_reason.value:12s} "
+            f"{row.concordance_title}"
+        )
 
     proposed = [r.rule_id for r in registry.rules if r.review_status is ReviewStatus.PROPOSED]
     print(f"\n  Shelter-coupled rules still PROPOSED ({len(proposed)}):")

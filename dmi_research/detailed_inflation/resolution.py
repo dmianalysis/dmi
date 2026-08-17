@@ -7,14 +7,20 @@ pinned scope-rule registry and reports the result without normalizing weights,
 acquiring CPI prices, or computing any inflation index. Core DMI remains
 withdrawn and unimplemented, and nothing here is wired into ``dmi_calculator``.
 
-Two rules govern the arithmetic here and are enforced rather than assumed:
+Three rules govern the arithmetic here and are enforced rather than assumed:
 
 * Spec section 16 -- a suppressed BLS observation is missing, not zero. It is
   never coerced to zero, never imputed, and always carried as a bounded
   unknown.
 * Spec section 19.1 -- no expenditure may disappear. Observed CE expenditure
-  must partition exactly into retained, transformed, out-of-scope and
-  unresolved.
+  must partition exactly into retained, accepted-transformed,
+  accepted-out-of-scope, pending-proposed and open-unresolved.
+* A *proposed* methodological disposition is not an *effective* Track-A
+  classification. A rule that is ``PROPOSED``, and therefore not applicable on
+  its own, records where its expenditure would go once its prerequisite is
+  satisfied. It does not put the expenditure there. The two claims are carried
+  in separate fields and only the effective one drives the accounting, so a
+  machine consumer cannot read a blocked shelter rule as a settled exclusion.
 """
 
 from __future__ import annotations
@@ -22,6 +28,7 @@ from __future__ import annotations
 import csv
 import json
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
 
@@ -29,6 +36,7 @@ from .audit import assert_research_output_dir
 from .basis import BLS_AGGREGATE_ROUNDING_UNIT, Basis
 from .mapping import UccMapping
 from .scope_rules import (
+    ReviewStatus,
     RuleType,
     ScopeRule,
     ScopeRuleRegistry,
@@ -271,6 +279,140 @@ def _classify(
 
 
 # ---------------------------------------------------------------------------
+# Proposed disposition versus effective disposition
+# ---------------------------------------------------------------------------
+
+
+class ResolutionState(str, Enum):
+    """Whether a rule's proposed disposition is in force.
+
+    This is a research-only state variable. It deliberately does *not* extend
+    :class:`~dmi_research.detailed_inflation.taxonomy.MappingStatus`, which
+    Milestone 1 and the shared basis code also use: adding a research state to
+    that enum would put a Milestone-2 concept into Milestone-1 vocabulary.
+    Instead the effective status stays inside the existing five-member enum and
+    this field carries the reason it is what it is.
+
+    ``UNRESOLVED`` alone cannot answer the question a consumer actually has,
+    which is *why* nothing is in force. ``OPEN`` means the disposition itself is
+    undecided; ``PENDING`` means the disposition is argued and documented but
+    its prerequisite is unmet. Collapsing the two would either overstate the
+    open gap or understate the blocked one.
+    """
+
+    #: The rule is ACCEPTED and applicable. Its final status is in force.
+    EFFECTIVE = "EFFECTIVE"
+    #: The rule proposes a disposition that cannot take effect yet. The
+    #: expenditure is neither retained, transformed nor excluded.
+    PENDING = "PENDING"
+    #: No disposition is proposed at all. The methodology is unresolved.
+    OPEN = "OPEN"
+
+
+@dataclass(frozen=True)
+class TrackADisposition:
+    """What a rule proposes for a UCC, and what is actually in force.
+
+    The invariants are checked in ``__post_init__`` rather than trusted, so an
+    illegal combination -- most importantly "``PROPOSED`` review but
+    ``OUT_OF_SCOPE`` in force" -- cannot be constructed at all, whether by this
+    module, by a test fixture or by a future caller.
+    """
+
+    #: Where the rule argues the expenditure belongs.
+    proposed_status: MappingStatus
+    #: Where the accounting actually puts it today.
+    effective_status: MappingStatus
+    resolution_state: ResolutionState
+    review_status: ReviewStatus
+
+    def __post_init__(self) -> None:
+        state = self.resolution_state
+        if state is ResolutionState.EFFECTIVE:
+            if self.review_status is not ReviewStatus.ACCEPTED:
+                raise ResolutionError(
+                    f"a disposition can only be EFFECTIVE for an ACCEPTED "
+                    f"rule; review_status is {self.review_status.value}"
+                )
+            if self.proposed_status is MappingStatus.UNRESOLVED:
+                raise ResolutionError(
+                    "UNRESOLVED is the absence of a disposition and can never "
+                    "be EFFECTIVE"
+                )
+            if self.effective_status is not self.proposed_status:
+                raise ResolutionError(
+                    f"an EFFECTIVE disposition must put expenditure where the "
+                    f"rule proposes; proposed {self.proposed_status.value} but "
+                    f"effective {self.effective_status.value}"
+                )
+            return
+
+        if self.effective_status is not MappingStatus.UNRESOLVED:
+            raise ResolutionError(
+                f"a {state.value} disposition is not in force, so its "
+                f"effective status must be UNRESOLVED, not "
+                f"{self.effective_status.value}"
+            )
+        if state is ResolutionState.OPEN:
+            if self.proposed_status is not MappingStatus.UNRESOLVED:
+                raise ResolutionError(
+                    f"an OPEN disposition proposes nothing, but "
+                    f"{self.proposed_status.value} is proposed; a rule with a "
+                    f"proposed destination is PENDING, not OPEN"
+                )
+        else:  # PENDING
+            if self.proposed_status is MappingStatus.UNRESOLVED:
+                raise ResolutionError(
+                    "a PENDING disposition must propose a destination; with "
+                    "nothing proposed the state is OPEN"
+                )
+            if self.review_status is ReviewStatus.ACCEPTED:
+                raise ResolutionError(
+                    "an ACCEPTED applicable rule cannot be PENDING; either it "
+                    "is in force or its review status says otherwise"
+                )
+
+    @property
+    def is_effective(self) -> bool:
+        return self.resolution_state is ResolutionState.EFFECTIVE
+
+
+def track_a_disposition(rule: ScopeRule) -> TrackADisposition:
+    """Derive the effective Track-A disposition of ``rule``.
+
+    This is the **only** place a rule's declared ``final_status`` becomes an
+    effective status, and it cannot do so without consulting the rule's review
+    status and applicability. ``test_final_status_is_only_read_through_the_
+    disposition_gate`` parses this module to prove no other code path exists,
+    because the original defect was exactly a direct assignment that skipped
+    the check.
+    """
+    proposed = rule.final_status
+    if proposed is MappingStatus.UNRESOLVED:
+        # An UNRESOLVED rule documents why it cannot decide. There is nothing
+        # to hold pending, so the state is OPEN whatever its review status.
+        return TrackADisposition(
+            proposed_status=proposed,
+            effective_status=MappingStatus.UNRESOLVED,
+            resolution_state=ResolutionState.OPEN,
+            review_status=rule.review_status,
+        )
+    if rule.review_status is ReviewStatus.ACCEPTED and rule.is_applicable:
+        return TrackADisposition(
+            proposed_status=proposed,
+            effective_status=proposed,
+            resolution_state=ResolutionState.EFFECTIVE,
+            review_status=rule.review_status,
+        )
+    return TrackADisposition(
+        proposed_status=proposed,
+        effective_status=MappingStatus.UNRESOLVED,
+        resolution_state=ResolutionState.PENDING,
+        review_status=rule.review_status,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Section 18 -- resolution output
 # ---------------------------------------------------------------------------
 
@@ -285,7 +427,10 @@ RESOLUTION_CSV_COLUMNS = (
     "q4_expenditure",
     "q5_expenditure",
     "m1_status",
-    "m2_track_a_status",
+    "proposed_track_a_status",
+    "effective_track_a_status",
+    "review_status",
+    "resolution_state",
     "track_a_rule_id",
     "track_a_node",
     "track_b_treatment",
@@ -297,22 +442,46 @@ RESOLUTION_CSV_COLUMNS = (
 
 @dataclass(frozen=True)
 class ResolutionRow:
-    """One resolved Milestone-1 exception, in spec section 18 column order."""
+    """One resolved Milestone-1 exception, in spec section 18 column order.
+
+    The Track-A outcome is held as a single :class:`TrackADisposition` rather
+    than as loose status and review fields, so a row cannot carry a proposed
+    status in an effective field. There is deliberately no ``m2_track_a_status``
+    attribute: the earlier name did not say whose claim it was, and callers had
+    to remember to check ``review_status`` themselves.
+    """
 
     ucc: str
     label: str
     domain: str
     expenditure_by_population: Mapping
     m1_status: MappingStatus
-    m2_track_a_status: MappingStatus
+    disposition: TrackADisposition
     track_a_rule_id: str
     track_a_node: Optional[str]
     track_b_treatment: TrackBTreatment
     evidence_strength: str
     suppression: SuppressionExposure
-    review_status: str
     rule_type: RuleType
     notes: str
+
+    @property
+    def proposed_track_a_status(self) -> MappingStatus:
+        """Where the governing rule argues this expenditure belongs."""
+        return self.disposition.proposed_status
+
+    @property
+    def effective_track_a_status(self) -> MappingStatus:
+        """Where the section 19.1 accounting actually puts it today."""
+        return self.disposition.effective_status
+
+    @property
+    def resolution_state(self) -> ResolutionState:
+        return self.disposition.resolution_state
+
+    @property
+    def review_status(self) -> str:
+        return self.disposition.review_status.value
 
     def as_csv_row(self) -> list:
         def cell(population: str) -> str:
@@ -328,7 +497,10 @@ class ResolutionRow:
             cell(ALL_CU),
             *(cell(q) for q in QUINTILES),
             self.m1_status.value,
-            self.m2_track_a_status.value,
+            self.proposed_track_a_status.value,
+            self.effective_track_a_status.value,
+            self.review_status,
+            self.resolution_state.value,
             self.track_a_rule_id,
             self.track_a_node or "",
             self.track_b_treatment.value,
@@ -345,13 +517,22 @@ class ResolutionRow:
 #: Section 19.1 buckets, keyed by the final mapping status they arise from.
 _RETAINED_STATUSES = frozenset({MappingStatus.DIRECT, MappingStatus.MULTI_SAME_NODE})
 
+#: The section 19.1 buckets, in the order they appear in the identity. Every
+#: bucket name says whether the disposition is in force, because the whole
+#: point of the split is that "transformed" and "proposed to be transformed"
+#: are different claims and must not be summed together.
+RECONCILIATION_BUCKETS = (
+    "retained",
+    "accepted_transformed",
+    "accepted_out_of_scope",
+    "pending_proposed",
+    "unresolved_open",
+)
+
 RECONCILIATION_CSV_COLUMNS = (
     "population",
     "ce_observed_basis",
-    "retained",
-    "transformed",
-    "out_of_scope",
-    "unresolved",
+    *RECONCILIATION_BUCKETS,
     "sum_of_buckets",
     "residual",
     "suppressed_leaf_count",
@@ -362,20 +543,28 @@ RECONCILIATION_CSV_COLUMNS = (
 
 @dataclass(frozen=True)
 class PopulationReconciliation:
-    """Section 19.1 accounting identity for one population."""
+    """Section 19.1 accounting identity for one population.
+
+    ``pending_proposed`` holds expenditure whose governing rule argues for a
+    destination that is not yet in force. It is reported beside the accepted
+    buckets rather than inside them so that no consumer can read a blocked
+    shelter rule as a settled exclusion, and beside ``unresolved_open`` rather
+    than inside it so that the genuinely undecided residue stays visible.
+    """
 
     population: str
     ce_observed_basis: float
     retained: float
-    transformed: float
-    out_of_scope: float
-    unresolved: float
+    accepted_transformed: float
+    accepted_out_of_scope: float
+    pending_proposed: float
+    unresolved_open: float
     suppressed_leaf_count: int
     suppressed_upper_bound: float
 
     @property
     def sum_of_buckets(self) -> float:
-        return self.retained + self.transformed + self.out_of_scope + self.unresolved
+        return sum(getattr(self, name) for name in RECONCILIATION_BUCKETS)
 
     @property
     def residual(self) -> float:
@@ -387,14 +576,19 @@ class PopulationReconciliation:
             return 0.0
         return 100.0 * self.suppressed_upper_bound / self.ce_observed_basis
 
+    def pct_of_basis(self, bucket: str) -> float:
+        """Share of the observed basis in ``bucket``, as a percentage."""
+        if bucket not in RECONCILIATION_BUCKETS:
+            raise ResolutionError(f"{bucket} is not a section 19.1 bucket")
+        if not self.ce_observed_basis:
+            return 0.0
+        return 100.0 * getattr(self, bucket) / self.ce_observed_basis
+
     def as_csv_row(self) -> list:
         return [
             self.population,
             f"{self.ce_observed_basis:.1f}",
-            f"{self.retained:.1f}",
-            f"{self.transformed:.1f}",
-            f"{self.out_of_scope:.1f}",
-            f"{self.unresolved:.1f}",
+            *(f"{getattr(self, name):.1f}" for name in RECONCILIATION_BUCKETS),
             f"{self.sum_of_buckets:.1f}",
             f"{self.residual:.6f}",
             str(self.suppressed_leaf_count),
@@ -476,13 +670,12 @@ def build_resolution(
                 domain=domain,
                 expenditure_by_population=expenditure,
                 m1_status=m1_status[ucc],
-                m2_track_a_status=rule.final_status,
+                disposition=track_a_disposition(rule),
                 track_a_rule_id=rule.rule_id,
                 track_a_node=rule.resolved_node_for(ucc),
                 track_b_treatment=rule.track_b_for(ucc),
                 evidence_strength=rule.evidence_strength.value,
                 suppression=exposure,
-                review_status=rule.review_status.value,
                 rule_type=rule.rule_type,
                 notes=_row_note(rule, ucc, exposure),
             )
@@ -599,6 +792,30 @@ def _row_note(rule: ScopeRule, ucc: str, exposure: SuppressionExposure) -> str:
     return " ".join(parts)
 
 
+def _bucket_for(disposition: TrackADisposition, ucc: str) -> str:
+    """Section 19.1 bucket for one exception UCC.
+
+    The bucket is chosen from the *effective* status and the resolution state.
+    A proposed-but-blocked rule lands in ``pending_proposed`` no matter how
+    strong its argument, which is what stops a PROPOSED shelter exclusion from
+    being counted as an accepted exclusion.
+    """
+    if disposition.resolution_state is ResolutionState.PENDING:
+        return "pending_proposed"
+    if disposition.resolution_state is ResolutionState.OPEN:
+        return "unresolved_open"
+    effective = disposition.effective_status
+    if effective in _RETAINED_STATUSES:
+        return "retained"
+    if effective is MappingStatus.TRANSFORMED:
+        return "accepted_transformed"
+    if effective is MappingStatus.OUT_OF_SCOPE:
+        return "accepted_out_of_scope"
+    raise ResolutionError(
+        f"{ucc} has unbucketable effective status {effective.value}"
+    )
+
+
 def _reconcile(
     *, basis, mappings, registry, rows, bounds, basis_totals
 ) -> list:
@@ -609,7 +826,7 @@ def _reconcile(
 
     results: list = []
     for population in POPULATIONS:
-        retained = transformed = out_of_scope = unresolved = 0.0
+        totals = {name: 0.0 for name in RECONCILIATION_BUCKETS}
         for entry in basis.entries:
             if entry.population != population:
                 continue
@@ -617,21 +834,19 @@ def _reconcile(
             if amount is None:
                 continue
             if entry.ucc in exception_uccs:
-                final = by_ucc[entry.ucc].m2_track_a_status
+                bucket = _bucket_for(by_ucc[entry.ucc].disposition, entry.ucc)
             else:
-                final = status_by_ucc[entry.ucc]
-            if final in _RETAINED_STATUSES:
-                retained += amount
-            elif final is MappingStatus.TRANSFORMED:
-                transformed += amount
-            elif final is MappingStatus.OUT_OF_SCOPE:
-                out_of_scope += amount
-            elif final is MappingStatus.UNRESOLVED:
-                unresolved += amount
-            else:
-                raise ResolutionError(
-                    f"{entry.ucc} in {population} has unbucketable status {final}"
-                )
+                # A non-exception UCC was mapped by Milestone 1 alone. Nothing
+                # in Milestone 2 can move it, and Milestone 1 only ever assigns
+                # DIRECT or MULTI_SAME_NODE outside the exception set.
+                status = status_by_ucc[entry.ucc]
+                if status not in _RETAINED_STATUSES:
+                    raise ResolutionError(
+                        f"{entry.ucc} in {population} is outside the exception "
+                        f"set but carries Milestone-1 status {status.value}"
+                    )
+                bucket = "retained"
+            totals[bucket] += amount
 
         suppressed_count = sum(
             b.suppressed_leaf_count
@@ -646,12 +861,9 @@ def _reconcile(
         result = PopulationReconciliation(
             population=population,
             ce_observed_basis=basis_totals[population],
-            retained=retained,
-            transformed=transformed,
-            out_of_scope=out_of_scope,
-            unresolved=unresolved,
             suppressed_leaf_count=suppressed_count,
             suppressed_upper_bound=suppressed_bound,
+            **totals,
         )
         # Section 19.1 is an identity, not a tolerance. The only slack allowed
         # is floating-point summation error over ~2000 addends.
@@ -665,7 +877,14 @@ def _reconcile(
 
 
 def _replacement_accounting(*, registry, rows) -> dict:
-    """Section 19.2: removed outlays vs replacement, reported separately."""
+    """Section 19.2: removed outlays vs replacement, reported separately.
+
+    The ``status`` reported here is the rule's own resolution state, read off
+    the rows rather than asserted, so section 19.2 cannot say ``PENDING`` while
+    section 19.1 has already spent the expenditure. A REPLACE rule whose
+    disposition is in force but whose replacement amount is still uncomputed is
+    a contradiction and is raised rather than reported.
+    """
     by_ucc = {row.ucc: row for row in rows}
     report: dict = {}
     for rule in registry.rules_of_type(RuleType.REPLACE):
@@ -683,11 +902,22 @@ def _replacement_accounting(*, registry, rows) -> dict:
                 "observed_removed_expenditure": round(total, 1),
                 "suppressed_cell_count": suppressed,
             }
+        disposition = by_ucc[rule.source_uccs[0]].disposition
+        if disposition.is_effective:
+            raise ResolutionError(
+                f"{rule.rule_id} is in force but its replacement expenditure "
+                f"is not computed in this run; section 19.2 would report a "
+                f"removal with no replacement"
+            )
         report[rule.rule_id] = {
             "removed_owner_outlay": removed,
             "replacement_expenditure": None,
             "concept_difference": None,
-            "status": "PENDING",
+            "status": disposition.resolution_state.value,
+            "proposed_track_a_status": disposition.proposed_status.value,
+            "effective_track_a_status": disposition.effective_status.value,
+            "review_status": disposition.review_status.value,
+            "removed_outlay_is_still_in_the_basis": True,
             "pending_reason": (
                 "The replacement rental-equivalence amount is not computed in "
                 "this run. It depends on the Track-A shelter rule, which is "
@@ -695,21 +925,95 @@ def _replacement_accounting(*, registry, rows) -> dict:
                 "has been validated against published 2024 LB01 LABSTAT "
                 "benchmarks. Spec section 19.2 does not expect the removed and "
                 "replacement amounts to be equal, so neither may be inferred "
-                "from the other."
+                "from the other. Because the rule is not in force, the removed "
+                "outlay above has not actually been removed from the section "
+                "19.1 basis: it sits in the pending_proposed bucket."
             ),
         }
     return report
 
 
+def _headline(reconciliations: Sequence) -> dict:
+    """Quantify the four non-retained buckets for every population.
+
+    Everything here is computed from the section 19.1 reconciliation. No share
+    is written down as prose and then repeated as a number, because the two
+    would drift apart the first time the registry changed.
+    """
+    by_population: dict = {}
+    for recon in reconciliations:
+        entry = {
+            "ce_observed_basis": round(recon.ce_observed_basis, 1),
+        }
+        for bucket in RECONCILIATION_BUCKETS:
+            if bucket == "retained":
+                continue
+            entry[bucket] = {
+                "expenditure": round(getattr(recon, bucket), 1),
+                "pct_of_basis": round(recon.pct_of_basis(bucket), 4),
+            }
+        # The Milestone-1 exception set is exactly the non-retained remainder,
+        # so this reproduces the share Milestone 1 left unexplained.
+        entry["milestone_1_unexplained"] = {
+            "expenditure": round(recon.ce_observed_basis - recon.retained, 1),
+            "pct_of_basis": round(100.0 - recon.pct_of_basis("retained"), 4),
+        }
+        entry["with_a_proposed_disposition"] = {
+            "expenditure": round(
+                recon.accepted_transformed
+                + recon.accepted_out_of_scope
+                + recon.pending_proposed,
+                1,
+            ),
+            "pct_of_basis": round(
+                recon.pct_of_basis("accepted_transformed")
+                + recon.pct_of_basis("accepted_out_of_scope")
+                + recon.pct_of_basis("pending_proposed"),
+                4,
+            ),
+        }
+        entry["effective_now"] = {
+            "expenditure": round(
+                recon.accepted_transformed + recon.accepted_out_of_scope, 1
+            ),
+            "pct_of_basis": round(
+                recon.pct_of_basis("accepted_transformed")
+                + recon.pct_of_basis("accepted_out_of_scope"),
+                4,
+            ),
+        }
+        by_population[recon.population] = entry
+
+    all_cu = by_population[ALL_CU]
+    statement = (
+        f"Milestone 2 reduces the All Consumer Units expenditure share lacking "
+        f"any proposed methodological disposition from "
+        f"{all_cu['milestone_1_unexplained']['pct_of_basis']:.4f}% to "
+        f"{all_cu['unresolved_open']['pct_of_basis']:.4f}%. However, only "
+        f"{all_cu['effective_now']['pct_of_basis']:.4f}% of the basis is "
+        f"actually classified by rules that are in force. A further "
+        f"{all_cu['pending_proposed']['pct_of_basis']:.4f}% is subject to "
+        f"proposed shelter rules that are not yet effective, pending PUMD "
+        f"annual-weighting validation, and is reported in a separate pending "
+        f"bucket rather than as an accepted transformation or exclusion."
+    )
+    return {"statement": statement, "by_population": by_population}
+
+
 def _build_summary(resolution: Resolution, registry: ScopeRuleRegistry) -> dict:
     rows = resolution.rows
-    by_status: dict = {}
+    by_proposed: dict = {}
+    by_effective: dict = {}
+    by_state: dict = {}
     by_track_b: dict = {}
     by_suppression: dict = {}
     for row in rows:
-        by_status[row.m2_track_a_status.value] = (
-            by_status.get(row.m2_track_a_status.value, 0) + 1
-        )
+        proposed = row.proposed_track_a_status.value
+        effective = row.effective_track_a_status.value
+        state = row.resolution_state.value
+        by_proposed[proposed] = by_proposed.get(proposed, 0) + 1
+        by_effective[effective] = by_effective.get(effective, 0) + 1
+        by_state[state] = by_state.get(state, 0) + 1
         by_track_b[row.track_b_treatment.value] = (
             by_track_b.get(row.track_b_treatment.value, 0) + 1
         )
@@ -751,7 +1055,18 @@ def _build_summary(resolution: Resolution, registry: ScopeRuleRegistry) -> dict:
         "index_computed": False,
         "weights_normalized": False,
         "exception_count": len(rows),
-        "track_a_status_counts": by_status,
+        "disposition_model": (
+            "A proposed methodological disposition is not an effective Track-A "
+            "classification. track_a_proposed_status_counts reports what the "
+            "governing rules argue for; track_a_effective_status_counts reports "
+            "what is in force. Rules that are PROPOSED, and therefore not "
+            "applicable on their own, appear as UNRESOLVED in the effective "
+            "counts with resolution_state PENDING."
+        ),
+        "track_a_proposed_status_counts": by_proposed,
+        "track_a_effective_status_counts": by_effective,
+        "resolution_state_counts": by_state,
+        "headline": _headline(resolution.reconciliations),
         "track_b_treatment_counts": by_track_b,
         "suppression_status_counts": by_suppression,
         "suppression_thresholds_pct": {
@@ -765,10 +1080,10 @@ def _build_summary(resolution: Resolution, registry: ScopeRuleRegistry) -> dict:
             {
                 "population": r.population,
                 "ce_observed_basis": round(r.ce_observed_basis, 1),
-                "retained": round(r.retained, 1),
-                "transformed": round(r.transformed, 1),
-                "out_of_scope": round(r.out_of_scope, 1),
-                "unresolved": round(r.unresolved, 1),
+                **{
+                    bucket: round(getattr(r, bucket), 1)
+                    for bucket in RECONCILIATION_BUCKETS
+                },
                 "residual": round(r.residual, 6),
                 "suppressed_leaf_count": r.suppressed_leaf_count,
                 "suppressed_upper_bound": round(r.suppressed_upper_bound, 1),
@@ -853,7 +1168,10 @@ def write_artifacts(
     )
     unresolved_rows = []
     for row in resolution.rows:
-        if row.m2_track_a_status is not MappingStatus.UNRESOLVED:
+        # OPEN, not UNRESOLVED: a pending shelter row's *effective* status is
+        # also UNRESOLVED, but it is not a research lead. The ledger is the
+        # list of UCCs with no proposed disposition at all.
+        if row.resolution_state is not ResolutionState.OPEN:
             continue
         member = member_by_ucc.get(row.ucc, {})
         amount = row.expenditure_by_population.get(ALL_CU)

@@ -1,6 +1,198 @@
 {
   "core_dmi": "WITHDRAWN_AND_UNIMPLEMENTED",
+  "disposition_model": "A proposed methodological disposition is not an effective Track-A classification. track_a_proposed_status_counts reports what the governing rules argue for; track_a_effective_status_counts reports what is in force. Rules that are PROPOSED, and therefore not applicable on their own, appear as UNRESOLVED in the effective counts with resolution_state PENDING.",
   "exception_count": 58,
+  "headline": {
+    "by_population": {
+      "All Consumer Units": {
+        "accepted_out_of_scope": {
+          "expenditure": 57354.0,
+          "pct_of_basis": 0.8389
+        },
+        "accepted_transformed": {
+          "expenditure": 120803.0,
+          "pct_of_basis": 1.767
+        },
+        "ce_observed_basis": 6836520.0,
+        "effective_now": {
+          "expenditure": 178157.0,
+          "pct_of_basis": 2.606
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 1326642.0,
+          "pct_of_basis": 19.4052
+        },
+        "pending_proposed": {
+          "expenditure": 1137534.0,
+          "pct_of_basis": 16.6391
+        },
+        "unresolved_open": {
+          "expenditure": 10951.0,
+          "pct_of_basis": 0.1602
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 1315691.0,
+          "pct_of_basis": 19.245
+        }
+      },
+      "Q1": {
+        "accepted_out_of_scope": {
+          "expenditure": 2836.0,
+          "pct_of_basis": 0.4117
+        },
+        "accepted_transformed": {
+          "expenditure": 7535.0,
+          "pct_of_basis": 1.0938
+        },
+        "ce_observed_basis": 688872.0,
+        "effective_now": {
+          "expenditure": 10371.0,
+          "pct_of_basis": 1.5055
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 80259.0,
+          "pct_of_basis": 11.6508
+        },
+        "pending_proposed": {
+          "expenditure": 69066.0,
+          "pct_of_basis": 10.026
+        },
+        "unresolved_open": {
+          "expenditure": 822.0,
+          "pct_of_basis": 0.1193
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 79437.0,
+          "pct_of_basis": 11.5315
+        }
+      },
+      "Q2": {
+        "accepted_out_of_scope": {
+          "expenditure": 6603.0,
+          "pct_of_basis": 0.6878
+        },
+        "accepted_transformed": {
+          "expenditure": 11223.0,
+          "pct_of_basis": 1.1691
+        },
+        "ce_observed_basis": 959951.0,
+        "effective_now": {
+          "expenditure": 17826.0,
+          "pct_of_basis": 1.857
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 136975.0,
+          "pct_of_basis": 14.269
+        },
+        "pending_proposed": {
+          "expenditure": 117957.0,
+          "pct_of_basis": 12.2878
+        },
+        "unresolved_open": {
+          "expenditure": 1192.0,
+          "pct_of_basis": 0.1242
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 135783.0,
+          "pct_of_basis": 14.1448
+        }
+      },
+      "Q3": {
+        "accepted_out_of_scope": {
+          "expenditure": 10273.0,
+          "pct_of_basis": 0.8394
+        },
+        "accepted_transformed": {
+          "expenditure": 18881.0,
+          "pct_of_basis": 1.5427
+        },
+        "ce_observed_basis": 1223874.0,
+        "effective_now": {
+          "expenditure": 29154.0,
+          "pct_of_basis": 2.3821
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 213572.0,
+          "pct_of_basis": 17.4505
+        },
+        "pending_proposed": {
+          "expenditure": 182599.0,
+          "pct_of_basis": 14.9198
+        },
+        "unresolved_open": {
+          "expenditure": 1819.0,
+          "pct_of_basis": 0.1486
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 211753.0,
+          "pct_of_basis": 17.3019
+        }
+      },
+      "Q4": {
+        "accepted_out_of_scope": {
+          "expenditure": 17268.0,
+          "pct_of_basis": 1.0978
+        },
+        "accepted_transformed": {
+          "expenditure": 29686.0,
+          "pct_of_basis": 1.8873
+        },
+        "ce_observed_basis": 1572916.0,
+        "effective_now": {
+          "expenditure": 46954.0,
+          "pct_of_basis": 2.9852
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 310596.0,
+          "pct_of_basis": 19.7465
+        },
+        "pending_proposed": {
+          "expenditure": 260875.0,
+          "pct_of_basis": 16.5854
+        },
+        "unresolved_open": {
+          "expenditure": 2767.0,
+          "pct_of_basis": 0.1759
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 307829.0,
+          "pct_of_basis": 19.5706
+        }
+      },
+      "Q5": {
+        "accepted_out_of_scope": {
+          "expenditure": 20374.0,
+          "pct_of_basis": 0.8521
+        },
+        "accepted_transformed": {
+          "expenditure": 53478.0,
+          "pct_of_basis": 2.2367
+        },
+        "ce_observed_basis": 2390913.0,
+        "effective_now": {
+          "expenditure": 73852.0,
+          "pct_of_basis": 3.0889
+        },
+        "milestone_1_unexplained": {
+          "expenditure": 585242.0,
+          "pct_of_basis": 24.4778
+        },
+        "pending_proposed": {
+          "expenditure": 507039.0,
+          "pct_of_basis": 21.2069
+        },
+        "unresolved_open": {
+          "expenditure": 4351.0,
+          "pct_of_basis": 0.182
+        },
+        "with_a_proposed_disposition": {
+          "expenditure": 580891.0,
+          "pct_of_basis": 24.2958
+        }
+      }
+    },
+    "statement": "Milestone 2 reduces the All Consumer Units expenditure share lacking any proposed methodological disposition from 19.4052% to 0.1602%. However, only 2.6060% of the basis is actually classified by rules that are in force. A further 16.6391% is subject to proposed shelter rules that are not yet effective, pending PUMD annual-weighting validation, and is reported in a separate pending bucket rather than as an accepted transformation or exclusion."
+  },
   "index_computed": false,
   "milestone": "Detailed Inflation Substrate v0.1, Milestone 2",
   "pending_shelter_work": [
@@ -10,82 +202,91 @@
   ],
   "reconciliation": [
     {
+      "accepted_out_of_scope": 57354.0,
+      "accepted_transformed": 120803.0,
       "ce_observed_basis": 6836520.0,
-      "out_of_scope": 1182268.0,
+      "pending_proposed": 1137534.0,
       "population": "All Consumer Units",
       "residual": 0.0,
       "retained": 5509878.0,
       "suppressed_leaf_count": 19,
       "suppressed_upper_bound": 122.5,
       "suppressed_upper_bound_pct_of_basis": 0.001792,
-      "transformed": 133423.0,
-      "unresolved": 10951.0
+      "unresolved_open": 10951.0
     },
     {
+      "accepted_out_of_scope": 2836.0,
+      "accepted_transformed": 7535.0,
       "ce_observed_basis": 688872.0,
-      "out_of_scope": 71451.0,
+      "pending_proposed": 69066.0,
       "population": "Q1",
       "residual": 0.0,
       "retained": 608613.0,
       "suppressed_leaf_count": 38,
       "suppressed_upper_bound": 108.0,
       "suppressed_upper_bound_pct_of_basis": 0.015678,
-      "transformed": 7986.0,
-      "unresolved": 822.0
+      "unresolved_open": 822.0
     },
     {
+      "accepted_out_of_scope": 6603.0,
+      "accepted_transformed": 11223.0,
       "ce_observed_basis": 959951.0,
-      "out_of_scope": 123339.0,
+      "pending_proposed": 117957.0,
       "population": "Q2",
       "residual": 0.0,
       "retained": 822976.0,
       "suppressed_leaf_count": 31,
       "suppressed_upper_bound": 111.5,
       "suppressed_upper_bound_pct_of_basis": 0.011615,
-      "transformed": 12444.0,
-      "unresolved": 1192.0
+      "unresolved_open": 1192.0
     },
     {
+      "accepted_out_of_scope": 10273.0,
+      "accepted_transformed": 18881.0,
       "ce_observed_basis": 1223874.0,
-      "out_of_scope": 191558.0,
+      "pending_proposed": 182599.0,
       "population": "Q3",
       "residual": 0.0,
       "retained": 1010302.0,
       "suppressed_leaf_count": 33,
       "suppressed_upper_bound": 111.5,
       "suppressed_upper_bound_pct_of_basis": 0.00911,
-      "transformed": 20195.0,
-      "unresolved": 1819.0
+      "unresolved_open": 1819.0
     },
     {
+      "accepted_out_of_scope": 17268.0,
+      "accepted_transformed": 29686.0,
       "ce_observed_basis": 1572916.0,
-      "out_of_scope": 272796.0,
+      "pending_proposed": 260875.0,
       "population": "Q4",
       "residual": 0.0,
       "retained": 1262320.0,
       "suppressed_leaf_count": 30,
       "suppressed_upper_bound": 113.0,
       "suppressed_upper_bound_pct_of_basis": 0.007184,
-      "transformed": 35033.0,
-      "unresolved": 2767.0
+      "unresolved_open": 2767.0
     },
     {
+      "accepted_out_of_scope": 20374.0,
+      "accepted_transformed": 53478.0,
       "ce_observed_basis": 2390913.0,
-      "out_of_scope": 523122.0,
+      "pending_proposed": 507039.0,
       "population": "Q5",
       "residual": 0.0,
       "retained": 1805671.0,
       "suppressed_leaf_count": 25,
       "suppressed_upper_bound": 118.5,
       "suppressed_upper_bound_pct_of_basis": 0.004956,
-      "transformed": 57769.0,
-      "unresolved": 4351.0
+      "unresolved_open": 4351.0
     }
   ],
   "replacement_accounting": {
     "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1": {
       "concept_difference": null,
-      "pending_reason": "The replacement rental-equivalence amount is not computed in this run. It depends on the Track-A shelter rule, which is held until the PUMD annual-weighting and quintile procedure has been validated against published 2024 LB01 LABSTAT benchmarks. Spec section 19.2 does not expect the removed and replacement amounts to be equal, so neither may be inferred from the other.",
+      "effective_track_a_status": "UNRESOLVED",
+      "pending_reason": "The replacement rental-equivalence amount is not computed in this run. It depends on the Track-A shelter rule, which is held until the PUMD annual-weighting and quintile procedure has been validated against published 2024 LB01 LABSTAT benchmarks. Spec section 19.2 does not expect the removed and replacement amounts to be equal, so neither may be inferred from the other. Because the rule is not in force, the removed outlay above has not actually been removed from the section 19.1 basis: it sits in the pending_proposed bucket.",
+      "proposed_track_a_status": "TRANSFORMED",
+      "removed_outlay_is_still_in_the_basis": true,
       "removed_owner_outlay": {
         "All Consumer Units": {
           "observed_removed_expenditure": 12620.0,
@@ -113,8 +314,14 @@
         }
       },
       "replacement_expenditure": null,
+      "review_status": "PROPOSED",
       "status": "PENDING"
     }
+  },
+  "resolution_state_counts": {
+    "EFFECTIVE": 14,
+    "OPEN": 11,
+    "PENDING": 33
   },
   "rule_suppression_declared_vs_computed": {
     "OS_CPI_CAPITAL_IMPROVEMENT_v0_1": {
@@ -177,7 +384,12 @@
     "basis_share": 0.05,
     "rule_unobserved_share": 25.0
   },
-  "track_a_status_counts": {
+  "track_a_effective_status_counts": {
+    "OUT_OF_SCOPE": 8,
+    "TRANSFORMED": 6,
+    "UNRESOLVED": 44
+  },
+  "track_a_proposed_status_counts": {
     "OUT_OF_SCOPE": 26,
     "TRANSFORMED": 21,
     "UNRESOLVED": 11

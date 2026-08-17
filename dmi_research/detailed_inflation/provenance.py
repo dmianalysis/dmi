@@ -17,18 +17,35 @@ be made silently:
 ``PUBLISHED_CE_UCC``
     Published only. Usable as a validation counterpart, but the CPI draws no
     weight directly from it.
-``CPI_ADJUSTED_PUMD_UCC``
-    Concordance only. The CPI uses it; LABSTAT publishes no aggregate for it.
+``CONCORDANCE_ONLY_UCC``
+    In the concordance and not in ``cx.item``. That difference in source-file
+    membership is the entire content of the class.
 
 The class is *derived* from set membership, never hand-assigned, so it cannot
 drift from the sources. The registry pins the expected result so that a change
 of concordance vintage or ``cx.item`` extract is caught rather than absorbed.
 
+A structural class is not an evidence claim
+-------------------------------------------
+Set membership shows that a UCC is in the concordance and not in ``cx.item``.
+It does not show that the UCC is reachable in the CE Public Use Microdata, that
+the CPI adjusts it, or why BLS declines to publish an aggregate for it. Those
+three properties are carried in :class:`PumdMembership`,
+:class:`CpiAdjustmentStatus` and :class:`PublicationReason`, read from the
+registry per UCC and defaulted to not-claimed. They are never derived from the
+class, because the class cannot support them.
+
+An earlier version of this module called the third class
+``CPI_ADJUSTED_PUMD_UCC``. That name asserted two of the three properties in
+the act of naming the first, which is exactly the inference this split exists
+to prevent.
+
 This classification is descriptive. It authorizes no expenditure amount and
 changes no Milestone-1 or Milestone-2 result.
 
 Attribution: ``cx.item`` and the concordance are publications of the U.S.
-Bureau of Labor Statistics. The three class names are DMI research vocabulary.
+Bureau of Labor Statistics. The three class names, the evidence scales and
+every inference recorded here are DMI research vocabulary and DMI claims.
 """
 
 from __future__ import annotations
@@ -51,7 +68,9 @@ PROVENANCE_CLASSES_PATH = (
     / "ucc_provenance_classes_v0_1.json"
 )
 
-#: Columns of the emitted classification artifact.
+#: Columns of the emitted classification artifact. The three evidence columns
+#: sit beside the structural class, not inside it, so a reader can see at a
+#: glance that the class is derived and the properties are asserted.
 PROVENANCE_CSV_COLUMNS = (
     "ucc",
     "provenance_class",
@@ -62,6 +81,9 @@ PROVENANCE_CSV_COLUMNS = (
     "elis",
     "dmi_node",
     "ce_source",
+    "publication_reason",
+    "pumd_membership",
+    "cpi_adjustment_status",
 )
 
 
@@ -70,19 +92,61 @@ class UccProvenanceError(ValueError):
 
 
 class UccProvenanceClass(str, Enum):
-    """Which BLS universe a UCC belongs to."""
+    """Which BLS source files a UCC appears in. Nothing more."""
 
     #: Published in cx.item and mapped by the concordance.
     DIRECT_CONCORDANCE_UCC = "DIRECT_CONCORDANCE_UCC"
     #: Published in cx.item, absent from the concordance.
     PUBLISHED_CE_UCC = "PUBLISHED_CE_UCC"
     #: Named by the concordance, absent from cx.item.
-    CPI_ADJUSTED_PUMD_UCC = "CPI_ADJUSTED_PUMD_UCC"
+    CONCORDANCE_ONLY_UCC = "CONCORDANCE_ONLY_UCC"
+
+
+class PumdMembership(str, Enum):
+    """Whether the UCC has been observed in CE Public Use Microdata.
+
+    This is not implied by any provenance class. A concordance-only UCC is
+    absent from a published aggregate file; that says nothing about whether the
+    microdata carries it.
+    """
+
+    #: A committed DMI research record cites a specific PUMD observation.
+    VERIFIED = "VERIFIED"
+    #: No observation is cited. Not a claim that the UCC is absent.
+    NOT_VERIFIED = "NOT_VERIFIED"
+
+
+class CpiAdjustmentStatus(str, Enum):
+    """Whether the CPI is known to adjust this UCC relative to reported outlay."""
+
+    #: BLS documentation states the adjustment. Not currently asserted.
+    VERIFIED = "VERIFIED"
+    #: The BLS title or ELI names an imputed concept, so some adjustment is
+    #: implied by the concept. A DMI reading of BLS titles, not a BLS statement.
+    INFERRED = "INFERRED"
+    #: Nothing in the pinned sources speaks to it.
+    UNKNOWN = "UNKNOWN"
+
+
+class PublicationReason(str, Enum):
+    """Why BLS publishes no ``cx.item`` aggregate for this UCC."""
+
+    #: The CE microdata marks the UCC 'Not published'.
+    PUBFLAG_1 = "PUBFLAG_1"
+    #: No BLS statement of the reason was located.
+    UNDOCUMENTED = "UNDOCUMENTED"
+    #: The UCC is published, so there is no non-publication to explain.
+    NOT_APPLICABLE = "NOT_APPLICABLE"
 
 
 @dataclass(frozen=True)
 class UccProvenanceRow:
-    """The provenance class of one UCC, with the evidence for it."""
+    """The provenance class of one UCC, and the separate claims about it.
+
+    ``provenance_class`` is derived from set membership. The three fields below
+    it are read from the pinned registry and default to not-claimed. No code
+    path sets them from the class.
+    """
 
     ucc: str
     provenance_class: UccProvenanceClass
@@ -93,6 +157,9 @@ class UccProvenanceRow:
     elis: tuple
     dmi_node: Optional[str]
     ce_source: str
+    publication_reason: PublicationReason = PublicationReason.NOT_APPLICABLE
+    pumd_membership: PumdMembership = PumdMembership.NOT_VERIFIED
+    cpi_adjustment_status: CpiAdjustmentStatus = CpiAdjustmentStatus.UNKNOWN
 
 
 @dataclass(frozen=True)
@@ -118,6 +185,18 @@ def load_provenance_classes(path: Path = PROVENANCE_CLASSES_PATH) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def concordance_only_evidence(registry: Optional[Mapping] = None) -> dict:
+    """The registry's per-UCC evidence records, keyed by UCC.
+
+    These are claims about PUMD availability, CPI adjustment and the reason for
+    non-publication. They are recorded, cited and graded in the registry; this
+    function only transports them.
+    """
+    registry = registry if registry is not None else load_provenance_classes()
+    roster = registry.get("concordance_only_uccs", {}).get("roster", ())
+    return {item["ucc"]: item for item in roster}
+
+
 def published_ucc_universe(item_codes: Iterable[str]) -> frozenset:
     """The six-digit numeric UCCs among ``cx.item`` item codes.
 
@@ -133,6 +212,7 @@ def classify_ucc_provenance(
     *,
     item_titles: Optional[Mapping] = None,
     resolver: Optional[EliNodeResolver] = None,
+    evidence: Optional[Mapping] = None,
 ) -> UccProvenanceReport:
     """Partition the union of the two BLS universes into the three classes.
 
@@ -141,10 +221,16 @@ def classify_ucc_provenance(
     UCC to its published ``item_text``, and ``resolver`` optionally resolves the
     concordance destinations to a DMI node, so the artifact can show what would
     be lost by ignoring a class.
+
+    ``evidence`` optionally supplies the registry's per-UCC claims about PUMD
+    availability, CPI adjustment and non-publication. Omitting it does not
+    change any class; it leaves every such claim at its not-claimed default,
+    which is the correct reading of no evidence.
     """
     published = published_ucc_universe(item_codes)
     mapped = frozenset(concordance.entries)
     titles = item_titles or {}
+    evidence = evidence or {}
 
     rows = []
     for ucc in sorted(published | mapped):
@@ -155,7 +241,7 @@ def classify_ucc_provenance(
         elif in_published:
             provenance_class = UccProvenanceClass.PUBLISHED_CE_UCC
         else:
-            provenance_class = UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC
+            provenance_class = UccProvenanceClass.CONCORDANCE_ONLY_UCC
 
         entry = concordance.get(ucc)
         elis = entry.elis if entry else ()
@@ -170,6 +256,7 @@ def classify_ucc_provenance(
                 elis=elis,
                 dmi_node=_resolve_node(elis, resolver),
                 ce_source=entry.ce_source if entry else "",
+                **_evidence_for(ucc, in_published, evidence),
             )
         )
 
@@ -183,6 +270,33 @@ def classify_ucc_provenance(
             1 for row in rows if row.provenance_class is member
         )
     return UccProvenanceReport(rows=tuple(rows), counts=counts)
+
+
+def _evidence_for(ucc: str, in_published: bool, evidence: Mapping) -> dict:
+    """The three asserted properties of ``ucc``, or their not-claimed defaults.
+
+    A published UCC has nothing to explain about non-publication, so its
+    ``publication_reason`` is ``NOT_APPLICABLE``. Everything else defaults to
+    the weakest reading, because silence in the registry is an absence of
+    evidence and must not be read as evidence of absence either way.
+    """
+    record = evidence.get(ucc, {})
+    return {
+        "publication_reason": PublicationReason(
+            record.get(
+                "publication_reason",
+                PublicationReason.NOT_APPLICABLE.value
+                if in_published
+                else PublicationReason.UNDOCUMENTED.value,
+            )
+        ),
+        "pumd_membership": PumdMembership(
+            record.get("pumd_membership", PumdMembership.NOT_VERIFIED.value)
+        ),
+        "cpi_adjustment_status": CpiAdjustmentStatus(
+            record.get("cpi_adjustment_status", CpiAdjustmentStatus.UNKNOWN.value)
+        ),
+    }
 
 
 def _resolve_node(elis: tuple, resolver: Optional[EliNodeResolver]) -> Optional[str]:
@@ -209,7 +323,7 @@ def verify_against_registry(
 
     Two things are checked. The counts must match, so a change of concordance
     vintage or ``cx.item`` extract surfaces as an error instead of quietly
-    reclassifying UCCs. And the ``CPI_ADJUSTED_PUMD_UCC`` roster must match
+    reclassifying UCCs. And the ``CONCORDANCE_ONLY_UCC`` roster must match
     exactly, because that is the class whose members are invisible to a
     ``cx.item``-keyed pipeline and therefore the one worth naming individually.
     """
@@ -228,15 +342,12 @@ def verify_against_registry(
                 f"loosening this check."
             )
 
-    expected_roster = tuple(
-        item["ucc"]
-        for item in registry.get("cpi_adjusted_pumd_uccs", {}).get("roster", ())
-    )
-    derived_roster = report.uccs_in(UccProvenanceClass.CPI_ADJUSTED_PUMD_UCC)
+    expected_roster = tuple(concordance_only_evidence(registry))
+    derived_roster = report.uccs_in(UccProvenanceClass.CONCORDANCE_ONLY_UCC)
     if tuple(sorted(expected_roster)) != tuple(sorted(derived_roster)):
         difference = sorted(set(expected_roster) ^ set(derived_roster))
         raise UccProvenanceError(
-            f"CPI_ADJUSTED_PUMD_UCC roster disagrees with the registry; "
+            f"CONCORDANCE_ONLY_UCC roster disagrees with the registry; "
             f"symmetric difference {difference}"
         )
 
@@ -254,6 +365,9 @@ def provenance_csv_rows(report: UccProvenanceReport) -> list:
             ";".join(row.elis),
             row.dmi_node or "",
             row.ce_source,
+            row.publication_reason.value,
+            row.pumd_membership.value,
+            row.cpi_adjustment_status.value,
         ]
         for row in report.rows
     ]
@@ -287,8 +401,13 @@ def build_ucc_provenance(
         item_codes.append(code)
         titles.setdefault(code, record.item_text)
 
+    registry = load_provenance_classes()
     report = classify_ucc_provenance(
-        concordance, item_codes, item_titles=titles, resolver=resolver
+        concordance,
+        item_codes,
+        item_titles=titles,
+        resolver=resolver,
+        evidence=concordance_only_evidence(registry),
     )
-    verify_against_registry(report)
+    verify_against_registry(report, registry)
     return report
