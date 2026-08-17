@@ -481,6 +481,114 @@ class TestFrozenConfirmationArtifacts(unittest.TestCase):
 
 
 # ==========================================================================
+# The confirmation result on disk
+# ==========================================================================
+
+
+class TestConfirmationResult(unittest.TestCase):
+    SUMMARY = OUTPUT_DIR / "confirmation_summary.json"
+    RESULTS = OUTPUT_DIR / "confirmation_results.csv"
+
+    def setUp(self):
+        if not self.SUMMARY.exists():
+            self.skipTest("the confirmation has not been run yet")
+        self.summary = json.loads(self.SUMMARY.read_text(encoding="utf-8"))
+        self.results = read_csv(self.RESULTS)
+        self.spec = json.loads(CONFIRM_SPEC_PATH.read_text(encoding="utf-8"))
+
+    def test_a_the_verdict_is_emitted_and_agrees_with_the_frozen_rule(self):
+        self.assertIn(self.summary["confirmation_status"], ("PASS", "FAIL", "BLOCKED"))
+        # The confirmation verdict is whatever the frozen summarize returned.
+        # It is not computed a second time here or anywhere else.
+        self.assertEqual(
+            self.summary["confirmation_status"], self.summary["benchmark_status"]
+        )
+
+    def test_b_it_ran_against_the_frozen_v0_2_acceptance_rule(self):
+        frozen = json.loads(FROZEN_SPEC_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(self.summary["spec_version"], frozen["spec_version"])
+        self.assertEqual(self.summary["spec_version"], "v0.2")
+        self.assertEqual(self.summary["roster_version"], bench.ROSTER_VERSION)
+        self.assertEqual(self.summary["thresholds_changed_for_confirmation"], [])
+        self.assertEqual(self.summary["frozen_estimator_commit"], FROZEN_COMMIT)
+
+    def test_c_it_ran_against_the_roster_the_spec_froze(self):
+        self.assertEqual(
+            self.summary["roster_hash"], self.spec["confirmation_roster"]["roster_hash"]
+        )
+        self.assertNotEqual(
+            self.summary["roster_hash"], self.summary["development_roster_hash"]
+        )
+        self.assertEqual(
+            self.summary["roster_size"], self.spec["confirmation_roster"]["size"]
+        )
+
+    def test_d_every_frozen_ucc_was_run_and_none_was_dropped(self):
+        frozen = {row["ucc"] for row in self.spec["confirmation_roster"]["entries"]}
+        run = {row["ucc"] for row in self.results}
+        self.assertEqual(run, frozen)
+        self.assertEqual(
+            len(self.results), self.spec["confirmation_roster"]["comparison_count"]
+        )
+        self.assertEqual(self.summary["comparison_count"], len(self.results))
+
+    def test_e_every_ucc_was_compared_on_all_six_populations(self):
+        seen: dict[str, set[str]] = {}
+        for row in self.results:
+            seen.setdefault(row["ucc"], set()).add(row["population"])
+        expected = set(bench.LABSTAT_POPULATION_BY_CODE.values())
+        for ucc, populations in seen.items():
+            with self.subTest(ucc=ucc):
+                self.assertEqual(populations, expected)
+
+    def test_f_no_failing_ucc_was_removed_from_the_summary(self):
+        # The pass fraction must be recomputable from the full result file,
+        # including everything that failed.
+        passes = sum(1 for row in self.results if row["benchmark_status"] == "PASS")
+        self.assertAlmostEqual(
+            self.summary["pass_fraction"], passes / len(self.results), places=12
+        )
+        self.assertLess(passes, len(self.results), "a run with no failure at all "
+                        "would make this test vacuous; investigate before relaxing it")
+
+    def test_g_no_shelter_ucc_appears_in_the_results(self):
+        run = {row["ucc"] for row in self.results}
+        self.assertEqual(run & set(bench.EXCLUDED_FROM_CALIBRATION), set())
+
+    def test_h_the_results_are_disjoint_from_the_development_benchmark(self):
+        development = {
+            row["ucc"] for row in read_csv(BENCHMARK_DIR / "benchmark_results.csv")
+        }
+        run = {row["ucc"] for row in self.results}
+        self.assertEqual(development & run, set())
+
+    def test_i_small_value_cells_are_reported_and_not_silently_dropped(self):
+        outcome = self.summary["small_value_outcome"]
+        absolute = [r for r in self.results if r["judged_on"] == "ABSOLUTE_DIFFERENCE"]
+        self.assertEqual(outcome["count"], len(absolute))
+        self.assertEqual(
+            self.summary["absolute_judged_count"] + self.summary["percentage_judged_count"],
+            len(self.results),
+        )
+        self.assertEqual(outcome["pass_count"] + outcome["fail_count"], outcome["count"])
+
+    def test_j_the_reported_metrics_are_recomputable_from_the_result_file(self):
+        comparable = sorted(
+            abs(float(row["percentage_difference"]))
+            for row in self.results
+            if row["judged_on"] == "PERCENTAGE_DIFFERENCE" and row["percentage_difference"]
+        )
+        self.assertEqual(len(comparable), self.summary["percentage_judged_count"])
+        self.assertAlmostEqual(
+            self.summary["median_abs_pct_error"], bench.percentile(comparable, 0.50), places=9
+        )
+        self.assertAlmostEqual(
+            self.summary["p90_abs_pct_error"], bench.percentile(comparable, 0.90), places=9
+        )
+        self.assertAlmostEqual(self.summary["max_abs_pct_error"], comparable[-1], places=9)
+
+
+# ==========================================================================
 # Preservation: the confirmation may not disturb the Phase-B checkpoint
 # ==========================================================================
 
