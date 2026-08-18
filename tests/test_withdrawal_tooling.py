@@ -114,21 +114,38 @@ class TestRemoteWithdrawalToolIsTwoPhase(unittest.TestCase):
         )
 
     def test_execute_verifies_sha256_before_deletion(self):
-        # The re-hash call must occur before the delete call, and the
-        # delete must not be reachable if any digest mismatched.
-        rehash_idx = self.src.find("_remote_rehash(")
-        mismatch_idx = self.src.find("mismatches")
-        delete_idx = self.src.find("_remote_delete(")
-        self.assertGreater(rehash_idx, 0, "§10: _remote_rehash call missing.")
-        self.assertGreater(mismatch_idx, 0, "§10: mismatch handling missing.")
-        self.assertGreater(delete_idx, 0, "§10: _remote_delete call missing.")
+        """Re-hash, then compare, then delete — in that order.
+
+        Scoped to the body of `cmd_execute`. An earlier version of this
+        test searched whole-file substring offsets, which made it
+        sensitive to unrelated docstring edits and blind to whether the
+        ordering held inside the function that actually runs.
+        """
+        func = next(
+            n for n in ast.walk(ast.parse(self.src))
+            if isinstance(n, ast.FunctionDef) and n.name == "cmd_execute"
+        )
+        body = ast.get_source_segment(self.src, func) or ""
+        self.assertIn("_remote_rehash(", body,
+                      "§10: _remote_rehash call missing from execute.")
+        self.assertIn("_remote_delete(", body,
+                      "§10: _remote_delete call missing from execute.")
+        self.assertIn("mismatches", body,
+                      "§10: mismatch handling missing from execute.")
         self.assertLess(
-            rehash_idx, delete_idx,
+            body.index("_remote_rehash("), body.index("_remote_delete("),
             "§10: sha256 re-hash must run before deletion.",
         )
         self.assertLess(
-            mismatch_idx, delete_idx,
+            body.index("mismatches"), body.index("_remote_delete("),
             "§10: mismatch check must precede deletion.",
+        )
+        # The delete must be unreachable when a mismatch was recorded:
+        # the guard raises rather than merely logging.
+        guard = body[body.index("mismatches"):body.index("_remote_delete(")]
+        self.assertIn(
+            "raise SystemExit", guard,
+            "§10: a digest mismatch must abort the run, not just warn.",
         )
 
     def test_execute_refuses_when_inventory_missing(self):
@@ -347,3 +364,441 @@ class TestPythonLocalInventoryToolIsReadOnly(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Round-3 §10 / §14: BEHAVIORAL coverage of the Core-withdrawal scope.
+#
+# The tests above this point are largely structural (they read the
+# source and assert on its shape). Structural tests could not have
+# caught the defect this section exists for: the tool's patterns
+# classified `_u6.json` and `_with_ci.json` as Core and omitted
+# `qa_report_*_core.json`, and every structural test still passed.
+#
+# These tests therefore exercise the real guard function and the real
+# pattern sets against concrete remote-path records.
+# ---------------------------------------------------------------------------
+
+from scripts.withdraw_remote_artifacts import (  # noqa: E402
+    CORE_NAME_REGEXES,
+    NON_CORE_REGEXES,
+    WITHDRAWN_PATTERNS,
+    _inventory_digest,
+    _refuse_protected,
+    cmd_execute,
+    cmd_reseal,
+)
+import argparse as _argparse  # noqa: E402
+import fnmatch as _fnmatch  # noqa: E402
+
+REMOTE_BASE = "/home/agiraces/dmianalysis"
+REMOTE_OUTPUTS = f"{REMOTE_BASE}/data/outputs"
+
+
+def _rec(name: str, sha: str = "a" * 64, size: int = 10) -> dict:
+    """One inventory record for a file directly under data/outputs."""
+    return {"path": f"{REMOTE_OUTPUTS}/{name}", "size": size, "sha256": sha}
+
+
+class TestCoreInventoryScope(unittest.TestCase):
+    """The inventory may contain ONLY Core artifacts."""
+
+    def test_core_qa_reports_are_in_scope(self):
+        """§10: `qa_report_*_core.json` was omitted by the old tool."""
+        self.assertTrue(
+            any(
+                _fnmatch.fnmatch("qa_report_2026-03_core.json", pat)
+                for pat in WITHDRAWN_PATTERNS
+            ),
+            "§10: qa_report_*_core.json must be inside the Core "
+            "withdrawal scope; the historical tool omitted it.",
+        )
+        # And it must survive the guard, not merely match a pattern.
+        _refuse_protected(
+            [_rec("qa_report_2026-03_core.json")], REMOTE_BASE
+        )
+
+    def test_every_core_artifact_class_is_accepted(self):
+        _refuse_protected(
+            [
+                _rec("dmi_release_2026-03_core.json"),
+                _rec("dmi-2026-03-core.csv"),
+                _rec("dmi-2026-03-core.parquet"),
+                _rec("qa_report_2026-03_core.json"),
+            ],
+            REMOTE_BASE,
+        )
+
+    def test_u6_files_are_never_in_scope(self):
+        """§10 + controlling decision: U-6 files are NOT Core."""
+        self.assertFalse(
+            any(
+                _fnmatch.fnmatch("dmi_release_2024-11_u6.json", pat)
+                for pat in WITHDRAWN_PATTERNS
+            ),
+            "§10: _u6 must not match any Core withdrawal pattern.",
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            _refuse_protected(
+                [_rec("dmi_release_2024-11_u6.json")], REMOTE_BASE
+            )
+        self.assertIn("not Core", str(ctx.exception))
+
+    def test_with_ci_files_are_never_in_scope(self):
+        """§10 + controlling decision: with-CI files are NOT Core."""
+        self.assertFalse(
+            any(
+                _fnmatch.fnmatch("dmi_release_2024-11_with_ci.json", pat)
+                for pat in WITHDRAWN_PATTERNS
+            ),
+            "§10: _with_ci must not match any Core withdrawal pattern.",
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            _refuse_protected(
+                [_rec("dmi_release_2024-11_with_ci.json")], REMOTE_BASE
+            )
+        self.assertIn("not Core", str(ctx.exception))
+
+    def test_non_core_refusal_survives_a_pattern_regression(self):
+        """Defence in depth.
+
+        Even if a future edit re-added `_u6` to WITHDRAWN_PATTERNS, the
+        guard must still refuse it. This is asserted directly against
+        the guard so the protection does not depend on the match
+        patterns being correct.
+        """
+        for name in (
+            "dmi_release_2024-11_u6.json",
+            "dmi_release_2024-11_with_ci.json",
+            "dmi-2024-11_u6.csv",
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(SystemExit):
+                    _refuse_protected([_rec(name)], REMOTE_BASE)
+
+    def test_baseline_and_slack_plus_are_refused(self):
+        for name in (
+            "dmi_release_2026-07.json",
+            "dmi_release_2026-07_slack_plus.json",
+            "dmi-2026-07-baseline.csv",
+            "dmi-2026-07-slack_plus.parquet",
+            "dmi-2026-01.csv",
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(SystemExit):
+                    _refuse_protected([_rec(name)], REMOTE_BASE)
+
+    def test_manifests_and_release_notes_are_refused(self):
+        """§10: manifests, release notes must never be in the inventory."""
+        for name in (
+            "releases.json",
+            "latest.json",
+            "specifications.json",
+            "health.json",
+            "2026-07.html",
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(SystemExit):
+                    _refuse_protected([_rec(name)], REMOTE_BASE)
+
+    def test_unexpected_names_fail_closed(self):
+        """Scope is an allow-list, not a deny-list.
+
+        An unrecognised name must be refused because it does not
+        positively match a Core pattern — not silently accepted.
+        """
+        for name in (
+            "random_file.json",
+            "dmi_release_2026-07_core.json.bak",
+            "notes.txt",
+            "dmi_core_release.json",
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(SystemExit):
+                    _refuse_protected([_rec(name)], REMOTE_BASE)
+
+    def test_historical_directory_paths_are_refused(self):
+        """§10: historical directories are out of scope."""
+        rec = {
+            "path": f"{REMOTE_OUTPUTS}/published/historical/"
+                    f"dmi_release_2017-10.json",
+            "size": 10,
+            "sha256": "b" * 64,
+        }
+        with self.assertRaises(SystemExit):
+            _refuse_protected([rec], REMOTE_BASE)
+
+    def test_paths_outside_remote_base_are_refused(self):
+        rec = {
+            "path": "/etc/dmi_release_2026-03_core.json",
+            "size": 10,
+            "sha256": "c" * 64,
+        }
+        with self.assertRaises(SystemExit) as ctx:
+            _refuse_protected([rec], REMOTE_BASE)
+        self.assertIn("outside remote_base", str(ctx.exception))
+
+    def test_core_and_non_core_regex_sets_are_disjoint(self):
+        """No name may be both Core and non-Core."""
+        core = [re.compile(p) for p in CORE_NAME_REGEXES]
+        non_core = [re.compile(p) for p in NON_CORE_REGEXES]
+        for name in (
+            "dmi_release_2024-11_core.json",
+            "dmi-2024-11-core.csv",
+            "dmi-2024-11-core.parquet",
+            "qa_report_2024-11_core.json",
+        ):
+            with self.subTest(name=name):
+                self.assertTrue(any(rx.match(name) for rx in core))
+                self.assertFalse(any(rx.search(name) for rx in non_core))
+
+
+class TestExactInventoryConsumption(unittest.TestCase):
+    """Phase 2 must consume the reviewed inventory, not rediscover targets."""
+
+    def test_execute_never_reruns_find(self):
+        """§10: no target rediscovery at deletion time.
+
+        `cmd_execute` must not call the enumeration helper. Asserted on
+        the parsed call graph rather than a substring so a renamed or
+        reformatted call cannot slip through.
+        """
+        tree = ast.parse(REMOTE_TOOL.read_text())
+        func = next(
+            n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "cmd_execute"
+        )
+        called = {
+            n.func.id
+            for n in ast.walk(func)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        }
+        self.assertNotIn(
+            "_remote_find_and_hash", called,
+            "§10: execute must not re-enumerate remote targets; it must "
+            "consume the exact reviewed inventory.",
+        )
+
+    def test_only_inventory_module_enumerates(self):
+        """`find` may appear only in the phase-1 enumeration helper."""
+        tree = ast.parse(REMOTE_TOOL.read_text())
+        offenders = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            if node.name in ("_remote_find_and_hash",):
+                continue
+            body = ast.get_source_segment(
+                REMOTE_TOOL.read_text(), node
+            ) or ""
+            if "find " in body and "-name" in body:
+                offenders.append(node.name)
+        self.assertEqual(
+            offenders, [],
+            f"§10: only the phase-1 enumerator may build a remote find "
+            f"expression; offenders: {offenders}",
+        )
+
+    def test_integrity_hash_is_recorded_and_covers_the_file_list(self):
+        a = _inventory_digest(
+            REMOTE_BASE, REMOTE_OUTPUTS,
+            [_rec("dmi_release_2026-03_core.json")],
+        )
+        b = _inventory_digest(
+            REMOTE_BASE, REMOTE_OUTPUTS,
+            [_rec("dmi_release_2026-03_core.json"),
+             _rec("dmi_release_2026-04_core.json")],
+        )
+        self.assertNotEqual(
+            a, b, "digest must change when the reviewed list changes",
+        )
+
+    def test_integrity_hash_detects_a_swapped_path(self):
+        a = _inventory_digest(
+            REMOTE_BASE, REMOTE_OUTPUTS,
+            [_rec("dmi_release_2026-03_core.json")],
+        )
+        b = _inventory_digest(
+            REMOTE_BASE, REMOTE_OUTPUTS,
+            [_rec("dmi_release_2026-04_core.json")],
+        )
+        self.assertNotEqual(a, b)
+
+    def test_integrity_hash_is_stable_for_the_same_decision(self):
+        recs = [_rec("dmi_release_2026-03_core.json")]
+        self.assertEqual(
+            _inventory_digest(REMOTE_BASE, REMOTE_OUTPUTS, recs),
+            _inventory_digest(REMOTE_BASE, REMOTE_OUTPUTS, recs),
+        )
+
+    def test_integrity_hash_ignores_generation_timestamp(self):
+        """The digest identifies the decision, not the run."""
+        recs = [_rec("dmi_release_2026-03_core.json")]
+        d1 = _inventory_digest(REMOTE_BASE, REMOTE_OUTPUTS, recs)
+        inv = {
+            "generated_at_utc": "2026-01-01T00:00:00Z",
+            "remote_base": REMOTE_BASE,
+            "remote_outputs": REMOTE_OUTPUTS,
+            "files": recs,
+        }
+        d2 = _inventory_digest(
+            inv["remote_base"], inv["remote_outputs"], inv["files"]
+        )
+        self.assertEqual(d1, d2)
+
+
+class TestExecuteFailsClosedWithoutTouchingRemote(unittest.TestCase):
+    """Phase 2's gates must fire before any SSH I/O.
+
+    None of these tests can contact a remote: no DMI_REMOTE_* variables
+    are set, so if a gate did NOT fire first the run would fail with a
+    missing-env error instead. Each test asserts on the specific
+    refusal message, which proves which gate stopped it.
+    """
+
+    def _write(self, tmp: Path, inventory: dict) -> Path:
+        path = tmp / "inv.json"
+        path.write_text(json.dumps(inventory, indent=2))
+        return path
+
+    def test_missing_confirm_is_refused_before_any_ssh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), {
+                "remote_base": REMOTE_BASE,
+                "remote_outputs": REMOTE_OUTPUTS,
+                "files": [_rec("dmi_release_2026-03_core.json")],
+                "integrity_sha256": "irrelevant",
+            })
+            args = _argparse.Namespace(inventory=str(path), confirm=False)
+            with self.assertRaises(SystemExit) as ctx:
+                cmd_execute(args)
+            self.assertIn("--confirm", str(ctx.exception))
+            self.assertIn("No files were touched", str(ctx.exception))
+
+    def test_default_namespace_is_non_mutating(self):
+        """§14: default invocation is non-mutating.
+
+        Parsing `execute` without `--confirm` must yield confirm=False,
+        so the default path is the refusal path.
+        """
+        from scripts.withdraw_remote_artifacts import main as _main
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), {
+                "remote_base": REMOTE_BASE,
+                "files": [_rec("dmi_release_2026-03_core.json")],
+                "integrity_sha256": "x",
+            })
+            with self.assertRaises(SystemExit) as ctx:
+                _main(["execute", "--inventory", str(path)])
+            self.assertIn("--confirm", str(ctx.exception))
+
+    def test_empty_inventory_deletes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), {
+                "remote_base": REMOTE_BASE,
+                "files": [],
+                "integrity_sha256": "x",
+            })
+            args = _argparse.Namespace(inventory=str(path), confirm=True)
+            self.assertEqual(cmd_execute(args), 0)
+
+
+class TestReseal(unittest.TestCase):
+    """`reseal` re-approves a pruned inventory without touching the remote."""
+
+    def test_reseal_updates_the_digest_to_match_pruned_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            files = [
+                _rec("dmi_release_2026-03_core.json"),
+                _rec("dmi_release_2026-04_core.json"),
+            ]
+            inv = {
+                "remote_base": REMOTE_BASE,
+                "remote_outputs": REMOTE_OUTPUTS,
+                "files": files,
+                "integrity_sha256": _inventory_digest(
+                    REMOTE_BASE, REMOTE_OUTPUTS, files
+                ),
+            }
+            path = Path(tmp) / "inv.json"
+            path.write_text(json.dumps(inv, indent=2))
+
+            # Reviewer prunes one entry.
+            inv["files"] = files[:1]
+            path.write_text(json.dumps(inv, indent=2))
+
+            cmd_reseal(_argparse.Namespace(inventory=str(path)))
+            resealed = json.loads(path.read_text())
+            self.assertEqual(
+                resealed["integrity_sha256"],
+                _inventory_digest(REMOTE_BASE, REMOTE_OUTPUTS, files[:1]),
+            )
+
+    def test_reseal_refuses_out_of_scope_entries(self):
+        """Reseal must not be a way to smuggle non-Core paths through."""
+        with tempfile.TemporaryDirectory() as tmp:
+            files = [_rec("dmi_release_2024-11_u6.json")]
+            path = Path(tmp) / "inv.json"
+            path.write_text(json.dumps({
+                "remote_base": REMOTE_BASE,
+                "remote_outputs": REMOTE_OUTPUTS,
+                "files": files,
+            }, indent=2))
+            with self.assertRaises(SystemExit) as ctx:
+                cmd_reseal(_argparse.Namespace(inventory=str(path)))
+            self.assertIn("not Core", str(ctx.exception))
+
+    def test_reseal_does_not_import_or_call_delete(self):
+        tree = ast.parse(REMOTE_TOOL.read_text())
+        func = next(
+            n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "cmd_reseal"
+        )
+        called = {
+            n.func.id
+            for n in ast.walk(func)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        }
+        for forbidden in ("_remote_delete", "_remote_rehash",
+                          "_remote_find_and_hash", "_load_ssh_config"):
+            self.assertNotIn(
+                forbidden, called,
+                f"reseal must be local-only; it called {forbidden}",
+            )
+
+
+class TestPostDeletionVerification(unittest.TestCase):
+    """§10: every inventoried path is verified absent after deletion."""
+
+    def test_execute_verifies_absence_after_delete(self):
+        src = REMOTE_TOOL.read_text()
+        tree = ast.parse(src)
+        func = next(
+            n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "cmd_execute"
+        )
+        called = [
+            n.func.id
+            for n in ast.walk(func)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        ]
+        self.assertIn(
+            "_remote_existing", called,
+            "§10: execute must verify every inventoried path afterward.",
+        )
+        body = ast.get_source_segment(src, func) or ""
+        self.assertLess(
+            body.index("_remote_delete"), body.index("_remote_existing"),
+            "verification must come after deletion.",
+        )
+
+    def test_survivors_cause_a_failure(self):
+        src = ast.get_source_segment(
+            REMOTE_TOOL.read_text(),
+            next(
+                n for n in ast.walk(ast.parse(REMOTE_TOOL.read_text()))
+                if isinstance(n, ast.FunctionDef) and n.name == "cmd_execute"
+            ),
+        ) or ""
+        self.assertIn("survivors", src)
+        self.assertIn("post-deletion verification failed", src)

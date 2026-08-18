@@ -17,17 +17,30 @@ requested). It exits ``0`` regardless of how many matches are found;
 callers that need to fail a CI job on non-empty inventories can gate on
 the JSON output themselves.
 
-Patterns matched (aligned with
-``scripts.withdraw_remote_artifacts.WITHDRAWN_PATTERNS``):
+Patterns are reported in TWO separate authorization classes (Round-3
+§10). Collapsing them into one "withdrawn" list was the original
+defect, because it let U-6 and confidence-interval files be treated as
+Core.
+
+``CORE_PATTERNS`` — the withdrawn Core specification, eligible for the
+remote Core-withdrawal procedure. Identical to
+``scripts.withdraw_remote_artifacts.WITHDRAWN_PATTERNS``:
 
 - ``dmi_release_*_core.json``
-- ``dmi_release_*_u6.json``
-- ``dmi_release_*_with_ci.json``
 - ``dmi-*-core.csv``
 - ``dmi-*-core.parquet``
-- ``qa_report_*_core.json``  (documented in
-  ``docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`` §1 but omitted from
-  the remote script because QA reports are not deployed)
+- ``qa_report_*_core.json``
+
+``LEGACY_NON_CORE_PATTERNS`` — pre-v0.1.12 artifacts that are NOT Core:
+
+- ``dmi_release_*_u6.json``
+- ``dmi_release_*_with_ci.json``
+
+These are historical evidence. Local copies are quarantined under
+``data/quarantine/pre_v0.1.12/`` rather than deleted, and their remote
+disposition is explicitly OUTSIDE the Core-withdrawal authorization.
+They are listed so an operator can see them, never so they can be
+withdrawn as Core.
 
 Excluded roots (never traversed): ``.git``, ``node_modules``,
 ``__pycache__``, ``.venv``, ``venv``, ``deploy`` — the last of these
@@ -45,14 +58,50 @@ import sys
 from pathlib import Path
 
 
-WITHDRAWN_PATTERNS: tuple[str, ...] = (
+# Round-3 §10 (classification correction). These two sets are kept
+# SEPARATE because they carry different authorizations, and collapsing
+# them was the original defect: a single "withdrawn" list let U-6 and
+# confidence-interval files be treated as Core.
+#
+# CORE_PATTERNS — the withdrawn Core specification. Eligible for the
+# remote Core-withdrawal procedure
+# (``scripts.withdraw_remote_artifacts``). This set is deliberately
+# identical to that tool's ``WITHDRAWN_PATTERNS``.
+CORE_PATTERNS: tuple[str, ...] = (
     "dmi_release_*_core.json",
-    "dmi_release_*_u6.json",
-    "dmi_release_*_with_ci.json",
     "dmi-*-core.csv",
     "dmi-*-core.parquet",
     "qa_report_*_core.json",
 )
+
+# LEGACY_NON_CORE_PATTERNS — pre-v0.1.12 artifacts that are NOT Core.
+# They are historical evidence of superseded methodology runs. Local
+# copies are quarantined under ``data/quarantine/pre_v0.1.12/`` rather
+# than deleted, and their remote disposition is OUTSIDE the
+# Core-withdrawal authorization. They are reported here so an operator
+# can see them, and labelled so nobody mistakes them for Core.
+LEGACY_NON_CORE_PATTERNS: tuple[str, ...] = (
+    "dmi_release_*_u6.json",
+    "dmi_release_*_with_ci.json",
+)
+
+# Union, used only for "what should this scan look at".
+WITHDRAWN_PATTERNS: tuple[str, ...] = (
+    CORE_PATTERNS + LEGACY_NON_CORE_PATTERNS
+)
+
+
+def classify(name: str) -> str:
+    """Return ``"core"``, ``"legacy_non_core"``, or ``"unmatched"``.
+
+    The distinction is the whole point of this module: ``core`` files
+    may be withdrawn remotely; ``legacy_non_core`` files may not.
+    """
+    if any(fnmatch.fnmatch(name, pat) for pat in CORE_PATTERNS):
+        return "core"
+    if any(fnmatch.fnmatch(name, pat) for pat in LEGACY_NON_CORE_PATTERNS):
+        return "legacy_non_core"
+    return "unmatched"
 
 
 EXCLUDED_DIRS: frozenset[str] = frozenset({
@@ -88,14 +137,35 @@ def iter_withdrawn_paths(root: Path) -> list[Path]:
 
 
 def build_report(root: Path) -> dict:
-    """Build a JSON-serialisable inventory report."""
+    """Build a JSON-serialisable inventory report.
+
+    Matches are split by authorization class so the report can never be
+    read as "these are all Core". ``core`` entries are withdrawal-
+    eligible; ``legacy_non_core`` entries are historical evidence whose
+    remote disposition is outside the Core-withdrawal authorization.
+    """
+    resolved = root.resolve()
     matches = iter_withdrawn_paths(root)
+    core: list[str] = []
+    legacy: list[str] = []
+    for path in matches:
+        rel = str(path.relative_to(resolved))
+        if classify(path.name) == "core":
+            core.append(rel)
+        else:
+            legacy.append(rel)
     return {
-        "root": str(root.resolve()),
-        "patterns": list(WITHDRAWN_PATTERNS),
+        "root": str(resolved),
+        "core_patterns": list(CORE_PATTERNS),
+        "legacy_non_core_patterns": list(LEGACY_NON_CORE_PATTERNS),
         "excluded_dirs": sorted(EXCLUDED_DIRS),
         "match_count": len(matches),
-        "matches": [str(p.relative_to(root.resolve())) for p in matches],
+        "core_match_count": len(core),
+        "legacy_non_core_match_count": len(legacy),
+        "core_matches": core,
+        "legacy_non_core_matches": legacy,
+        # Preserved for consumers of the previous report shape.
+        "matches": [str(p.relative_to(resolved)) for p in matches],
     }
 
 
@@ -123,9 +193,21 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write("\n")
     else:
         print(f"Inventory root: {report['root']}")
-        print(f"Patterns:       {', '.join(report['patterns'])}")
         print(f"Matches:        {report['match_count']}")
-        for rel in report["matches"]:
+        print()
+        print(
+            f"Core (withdrawal-eligible): "
+            f"{report['core_match_count']}"
+        )
+        for rel in report["core_matches"]:
+            print(f"  {rel}")
+        print()
+        print(
+            f"Pre-v0.1.12 legacy, NOT Core "
+            f"(outside Core-withdrawal authorization): "
+            f"{report['legacy_non_core_match_count']}"
+        )
+        for rel in report["legacy_non_core_matches"]:
             print(f"  {rel}")
     return 0
 
