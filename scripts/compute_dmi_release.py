@@ -132,7 +132,10 @@ def generate_release_note_for_period(
     specifications: dict = None,
     output_dir: Path = Path("data/outputs"),
 ):
-    """Render the baseline note after the three-spec manifest is available."""
+    """Render the baseline note once the specifications manifest exists.
+
+    v0.1.12 has two operational specifications (Baseline, Slack-Plus).
+    """
     baseline_path = output_dir / f"dmi_release_{reference_period}.json"
     if not baseline_path.exists():
         raise SystemExit(f"Missing baseline release file: {baseline_path}")
@@ -144,7 +147,7 @@ def generate_release_note_for_period(
         if not specifications_path.exists():
             raise SystemExit(
                 f"Missing specifications manifest: {specifications_path}. "
-                "Compute all three specifications first."
+                "Compute Baseline and Slack-Plus first."
             )
         with open(specifications_path, "r") as f:
             specifications = json.load(f)
@@ -204,7 +207,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--release-note-only",
         action="store_true",
-        help="Generate the baseline release note from completed three-spec outputs.",
+        help=(
+            "Generate the baseline release note from completed "
+            "Baseline + Slack-Plus outputs."
+        ),
     )
     return parser.parse_args()
 

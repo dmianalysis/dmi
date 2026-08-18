@@ -115,7 +115,12 @@ def build_specifications_manifest(
     output_dir: Path = Path("data/outputs"),
     releases_by_spec: Optional[dict] = None,
 ) -> dict:
-    """Build the three-spec manifest, optionally from preloaded releases."""
+    """Build the specifications manifest, optionally from preloaded releases.
+
+    v0.1.12 publishes two operational specifications, Baseline and
+    Slack-Plus. The original design had three; Core is withdrawn (see
+    docs/repair/CORE_WITHDRAWAL.md) and `SPEC_ORDER` no longer contains it.
+    """
     if releases_by_spec is None:
         releases_by_spec = {}
         for spec_id in SPEC_ORDER:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for deferred three-spec release-note generation."""
+"""Tests for deferred release-note generation (Baseline + Slack-Plus)."""
 
 import copy
 import json
