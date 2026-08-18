@@ -308,6 +308,43 @@ class TestRawArtifactGate(GateRejectionCase):
             tree.raw("slack_plus").unlink()
             self.assert_rejected(tree, "does not exist")
 
+    def test_cross_spec_gate_fails_closed_when_a_raw_output_is_missing(self):
+        """§1 gate 6 must not pass by omission.
+
+        The missing-artifact case above is caught by gate 3, so gate 6's
+        own fail-closed branch never runs in that test — a mutation that
+        turned the branch into a silent skip changed nothing. This pins
+        it directly: with one raw output unavailable, `run_gates` must
+        report the cross-specification check as FAILED, not absent.
+
+        It matters because gate 6 is the only check that compares the two
+        specifications. If gate 3 were ever loosened, a half-computed
+        release would otherwise sail through the comparison by having
+        nothing to compare.
+        """
+        with _RealTree() as tree:
+            tree.raw("slack_plus").unlink()
+            problems, _warnings = run_gates(PERIOD, tree.outputs)
+            self.assertTrue(
+                any("cross-spec" in p for p in problems),
+                f"§1: the cross-specification gate must record a failure "
+                f"when it cannot run. Problems were: {problems}",
+            )
+            self.assertTrue(
+                any("cannot pass by omission" in p or "skipped because" in p
+                    for p in problems),
+                f"§1: the failure must say the gate could not run, not "
+                f"stay silent. Problems were: {problems}",
+            )
+
+    def test_cross_spec_gate_fails_closed_when_a_raw_output_is_malformed(self):
+        with _RealTree() as tree:
+            tree.raw("baseline").write_text("{ broken")
+            problems, _warnings = run_gates(PERIOD, tree.outputs)
+            self.assertTrue(
+                any("cross-spec" in p for p in problems), problems
+            )
+
     def test_malformed_raw_output_is_rejected(self):
         with _RealTree() as tree:
             tree.raw("baseline").write_text("{ not json at all")
