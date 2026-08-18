@@ -1,0 +1,61 @@
+population,quantity,millions,definition
+ALL_CU,e_source,6836520.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+ALL_CU,e_cpi,8124511.812994,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+ALL_CU,delta_scope,1287991.812994,e_cpi minus e_source. Not required to be zero.
+ALL_CU,rental_equivalence_introduced,2493830.812994,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+ALL_CU,rental_equivalence_withheld,665.471372,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+ALL_CU,owner_outlays_removed,892133.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+ALL_CU,delta_shelter,1601697.812994,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+ALL_CU,secondary_residence_outlays_removed_without_replacement,25547.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+ALL_CU,pending_proposed,245401.000000,Under a PROPOSED rule: neither applied nor reversed.
+ALL_CU,unresolved_open,10951.000000,No disposition proposed at all.
+Q1,e_source,688872.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+Q1,e_cpi,854361.442108,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+Q1,delta_scope,165489.442108,e_cpi minus e_source. Not required to be zero.
+Q1,rental_equivalence_introduced,238213.442108,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+Q1,rental_equivalence_withheld,,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+Q1,owner_outlays_removed,49260.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+Q1,delta_shelter,188953.442108,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+Q1,secondary_residence_outlays_removed_without_replacement,1122.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+Q1,pending_proposed,19806.000000,Under a PROPOSED rule: neither applied nor reversed.
+Q1,unresolved_open,822.000000,No disposition proposed at all.
+Q2,e_source,959951.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+Q2,e_cpi,1182887.881735,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+Q2,delta_scope,222936.881735,e_cpi minus e_source. Not required to be zero.
+Q2,rental_equivalence_introduced,348688.881735,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+Q2,rental_equivalence_withheld,9.807815,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+Q2,owner_outlays_removed,84170.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+Q2,delta_shelter,264518.881735,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+Q2,secondary_residence_outlays_removed_without_replacement,2325.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+Q2,pending_proposed,33787.000000,Under a PROPOSED rule: neither applied nor reversed.
+Q2,unresolved_open,1192.000000,No disposition proposed at all.
+Q3,e_source,1223874.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+Q3,e_cpi,1438790.013756,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+Q3,delta_scope,214916.013756,e_cpi minus e_source. Not required to be zero.
+Q3,rental_equivalence_introduced,409607.013756,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+Q3,rental_equivalence_withheld,99.075314,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+Q3,owner_outlays_removed,132582.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+Q3,delta_shelter,277025.013756,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+Q3,secondary_residence_outlays_removed_without_replacement,2599.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+Q3,pending_proposed,50017.000000,Under a PROPOSED rule: neither applied nor reversed.
+Q3,unresolved_open,1819.000000,No disposition proposed at all.
+Q4,e_source,1572916.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+Q4,e_cpi,1857768.947078,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+Q4,delta_scope,284852.947078,e_cpi minus e_source. Not required to be zero.
+Q4,rental_equivalence_introduced,565762.947078,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+Q4,rental_equivalence_withheld,120.808528,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+Q4,owner_outlays_removed,211580.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+Q4,delta_shelter,354182.947078,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+Q4,secondary_residence_outlays_removed_without_replacement,4938.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+Q4,pending_proposed,49295.000000,Under a PROPOSED rule: neither applied nor reversed.
+Q4,unresolved_open,2767.000000,No disposition proposed at all.
+Q5,e_source,2390913.000000,"CE observed outlay basis, Milestone 2 section 19.1."
+Q5,e_cpi,2790707.528318,Retained plus accepted-transformed plus rental equivalence introduced. Excludes everything under a PROPOSED or OPEN rule.
+Q5,delta_scope,399794.528318,e_cpi minus e_source. Not required to be zero.
+Q5,rental_equivalence_introduced,931558.528318,Admitted Track-A rental equivalence under an EFFECTIVE introducing rule.
+Q5,rental_equivalence_withheld,435.779715,"Estimated amount for shelter UCCs that failed adjudication. Shown so the gap has a size; blank where the cell has no estimate at all, which is not zero."
+Q5,owner_outlays_removed,414540.000000,Published CE expenditure removed by the shelter-coupled rules accepted in this task.
+Q5,delta_shelter,517018.528318,rental_equivalence_introduced minus owner_outlays_removed. Not required to be zero and not adjusted.
+Q5,secondary_residence_outlays_removed_without_replacement,14563.000000,Owned-vacation outlays leaving the basis under accepted rules while the secondary-residence rental-equivalence rule is still PENDING.
+Q5,pending_proposed,92499.000000,Under a PROPOSED rule: neither applied nor reversed.
+Q5,unresolved_open,4351.000000,No disposition proposed at all.

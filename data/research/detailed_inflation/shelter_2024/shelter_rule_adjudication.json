@@ -1,0 +1,291 @@
+{
+  "accepted": [
+    "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+    "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1"
+  ],
+  "artifact_id": "SHELTER_RULE_ADJUDICATION_2024",
+  "held": [
+    "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+    "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1"
+  ],
+  "phase": "D4",
+  "predecessor_registry": "ce_cpi_scope_rules_v0_1",
+  "predecessor_version": "0.1.0",
+  "status": "RESEARCH_ONLY",
+  "the_dependency_milestone_2_named_but_never_wrote": "All four rules reviewed here carried the same blocker: each 'takes effect only jointly with the Track-A rental-equivalence rule'. The v0.1 registry contains ten rules and none of them is that rule. The condition was unsatisfiable as written, not because the evidence was missing but because the thing to be joint with did not exist. Phase D writes it, and writes it in two parts because the pinned BLS concordance already splits the concept in two: 910104 to the sampled ELI HC011 for the primary residence, and 910105 to 910107 to the unsampled residual HC090 for secondary residences.",
+  "verdicts": {
+    "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1": {
+      "blocker": null,
+      "evidence_strength": "STRONG",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": true,
+      "materiality_all_cu_millions": 504695.0,
+      "questions": [
+        {
+          "answer": "YES",
+          "finding": "Unchanged and independent of shelter. The CPI Handbook of Methods states that 'interest costs and finance charges are also out-of-scope', and all eight UCCs are interest or charges on a credit instrument by name and by CE stub placement. Milestone 2 graded this STRONG on two independent grounds and neither has moved.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "YES FOR THE PRIMARY RESIDENCE, NO FOR THE SECONDARY",
+          "finding": "494,917 million dollars of the 504,695 million claimed by this rule is primary-residence financing, whose replacement TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1 is now EFFECTIVE. 9,778 million is secondary-residence financing, whose replacement rule is PENDING. This rule is an EXCLUDE rule and adds no term, so its arithmetic does not require the replacement; the residual is nonetheless quantified in the accounting summary rather than absorbed.",
+          "question": "Is the required replacement estimate now available?"
+        },
+        {
+          "answer": "YES",
+          "finding": "The removed amounts are published CE aggregates, not estimates, so they carry no sampling error of this task's making. One member, 830112, is suppressed; its published sibling 830111 is 21 million dollars, which bounds the unobserved amount far below materiality.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "YES, AND IT IS WHAT PREVENTS IT",
+          "finding": "Retaining mortgage interest alongside the introduced rental equivalence would count owner shelter twice, since rental equivalence prices the whole flow of housing services including the financing embedded in a market rent. The audit matrix records that no member of this rule survives in Track A.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "YES",
+          "finding": "Each UCC is claimed by exactly one rule, which Milestone 2 verified and which is re-checked here. The owned-vacation members sit in this rule rather than in RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1 because the interest ground is STRONG and does not depend on the secondary-residence argument, which is Milestone 2's stated reason and is unchanged.",
+          "question": "Does the rule interact correctly with the other three?"
+        },
+        {
+          "answer": "YES, RECORDED, NOT BLOCKING",
+          "finding": "The secondary-residence members leave the basis while their rental-equivalence replacement is PENDING. That understates Track-A shelter by an amount that is reported, not corrected. It is not a reason to retain interest, because the CPI excludes interest for both tenures regardless of how the shelter flow is priced.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "EFFECTIVE",
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+      "transition": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE. The recorded blocker was that the PUMD annual-weighting and income-quintile procedure had not been benchmarked against published 2024 LB01 estimates. It has been: the frozen estimator passed the Phase-B confirmation on 111 previously unused UCCs and 666 cells, and reproduces the published shelter counterpart 910050 to within 1.41 percent.",
+      "warnings": [
+        "9,778 million dollars of owned-vacation financing leaves the basis under this rule while TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1 is PENDING. The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible."
+      ]
+    },
+    "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1": {
+      "blocker": "The shelter dependency is cleared but the evidence blocker is not. BLS does not enumerate these eight UCCs; the membership rests on the DMI owner/renter counterpart test. Milestone 2 flagged the rule for reviewer attention on its own merits and nothing produced in this task speaks to it. Clearing requires either a BLS source naming the codes, or an independent check that no renter counterpart exists for the five maintenance members.",
+      "evidence_strength": "MODERATE",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": false,
+      "materiality_all_cu_millions": 232781.0,
+      "questions": [
+        {
+          "answer": "PARTLY",
+          "finding": "The principle is BLS's: the CPI 'excludes investment items, such as stocks, bonds, real estate', and Casey 2010 states that owner maintenance is weighted from 'the corresponding mean expenditures of renters'. What is not BLS's is the membership. BLS does not name these eight UCCs. Milestone 2 assigned them with the owner/renter counterpart test, which is a DMI structural inference, and graded the rule MODERATE for that reason.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "NOT APPLICABLE TO THE BLOCKER",
+          "finding": "This is the part that has changed. All eight members are primary-residence codes, so the rental-equivalence dependency is satisfied by TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1. For the five maintenance members the operative replacement is not rental equivalence at all but the renter counterpart expenditure, which Track A already retains; the counterpart test's whole claim is that these five have no such counterpart. That claim is what remains unverified against BLS.",
+          "question": "Is the required replacement estimate now available?"
+        },
+        {
+          "answer": "YES FOR THE AMOUNT, NO FOR THE MEMBERSHIP",
+          "finding": "The 232,781 million dollars is published and exact. The uncertainty is not sampling uncertainty; it is whether these are the right eight codes, and an exact amount attached to an uncertain membership is precisely the shape of error this rule is exposed to.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "YES, IF THE MEMBERSHIP IS RIGHT",
+          "finding": "Conditional on the membership, retaining owner maintenance alongside rental equivalence would double count. The condition is the problem.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "YES",
+          "finding": "No UCC overlap, and its 232,781 million dollars stays in the pending bucket, so it is neither retained in Track A nor removed from it and cannot double count in either direction.",
+          "question": "Does the rule interact correctly with the other three?"
+        },
+        {
+          "answer": "YES, BLOCKING",
+          "finding": "Milestone 2 recorded that this is 'the largest MODERATE-evidence exclusion in the registry at 3.4 percent of basis and should receive explicit reviewer attention on its own merits'. That was a second, separate bar, and this task produced no evidence bearing on it. Clearing the shelter blocker does not clear it. Accepting the rule now would be promoting a MODERATE structural inference on the strength of an unrelated benchmark, which is the failure mode the instruction against obtaining closure names.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "PENDING",
+      "review_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "transition": "PROPOSED/PENDING preserved. One of its two recorded blockers is cleared and the other is untouched, so its status does not move.",
+      "warnings": []
+    },
+    "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1": {
+      "blocker": null,
+      "evidence_strength": "STRONG",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": true,
+      "materiality_all_cu_millions": 387438.0,
+      "questions": [
+        {
+          "answer": "YES",
+          "finding": "Unchanged. The Handbook states that 'the CPI excludes income tax and other direct taxes', and residential property tax is a direct tax on the owner. Graded STRONG at Milestone 2 and not revisited here.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "YES FOR THE PRIMARY RESIDENCE, NO FOR THE SECONDARY",
+          "finding": "371,669 million dollars is primary-residence property tax and 15,769 million is owned-vacation property tax. The same asymmetry as the mortgage rule, reported the same way.",
+          "question": "Is the required replacement estimate now available?"
+        },
+        {
+          "answer": "YES",
+          "finding": "Both members are published, unsuppressed CE aggregates.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "YES",
+          "finding": "A market rent embeds the landlord's property tax. Pricing owner shelter by rental equivalence and also charging the owner's tax bill would count it twice.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "YES",
+          "finding": "Milestone 2 deliberately did not extend this treatment to the vehicle personal property tax, which BLS itself bundles into the registration-fee concept. That boundary is untouched.",
+          "question": "Does the rule interact correctly with the other three?"
+        },
+        {
+          "answer": "YES, RECORDED, NOT BLOCKING",
+          "finding": "The owned-vacation member, as with the mortgage rule.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "EFFECTIVE",
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+      "transition": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE, on the same cleared benchmark blocker as the mortgage-interest rule.",
+      "warnings": [
+        "15,769 million dollars of owned-vacation property tax leaves the basis while TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1 is PENDING."
+      ]
+    },
+    "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1": {
+      "blocker": "The replacement amount this rule must add is not available. The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible. Separately, whether these outlays are replaced or simply excluded is not settled by the published record, and the two readings differ in what the rule has to supply.",
+      "evidence_strength": "MODERATE",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": false,
+      "materiality_all_cu_millions": 12620.0,
+      "questions": [
+        {
+          "answer": "YES",
+          "finding": "Casey 2010 Appendix B note 2 documents that the CPI prices secondary homes and timeshares by rental equivalence, and Milestone 2's structural check that the entire owned-vacation CE stub branch is unmapped in the concordance is unchanged.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "NO",
+          "finding": "This is a REPLACE rule. Its transformation formula removes the fifteen owned-vacation outlays and adds the secondary-residence rental-equivalence amount. That addend is supplied by TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1, which is PENDING because 910106 failed adjudication and because the BLS consumption factor is unpublished. Executing the formula would require substituting zero for the missing component or inferring it from 910102, both of which are forbidden.",
+          "question": "Is the required replacement estimate now available?"
+        },
+        {
+          "answer": "PARTLY",
+          "finding": "The removed side is published and exact, though 320633 is suppressed and eight of fifteen members are suppressed in Q1. The added side has no defensible value, which is not a wide interval but an absence.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "NOT REACHED",
+          "finding": "The question does not arise while the rule is PENDING.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "YES",
+          "finding": "It claims only the owned-vacation codes that the STRONG interest and direct-tax rules do not claim, and it cedes 990940 to the capital-improvement rule so that concept is treated identically across tenures. That partition is unchanged.",
+          "question": "Does the rule interact correctly with the other three?"
+        },
+        {
+          "answer": "YES, BLOCKING",
+          "finding": "Milestone 2 recorded a competing reading under which these outlays are simply excluded as real-estate investment rather than replaced. Under that reading the rule needs no addend and could be accepted today. The published record does not settle which reading is right, and choosing the convenient one to obtain closure is not an argument.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "PENDING",
+      "review_status": "PROPOSED",
+      "rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "transition": "PROPOSED/PENDING preserved. The benchmark blocker is cleared; the replacement this rule has to add is still not statable.",
+      "warnings": []
+    },
+    "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1": {
+      "blocker": null,
+      "evidence_strength": "STRONG",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": true,
+      "materiality_all_cu_millions": 2493830.812994,
+      "questions": [
+        {
+          "answer": "YES",
+          "finding": "The pinned 2024 BLS concordance maps 910104 to ELI HC011, 'Owners' Equivalent Rent Of Primary Residence', which is a sampled ELI. Casey 2010 states that owned housing is 'adjusted from net out-of-pocket expense to eliminate investment elements'. Both are BLS documents naming this concept for this UCC.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "YES",
+          "finding": "910104 is adjudicated HIGH quality and admitted to Track A. Its published counterpart 910050 reproduces at a ratio of 0.9990 for All Consumer Units with a maximum deviation of 1.41 percent across the six populations.",
+          "question": "Is the required estimate now available?"
+        },
+        {
+          "answer": "YES",
+          "finding": "The All-CU relative standard error is 1.30 percent and every quintile is estimated with a non-degenerate replicate distribution. The standard error travels with the amount in every artifact.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "YES",
+          "finding": "This rule introduces an amount that has no counterpart in the CE outlay basis. 910104 is an ADDENDA line and is not a member of the EXPEND basis, so introducing it cannot duplicate anything already counted. Whether the outlays it displaces are removed is the business of the three rules below, and is audited separately.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "YES",
+          "finding": "It supplies the replacement concept that OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1, OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1 and OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1 were all made conditional on. It claims no UCC claimed by any other rule.",
+          "question": "Does the rule interact correctly with the others?"
+        },
+        {
+          "answer": "YES, RECORDED",
+          "finding": "BLS has not been located stating whether a further adjustment is applied to 910104 before it becomes the CPI's HC011 weight. The provenance registry records cpi_adjustment_status as INFERRED for exactly this reason and this task produced no evidence that changes it. The amount introduced here is the CE addendum, not a reconstruction of a CPI weight, and the artifacts say so.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "EFFECTIVE",
+      "review_status": "ACCEPTED",
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1",
+      "transition": "NEW. Milestone 2 made four rules conditional on a Track-A rental-equivalence rule that the v0.1 registry does not contain. This is that rule for the primary residence.",
+      "warnings": [
+        "The introduced amount is the CE rental-equivalence addendum. It is not a CPI expenditure weight and no claim is made that BLS uses it unmodified."
+      ]
+    },
+    "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1": {
+      "blocker": "The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible.",
+      "evidence_strength": "MODERATE",
+      "evidence_strength_changed_in_this_task": false,
+      "is_applicable": false,
+      "materiality_all_cu_millions": 102234.815688,
+      "questions": [
+        {
+          "answer": "YES",
+          "finding": "The pinned concordance maps 910105, 910106 and 910107 to ELI HC090, and Casey 2010 Appendix B note 2 confirms that the CPI prices secondary homes and timeshares by rental equivalence. HC090 is an unsampled residual, which is a weaker destination than the primary residence's HC011.",
+          "question": "Is its BLS scope rationale still supported?"
+        },
+        {
+          "answer": "NO",
+          "finding": "Two of the three components are admissible (910105, 910107) and 910106 is not. A concept made of three parts cannot be stated from two of them without assuming the third, and the two available parts are not offered as if they were the whole.",
+          "question": "Is the required estimate now available?"
+        },
+        {
+          "answer": "PARTLY",
+          "finding": "910105 is MODERATE quality and 910107 is LOW at a 31.79 percent All-CU relative standard error, both carried explicitly. 910107's published counterpart 910103 misses by 11.05 percent in Q3, which is recorded rather than dropped. For 910106 there is no defensible uncertainty statement at all, which is the point.",
+          "question": "Is uncertainty adequately represented?"
+        },
+        {
+          "answer": "NOT REACHED",
+          "finding": "The question does not arise while the rule is PENDING. The double-counting matrix nevertheless records the secondary residence row, because the outlays removed by the two accepted exclusion rules include secondary-residence members whose replacement is this pending concept.",
+          "question": "Does acceptance avoid double counting?"
+        },
+        {
+          "answer": "NOT YET",
+          "finding": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1 is a REPLACE rule whose added term is precisely this amount, so it cannot take effect while this is PENDING. Separately, the secondary-residence members of the mortgage-interest and property-tax rules leave the basis without this concept entering. That residual is quantified in the accounting summary and is not netted against anything.",
+          "question": "Does the rule interact correctly with the others?"
+        },
+        {
+          "answer": "YES",
+          "finding": "The unpublished BLS consumption factor, and the question of whether a vacation home held available for rent is owner-occupied shelter at all. Neither was resolved here and neither was guessed at.",
+          "question": "Does any unresolved conceptual issue remain?"
+        }
+      ],
+      "resolution_state": "PENDING",
+      "review_status": "PROPOSED",
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1",
+      "transition": "NEW. The secondary-residence half of the Track-A rental-equivalence dependency Milestone 2 named. It is written down so that the rules depending on it have something real to depend on, and it is written down PENDING because it is.",
+      "warnings": []
+    }
+  },
+  "what_acceptance_does_and_does_not_mean": "An ACCEPTED rule moves expenditure between the accounting buckets of a research substrate. It does not compute an index, normalise a weight or touch the Operational Baseline, and it is reversible by a later versioned registry. That is not a reason to accept lightly, and the two rules held below are held for reasons that an amount becoming computable does not address."
+}

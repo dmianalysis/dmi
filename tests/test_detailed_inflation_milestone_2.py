@@ -1414,6 +1414,7 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
         allowed = {
             Path("dmi_research/detailed_inflation/provenance.py"),
             Path("registry/research/ucc_provenance_classes_v0_1.json"),
+            Path("registry/research/ucc_provenance_classes_v0_3.json"),
             Path("tests/test_detailed_inflation_milestone_2.py"),
             Path("docs/research/DETAILED_INFLATION_MILESTONE_2.md"),
         }
@@ -1452,9 +1453,22 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("CPI_ADJUSTED_PUMD_UCC", module)
         self.assertIn("An earlier version of this module called", module)
-        history = self.registry["scope_of_the_classification"]["naming_history"]
-        self.assertIn("CPI_ADJUSTED_PUMD_UCC", history)
-        self.assertIn("renames it CONCORDANCE_ONLY_UCC", history)
+        for path in (
+            REPO_ROOT / "registry/research/ucc_provenance_classes_v0_1.json",
+            REPO_ROOT / "registry/research/ucc_provenance_classes_v0_3.json",
+        ):
+            with self.subTest(registry=path.name):
+                registry = json.loads(path.read_text(encoding="utf-8"))
+                history = registry["scope_of_the_classification"]["naming_history"]
+                self.assertIn("CPI_ADJUSTED_PUMD_UCC", history)
+                self.assertIn("renames it CONCORDANCE_ONLY_UCC", history)
+                self.assertEqual(
+                    path.read_text(encoding="utf-8").count("CPI_ADJUSTED_PUMD"),
+                    1,
+                    "the whitelist covers migration prose only, so a successor "
+                    "registry may carry the old name exactly once and only in "
+                    "the sentence that withdraws it",
+                )
 
 
 class TestConcordanceSourceColumn(unittest.TestCase):

@@ -1,0 +1,158 @@
+{
+  "artifact_id": "SHELTER_ACCOUNTING_SUMMARY_2024",
+  "by_population": {
+    "ALL_CU": {
+      "accepted_out_of_scope": 949487.0,
+      "accepted_transformed": 120803.0,
+      "delta_scope": 1287991.8129939996,
+      "delta_shelter": 1601697.812994,
+      "e_cpi": 8124511.812994,
+      "e_source": 6836520.0,
+      "owner_outlays_removed": 892133.0,
+      "pending_proposed": 245401.0,
+      "rental_equivalence_introduced": 2493830.812994,
+      "rental_equivalence_withheld": 665.471372,
+      "retained": 5509878.0,
+      "secondary_residence_outlays_removed_without_replacement": 25547.0,
+      "unresolved_open": 10951.0
+    },
+    "Q1": {
+      "accepted_out_of_scope": 52096.0,
+      "accepted_transformed": 7535.0,
+      "delta_scope": 165489.44210799993,
+      "delta_shelter": 188953.442108,
+      "e_cpi": 854361.4421079999,
+      "e_source": 688872.0,
+      "owner_outlays_removed": 49260.0,
+      "pending_proposed": 19806.0,
+      "rental_equivalence_introduced": 238213.442108,
+      "rental_equivalence_withheld": null,
+      "retained": 608613.0,
+      "secondary_residence_outlays_removed_without_replacement": 1122.0,
+      "unresolved_open": 822.0
+    },
+    "Q2": {
+      "accepted_out_of_scope": 90773.0,
+      "accepted_transformed": 11223.0,
+      "delta_scope": 222936.88173500006,
+      "delta_shelter": 264518.881735,
+      "e_cpi": 1182887.881735,
+      "e_source": 959951.0,
+      "owner_outlays_removed": 84170.0,
+      "pending_proposed": 33787.0,
+      "rental_equivalence_introduced": 348688.881735,
+      "rental_equivalence_withheld": 9.807815,
+      "retained": 822976.0,
+      "secondary_residence_outlays_removed_without_replacement": 2325.0,
+      "unresolved_open": 1192.0
+    },
+    "Q3": {
+      "accepted_out_of_scope": 142855.0,
+      "accepted_transformed": 18881.0,
+      "delta_scope": 214916.01375599997,
+      "delta_shelter": 277025.013756,
+      "e_cpi": 1438790.013756,
+      "e_source": 1223874.0,
+      "owner_outlays_removed": 132582.0,
+      "pending_proposed": 50017.0,
+      "rental_equivalence_introduced": 409607.013756,
+      "rental_equivalence_withheld": 99.075314,
+      "retained": 1010302.0,
+      "secondary_residence_outlays_removed_without_replacement": 2599.0,
+      "unresolved_open": 1819.0
+    },
+    "Q4": {
+      "accepted_out_of_scope": 228848.0,
+      "accepted_transformed": 29686.0,
+      "delta_scope": 284852.94707800006,
+      "delta_shelter": 354182.94707800006,
+      "e_cpi": 1857768.947078,
+      "e_source": 1572916.0,
+      "owner_outlays_removed": 211580.0,
+      "pending_proposed": 49295.0,
+      "rental_equivalence_introduced": 565762.947078,
+      "rental_equivalence_withheld": 120.808528,
+      "retained": 1262320.0,
+      "secondary_residence_outlays_removed_without_replacement": 4938.0,
+      "unresolved_open": 2767.0
+    },
+    "Q5": {
+      "accepted_out_of_scope": 434914.0,
+      "accepted_transformed": 53478.0,
+      "delta_scope": 399794.528318,
+      "delta_shelter": 517018.528318,
+      "e_cpi": 2790707.528318,
+      "e_source": 2390913.0,
+      "owner_outlays_removed": 414540.0,
+      "pending_proposed": 92499.0,
+      "rental_equivalence_introduced": 931558.528318,
+      "rental_equivalence_withheld": 435.779715,
+      "retained": 1805671.0,
+      "secondary_residence_outlays_removed_without_replacement": 14563.0,
+      "unresolved_open": 4351.0
+    }
+  },
+  "disposition_semantics": {
+    "INTRODUCED": "An imputed amount enters this track that has no counterpart in the CE outlay basis.",
+    "PENDING_NEITHER_APPLIED_NOR_REVERSED": "The governing rule is PROPOSED. Milestone 2 established that a PROPOSED rule has no effect, so this amount is neither retained in the track nor removed from it. It is reported in its own bucket.",
+    "REMOVED_FOR_REPLACEMENT": "The outlay leaves this track because a different concept prices the same thing. The replacement is introduced separately and is not assumed to equal what it replaced.",
+    "REMOVED_OUT_OF_SCOPE": "The outlay leaves this track because the CPI does not price it. Nothing is added in its place.",
+    "RETAINED": "The outlay stays in this track at its published CE value.",
+    "UNRESOLVED": "No disposition has been proposed for this amount at all.",
+    "WITHHELD": "An amount that would belong to this track is not admitted, because the estimate for it failed adjudication. It is not replaced by zero: the track is incomplete by exactly this item and says so."
+  },
+  "double_counting_audit_categories": [
+    "primary_residence_owner_shelter",
+    "mortgage_interest_and_home_equity_interest",
+    "residential_property_tax",
+    "owner_repairs_improvements_structure_investment",
+    "homeowners_insurance_primary_residence",
+    "secondary_and_vacation_residence_costs",
+    "renter_rent_and_renter_related_costs",
+    "utilities",
+    "rental_equivalence_addenda_910104_910107"
+  ],
+  "identity_cpi": "e_cpi = retained + accepted_transformed + rental_equivalence_introduced",
+  "identity_delta": "delta_scope = e_cpi - e_source = rental_equivalence_introduced - accepted_out_of_scope - pending_proposed - unresolved_open. The last two terms are undecided, not out of scope, and are shown separately for that reason.",
+  "identity_source": "e_source = retained + accepted_transformed + accepted_out_of_scope + pending_proposed + unresolved_open",
+  "no_balancing": "Replacing an owner outlay concept with an imputed rental flow changes the size of the basis. delta_scope and delta_shelter are reported as they fall out. No rescaling, renormalisation, residual allocation or balancing factor was applied anywhere, and there is no requirement that either be zero. The only sums checked are that each total equals its own parts.",
+  "open_items": [
+    {
+      "all_cu_millions": 232781.0,
+      "category": "owner_repairs_improvements_structure_investment",
+      "finding": "POTENTIAL DUPLICATION, UNRESOLVED AND VISIBLE. The rule is PROPOSED, so these outlays are neither retained in Track A nor removed from it; they sit in the pending bucket. That is why the duplication does not occur, and it is also why the category is not closed. If the rule were accepted the duplication would be removed; if it were rejected the outlays would return to Track A alongside rental equivalence and the duplication would be real."
+    },
+    {
+      "all_cu_millions": 100026.0,
+      "category": "homeowners_insurance_primary_residence",
+      "finding": "RETAINED IN FULL, AND THAT IS PROBABLY TOO MUCH. Casey 2010 Appendix B note 3 states that homeowners insurance is reduced 'to reflect only the renter's part of the owner's expenditure. The factor applied is 43%'. Track A retains 100 percent of it because no rule claims it and this task's remit does not extend to writing one. The overstatement is bounded by 57 percent of the retained amount. It is recorded here as an open item; no factor has been applied, because applying an unadjudicated factor to obtain a tidier number is the thing this workstream exists to avoid."
+    },
+    {
+      "all_cu_millions": 12620.0,
+      "category": "secondary_and_vacation_residence_costs",
+      "finding": "NO DUPLICATION, BUT AN INCOMPLETE REPLACEMENT ELSEWHERE. This rule is PROPOSED so its fifteen members stay in the pending bucket. Separately, the owned-vacation members of the accepted mortgage-interest and property-tax rules do leave the basis while the secondary-residence rental equivalence has not entered. That is an understatement of Track-A secondary shelter, quantified in the accounting summary as secondary_residence_outlays_removed_without_replacement. It is not netted, offset or corrected."
+    }
+  ],
+  "phase": "D2",
+  "rules_effective_in_this_accounting": [
+    "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+    "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1"
+  ],
+  "rules_held": [
+    "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+    "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1"
+  ],
+  "rules_promoted_from_milestone_2_pending": [
+    "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+    "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1"
+  ],
+  "rules_written_new_in_this_task": [
+    "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1"
+  ],
+  "status": "RESEARCH_ONLY",
+  "track_b_is_not_the_household_cost_index": "Track B retains the consumer unit's recorded cash and payment outlays for owner shelter and introduces no rental equivalence. That is a payments concept, and it is the only claim made for it. It is not the BLS Household Cost Index. The HCI is a specific BLS construction with its own treatment of mortgage principal, insurance and durables, none of which is implemented here, and no attempt has been made to reproduce its published values. Calling this an HCI would be naming a thing that does not exist in this repository.",
+  "units": "millions of 2024 dollars, published CE aggregate basis"
+}

@@ -14,6 +14,19 @@ Their dispositions are recorded but **not in force**, and the expenditure is
 held in a separate `pending_proposed` bucket rather than counted as excluded or
 transformed. See §2 and §8 below.
 
+> **Forward reference (added after this milestone closed; the text above is
+> left as written).** The paragraph above records the state of the four rules
+> at the close of Milestone 2, and that record is not revised here. A later
+> task — [Shelter 2024](DETAILED_INFLATION_SHELTER_2024.md) — reviewed all four
+> individually and moved two of them: the mortgage-interest and property-tax
+> rules were `ACCEPTED`, and the owner-structure-investment and
+> secondary-residence rules were held with their blockers restated. Of the
+> $1,137,534M, $892,133M is now dispositioned and $245,401M remains
+> `pending_proposed`. Those changes live in
+> `registry/research/ce_cpi_scope_rules_v0_2.json`, a successor registry;
+> `ce_cpi_scope_rules_v0_1.json` and the accounting described below are
+> unchanged.
+
 ---
 
 ## 1. What this milestone was for
