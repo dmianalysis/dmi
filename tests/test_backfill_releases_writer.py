@@ -62,11 +62,17 @@ RELEASES_SCHEMA = REPO_ROOT / "schemas" / "releases.schema.json"
 GROUPS = ("Q1", "Q2", "Q3", "Q4", "Q5")
 
 
-def _raw_release(period: str, *, modern: bool) -> dict:
+def _raw_release(period: str, *, modern: bool, spec: str = "baseline") -> dict:
     """A schema-shaped raw release file.
 
     ``modern`` controls the presence of the v0.1.12 parameter block,
     which is the evidence ``derive_methodology_version`` reads.
+
+    ``spec`` controls the declared specification identity. It must be
+    real: §5's evidence writer refuses to advertise an artifact whose
+    internal ``specification`` does not match the slot it is being
+    written into, so a Slack-Plus fixture that declares itself Baseline
+    is correctly dropped from ``spec_urls``.
     """
     # Descending DMI so Q1 is most pressured and Q5 least — a realistic
     # distributional shape, and it makes tilt/spread non-zero.
@@ -81,17 +87,25 @@ def _raw_release(period: str, *, modern: bool) -> dict:
     parameters = {"alpha": 0.5, "scale_factor": 2.0, "weights_year": 2023}
     if modern:
         parameters.update({
-            "spec_id": "baseline",
-            "slack_measure": "U3",
-            "inflation_measure": "headline_cpi",
+            "spec_id": spec,
+            "slack_measure": "u6" if spec == "slack_plus" else "u3",
+            "inflation_measure": "HEADLINE_CPI",
         })
     dmis = [g["dmi"] for g in by_group]
     return {
         "reference_period": period,
-        "specification": "baseline" if modern else None,
+        "specification": spec if modern else None,
         "parameters": parameters,
         "dmi_by_group": by_group,
-        "inflation_contributions": {},
+        # Schema requires a non-empty contributions array. The evidence
+        # writer validates fixtures against the real schema, so a
+        # placeholder that does not validate would be silently dropped
+        # from spec_urls rather than failing loudly.
+        "inflation_contributions": [
+            {"group_id": gid, "category_id": "CPI_HOUSING",
+             "contribution": 1.0}
+            for gid in GROUPS
+        ],
         "summary_metrics": {
             "dmi_median": sorted(dmis)[len(dmis) // 2],
             "dmi_stress": max(dmis),
@@ -179,7 +193,10 @@ class BackfillWriterFixture(unittest.TestCase):
                 (cls.outputs / f"dmi-{period}-baseline.{ext}").write_text("x")
                 (cls.outputs / f"dmi-{period}-slack_plus.{ext}").write_text("x")
             (cls.outputs / f"dmi_release_{period}_slack_plus.json").write_text(
-                json.dumps(_raw_release(period, modern=True), indent=2)
+                json.dumps(
+                    _raw_release(period, modern=True, spec="slack_plus"),
+                    indent=2,
+                )
             )
 
         # Run the REAL writer from inside the throwaway tree. The writer

@@ -15,19 +15,19 @@ from datetime import datetime
 from pathlib import Path
 
 from dmi_pipeline.agents.qa_validator import generate_qa_report, print_qa_summary
+# Round-4 §1: this module imports only what COMPUTATION needs. The
+# publication writers (export_csv_parquet, update_releases_json,
+# update_latest_json, update_health_json, update_timeseries_json) are
+# deliberately absent — importing them here is what made it easy to call
+# them mid-computation. They belong to `scripts.finalize_release`.
 from scripts.compute_dmi import (
     build_release_summary,
     compute_dmi_for_period,
-    export_csv_parquet,
     generate_release_note_html,
     load_cpi_data,
     load_slack_data,
     load_weights,
     save_dmi_output,
-    update_health_json,
-    update_latest_json,
-    update_releases_json,
-    update_timeseries_json,
 )
 
 MONTH_NAMES = [
@@ -348,47 +348,41 @@ def main() -> int:
         weights_data=weights_df,
         slack_data=slack_df,
         output_path=Path(f"data/outputs/qa_report_{reference_period}_{spec}.json"),
+        # Round-4 §1: bind the report to the exact artifact bytes and
+        # specification, so finalization can verify it describes the
+        # release being published rather than trusting the filename.
+        raw_artifact_path=output_path,
+        specification=spec,
     )
     print_qa_summary(qa_report)
 
+    # Round-4 §1: computation STOPS here. It produces exactly two
+    # artifacts — the raw release JSON and its QA report — and mutates
+    # nothing public.
+    #
+    # Previously this function went on to write the CSV/Parquet exports
+    # and, for `--spec baseline`, releases.json, latest.json,
+    # web/health.json and the public timeseries. That published a release
+    # before anyone had looked at its QA outcome, and it published a
+    # Baseline manifest before Slack-Plus had even been computed, so the
+    # public tree passed through a state advertising a release that did
+    # not exist yet.
+    #
+    # All of that now belongs to `scripts.finalize_release`, which runs
+    # the QA-outcome and cross-specification gates first and publishes
+    # the whole set as one transaction:
+    #
+    #     python -m scripts.compute_dmi_release <period> --spec baseline ...
+    #     python -m scripts.compute_dmi_release <period> --spec slack_plus ...
+    #     python -m scripts.finalize_release <period>
     print("\n" + "=" * 80)
-    print("Creating CSV and Parquet files...")
+    print("Computation complete (no public artifact was modified).")
     print("=" * 80)
-    export_csv_parquet(results, reference_period, spec)
+    print(f"  raw release: {output_path}")
+    print(f"  QA report:   data/outputs/qa_report_{reference_period}_{spec}.json")
+    print("  Run `python -m scripts.finalize_release "
+          f"{reference_period}` after BOTH specifications are computed.")
 
-    # Baseline owns manifests + health + timeseries. The release note is
-    # generated separately after all three specs and specifications.json land.
-    if spec == "baseline":
-        year, month = reference_period.split('-')
-        current_release = {
-            'release_id': reference_period,
-            'data_through_label': f"{MONTH_NAMES[int(month) - 1]} {year}",
-            'metrics': build_metrics_payload(results),
-        }
-        prior_release = load_prior_release(reference_period)
-        summary_facts, summary = build_release_summary(current_release, prior_release)
-    
-        print("\n" + "=" * 80)
-        print("Updating release manifests...")
-        print("=" * 80)
-        metrics_payload = build_metrics_payload(results)
-        update_releases_json(
-            reference_period=reference_period,
-            metrics=metrics_payload,
-            summary=summary,
-            summary_facts=summary_facts,
-        )
-        update_latest_json(
-            reference_period=reference_period,
-            metrics=metrics_payload,
-            summary=summary,
-            summary_facts=summary_facts,
-        )
-        update_health_json(reference_period)
-        update_timeseries_json(reference_period)
-    else:
-        print(f"Saved companion specification: {spec} -> {output_path}")
-        
     print("\n" + "=" * 80)
     print("DMI RELEASE SUMMARY")
     print("=" * 80)

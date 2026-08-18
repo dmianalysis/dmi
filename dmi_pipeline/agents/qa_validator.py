@@ -4,6 +4,7 @@ QA Validator & Report Generator - Quality assurance gates for DMI releases.
 Implements hard checks, soft checks, and policy gates per v0.1.8 spec.
 """
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -210,12 +211,20 @@ def generate_qa_report(
     cpi_data: pd.DataFrame,
     weights_data: pd.DataFrame,
     slack_data: pd.DataFrame,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
+    raw_artifact_path: Optional[Path] = None,
+    specification: Optional[str] = None,
 ) -> Dict:
     """
     Generate comprehensive QA report for DMI release.
-    
+
     Returns QA report dict conforming to qa_report.schema.json.
+
+    Round-4 §1: when ``raw_artifact_path`` and ``specification`` are
+    supplied, the report carries a ``subject`` block binding it to the
+    exact artifact bytes and specification it was computed from. Release
+    finalization requires that binding, because a filename alone is not
+    evidence that a report describes the artifact it sits next to.
     """
     # Run checks
     hard_checks = run_hard_checks(dmi_output, cpi_data, weights_data, slack_data)
@@ -251,7 +260,25 @@ def generate_qa_report(
             "policy_fail_count": policy_fail_count
         }
     }
-    
+
+    # Round-4 §1: bind the report to the artifact it actually describes.
+    # Hashing the on-disk bytes (rather than re-serialising `dmi_output`)
+    # means the binding breaks if the raw file is edited after the checks
+    # ran, which is precisely the substitution we need to detect.
+    if raw_artifact_path is not None and specification is not None:
+        raw_path = Path(raw_artifact_path)
+        digest = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+        try:
+            recorded_path = str(raw_path.resolve().relative_to(Path.cwd().resolve()))
+        except ValueError:
+            recorded_path = str(raw_path)
+        report["subject"] = {
+            "specification": specification,
+            "reference_period": dmi_output["reference_period"],
+            "raw_artifact": recorded_path,
+            "raw_sha256": digest,
+        }
+
     # Save if path provided
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)

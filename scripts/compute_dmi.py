@@ -11,6 +11,12 @@ Combines:
 import sys
 import json
 from pathlib import Path
+
+from scripts.release_evidence import (  # §5: single authority
+    OPERATIONAL_SPECS,
+    build_spec_urls,
+    release_note_url,
+)
 from datetime import datetime
 from typing import Optional
 
@@ -654,16 +660,22 @@ def update_releases_json(
     # summary is spec-agnostic) and lives at the top of the release entry
     # per releases.schema.json 3.0.0. It must not be nested inside any
     # spec_urls block.
-    spec_urls = {
-        "baseline": {
-            "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-        },
-        "slack_plus": {
-            "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-    }
+    # §5: evidence-based, not literal. The previous version emitted BOTH
+    # specifications unconditionally as f-strings, so a manifest could
+    # advertise a Slack-Plus CSV that was never produced — a URL that
+    # 404s on the live site. `build_spec_urls` emits a specification only
+    # when its raw artifact exists, parses, validates against
+    # dmi_output.schema.json, and declares the matching reference period
+    # and specification identity.
+    #
+    # Both operational specs are REQUIRED here: these writers publish the
+    # current release, and a current release missing either spec must
+    # fail finalization rather than create partial public state.
+    spec_urls = build_spec_urls(
+        reference_period,
+        Path("data/outputs"),
+        require=OPERATIONAL_SPECS,
+    )
 
     if dashboard_url:
         for spec_key in spec_urls:
@@ -681,7 +693,7 @@ def update_releases_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
-        "release_note": f"/data/outputs/releases/{reference_period}.html",
+        "release_note": release_note_url(reference_period),
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],
@@ -740,16 +752,22 @@ def update_latest_json(
 
     # `release_note` is shared across specifications and lives at the top
     # of the release entry per releases.schema.json 3.0.0.
-    spec_urls = {
-        "baseline": {
-            "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-        },
-        "slack_plus": {
-            "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-    }
+    # §5: evidence-based, not literal. The previous version emitted BOTH
+    # specifications unconditionally as f-strings, so a manifest could
+    # advertise a Slack-Plus CSV that was never produced — a URL that
+    # 404s on the live site. `build_spec_urls` emits a specification only
+    # when its raw artifact exists, parses, validates against
+    # dmi_output.schema.json, and declares the matching reference period
+    # and specification identity.
+    #
+    # Both operational specs are REQUIRED here: these writers publish the
+    # current release, and a current release missing either spec must
+    # fail finalization rather than create partial public state.
+    spec_urls = build_spec_urls(
+        reference_period,
+        Path("data/outputs"),
+        require=OPERATIONAL_SPECS,
+    )
 
     if dashboard_url:
         for spec_key in spec_urls:
@@ -766,7 +784,7 @@ def update_latest_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
-        "release_note": f"/data/outputs/releases/{reference_period}.html",
+        "release_note": release_note_url(reference_period),
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],

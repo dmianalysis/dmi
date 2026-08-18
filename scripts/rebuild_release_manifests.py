@@ -34,6 +34,11 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+from scripts.release_evidence import (  # §5: single authority
+    build_spec_urls,
+    release_note_url,
+)
 from typing import Iterable, Optional
 
 # Reuse the same summary helper used by the live pipeline so wording does not
@@ -97,63 +102,14 @@ def derive_metrics(raw_release: dict) -> dict:
     }
 
 
-def _resolve_baseline_urls(release_id: str, output_dir: Path) -> Optional[dict]:
-    """Return {csv, parquet} URLs for the baseline spec, or None if no
-    baseline artifact exists on disk under either naming convention.
-
-    Modern periods (2026-03+) publish `dmi-YYYY-MM-baseline.{csv,parquet}`.
-    Historical periods (2025-12..2026-02) predate the -baseline suffix and
-    publish `dmi-YYYY-MM.{csv,parquet}` instead. §3 (historical URL
-    repair) requires the advertised URL to name the file that actually
-    exists — never a hypothetical suffixed rename.
-    """
-    suffixed_csv = output_dir / f"dmi-{release_id}-baseline.csv"
-    if suffixed_csv.exists():
-        return {
-            "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
-            "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
-        }
-    unsuffixed_csv = output_dir / f"dmi-{release_id}.csv"
-    if unsuffixed_csv.exists():
-        return {
-            "csv": f"/data/outputs/dmi-{release_id}.csv",
-            "parquet": f"/data/outputs/dmi-{release_id}.parquet",
-        }
-    return None
-
-
-def build_spec_urls(release_id: str, output_dir: Path) -> dict:
-    """Build the spec_urls block for a release.
-
-    Every URL emitted here must resolve to a file that actually exists in
-    `output_dir`. Historical baseline artifacts use the pre-suffix
-    `dmi-YYYY-MM.{csv,parquet}` naming; modern (2026-03+) baseline
-    artifacts use the `-baseline` suffix. Slack-Plus artifacts are
-    included only when their CSV is present. Under schema 3.0.0 no
-    `release_note` key is nested here.
-    """
-    spec_urls: dict = {}
-    baseline = _resolve_baseline_urls(release_id, output_dir)
-    if baseline is not None:
-        spec_urls["baseline"] = baseline
-    slack_plus_csv = output_dir / f"dmi-{release_id}-slack_plus.csv"
-    if slack_plus_csv.exists():
-        spec_urls["slack_plus"] = {
-            "csv": f"/data/outputs/dmi-{release_id}-slack_plus.csv",
-            "parquet": f"/data/outputs/dmi-{release_id}-slack_plus.parquet",
-        }
-    return spec_urls
-
-
-def release_note_url(release_id: str) -> str:
-    """Return the canonical release-note URL for a release_id.
-
-    releases.schema.json 3.0.0 requires `release_note` as a top-level
-    field on every release entry. §3 (historical URL repair) is
-    responsible for guaranteeing the returned URL resolves to an
-    existing file on disk via a regression test.
-    """
-    return f"/data/outputs/releases/{release_id}.html"
+# §5: URL construction is NOT implemented here. It lives in
+# `scripts/release_evidence.py`, the single authoritative
+# evidence-based writer, and is re-exported below so existing callers
+# keep working. Two modules independently deciding what a manifest
+# advertises is exactly how phantom URLs and existence-only checks
+# arose; there is now one implementation and one set of rules.
+#
+# `build_spec_urls` and `release_note_url` are imported at module top.
 
 
 @dataclass
