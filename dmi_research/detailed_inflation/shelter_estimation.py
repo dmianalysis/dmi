@@ -651,6 +651,18 @@ def assert_estimator_untouched(spec: Mapping[str, object]) -> None:
     window in which such an edit would otherwise be invisible.
     """
     pinned = dict(spec["estimator"]["pinned_module_digests"])  # type: ignore[index]
+
+    # Checking only the pins the spec happens to carry would let a pin be
+    # removed instead of satisfied, which is the same evasion with an extra
+    # step. The set has to match, not merely agree where it overlaps.
+    missing = sorted(set(PINNED_MODULES) - set(pinned))
+    if missing:
+        raise ShelterEstimationError(
+            "the estimation plan no longer pins every module that does the "
+            "arithmetic, so a change to one of them would go unchecked: "
+            + ", ".join(missing)
+        )
+
     measured = module_digests(tuple(pinned))
     drifted = sorted(name for name in pinned if pinned[name] != measured.get(name))
     if drifted:
@@ -683,6 +695,34 @@ class ShelterCell:
     replicate_min: float | None
     replicate_max: float | None
     replicates_at_zero: int | None
+
+    def __post_init__(self) -> None:
+        """A cell with no records may not carry an amount of any kind.
+
+        The frozen plan forbade substituting zero for a missing estimate. The
+        prohibition is worth little as prose, because the way it would be
+        broken is not by someone writing ``0.0`` deliberately but by an
+        arithmetic path that happens to produce it. So the type refuses.
+        """
+        if self.cell_status != NO_RECORDS:
+            return
+        amounts = {
+            "annual_mean_per_consumer_unit": self.annual_mean_per_consumer_unit,
+            "annual_aggregate_dollars": self.annual_aggregate_dollars,
+            "standard_error": self.standard_error,
+            "relative_standard_error_pct": self.relative_standard_error_pct,
+            "interval_low": self.interval_low,
+            "interval_high": self.interval_high,
+            "replicate_min": self.replicate_min,
+            "replicate_max": self.replicate_max,
+        }
+        stated = sorted(name for name, value in amounts.items() if value is not None)
+        if stated:
+            raise ValueError(
+                f"{self.ucc}/{self.population} has no records, so it has no "
+                "estimate. These fields must be None rather than zero: "
+                + ", ".join(stated)
+            )
 
     @property
     def annual_aggregate_millions(self) -> float | None:

@@ -1,0 +1,300 @@
+{
+  "adjudication": {
+    "910104": {
+      "basis": "Both structural conditions hold. The aggregation procedure reproduces the published LABSTAT mean for 910050 and the records of 910104 stand in a measured exact relation to it, so the demonstration reaches these records. The variance estimator is non-degenerate where it is relied on. Precision is reported separately and did not enter this decision.",
+      "counterpart_all_cu_ratio": 0.998982780682323,
+      "counterpart_consistent": true,
+      "pair_relation": "TWELVE_TIMES",
+      "per_population_quality": {
+        "ALL_CU": "HIGH",
+        "Q1": "HIGH",
+        "Q2": "HIGH",
+        "Q3": "HIGH",
+        "Q4": "HIGH",
+        "Q5": "HIGH"
+      },
+      "pumd_estimate_quality": "HIGH",
+      "pumd_membership": "VERIFIED",
+      "pumd_quantitative_usability": "BENCHMARKED",
+      "tests": [
+        {
+          "finding": "COST(910104) is exactly twelve times COST(910050) on 32284 of 36740 shared keys (87.9 percent).",
+          "name": "U1_procedure_demonstrated_on_these_records",
+          "passed": true
+        },
+        {
+          "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+          "name": "U2_variance_estimator_non_degenerate",
+          "passed": true
+        }
+      ],
+      "track_a_admissible": true,
+      "ucc": "910104",
+      "warnings": []
+    },
+    "910105": {
+      "basis": "Both structural conditions hold. The aggregation procedure reproduces the published LABSTAT mean for 910101 and the records of 910105 stand in a measured exact relation to it, so the demonstration reaches these records. The variance estimator is non-degenerate where it is relied on. Precision is reported separately and did not enter this decision.",
+      "counterpart_all_cu_ratio": 1.0059925489125372,
+      "counterpart_consistent": true,
+      "pair_relation": "TWELVE_TIMES",
+      "per_population_quality": {
+        "ALL_CU": "HIGH",
+        "Q1": "MODERATE",
+        "Q2": "MODERATE",
+        "Q3": "MODERATE",
+        "Q4": "MODERATE",
+        "Q5": "MODERATE"
+      },
+      "pumd_estimate_quality": "MODERATE",
+      "pumd_membership": "VERIFIED",
+      "pumd_quantitative_usability": "BENCHMARKED",
+      "tests": [
+        {
+          "finding": "COST(910105) is exactly twelve times COST(910101) on 1134 of 1425 shared keys (79.6 percent).",
+          "name": "U1_procedure_demonstrated_on_these_records",
+          "passed": true
+        },
+        {
+          "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+          "name": "U2_variance_estimator_non_degenerate",
+          "passed": true
+        }
+      ],
+      "track_a_admissible": true,
+      "ucc": "910105",
+      "warnings": []
+    },
+    "910106": {
+      "basis": "Withheld on U1_procedure_demonstrated_on_these_records, U2_variance_estimator_non_degenerate. This is a statement about the evidence and the procedure, not about the estimate being noisy; a noisy estimate is not evidence against an estimator.",
+      "counterpart_all_cu_ratio": 1.019325494821692,
+      "counterpart_consistent": true,
+      "pair_relation": "NO_CLEAN_RELATION",
+      "per_population_quality": {
+        "ALL_CU": "LOW",
+        "Q1": "UNUSABLE",
+        "Q2": "UNUSABLE",
+        "Q3": "UNUSABLE",
+        "Q4": "UNUSABLE",
+        "Q5": "UNUSABLE"
+      },
+      "pumd_estimate_quality": "UNUSABLE",
+      "pumd_membership": "VERIFIED",
+      "pumd_quantitative_usability": "NOT_ESTABLISHED",
+      "tests": [
+        {
+          "finding": "No exact relation holds on a majority of shared keys. Twelve times on 0, a whole number of weeks on 9, of 40 comparable keys. 167 of the published code's keys have no counterpart in the concordance code.",
+          "name": "U1_procedure_demonstrated_on_these_records",
+          "passed": false
+        },
+        {
+          "finding": "All Consumer Units sound; 0 of 5 quintiles sound. Degenerate cells: Q1, Q2, Q3, Q4, Q5.",
+          "name": "U2_variance_estimator_non_degenerate",
+          "passed": false
+        }
+      ],
+      "track_a_admissible": false,
+      "ucc": "910106",
+      "warnings": []
+    },
+    "910107": {
+      "basis": "Both structural conditions hold. The aggregation procedure reproduces the published LABSTAT mean for 910103 and the records of 910107 stand in a measured exact relation to it, so the demonstration reaches these records. The variance estimator is non-degenerate where it is relied on. Precision is reported separately and did not enter this decision.",
+      "counterpart_all_cu_ratio": 0.992844173044926,
+      "counterpart_consistent": false,
+      "pair_relation": "WEEKS_OWNED_SHARE",
+      "per_population_quality": {
+        "ALL_CU": "LOW",
+        "Q1": "LOW",
+        "Q2": "LOW",
+        "Q3": "LOW",
+        "Q4": "LOW",
+        "Q5": "LOW"
+      },
+      "pumd_estimate_quality": "LOW",
+      "pumd_membership": "VERIFIED",
+      "pumd_quantitative_usability": "BENCHMARKED",
+      "tests": [
+        {
+          "finding": "52 * COST(910107) / COST(910103) is a whole number on 517 of 590 shared keys (87.6 percent), distributed as {1: 304, 2: 140, 3: 20, 4: 24, 6: 13, 7: 10, 12: 6}.",
+          "name": "U1_procedure_demonstrated_on_these_records",
+          "passed": true
+        },
+        {
+          "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+          "name": "U2_variance_estimator_non_degenerate",
+          "passed": true
+        }
+      ],
+      "track_a_admissible": true,
+      "ucc": "910107",
+      "warnings": [
+        "The counterpart 910103 did not satisfy the pre-declared ratio-consistency description (max deviation 11.05 percent against a 10 percent tolerance). The frozen plan declared that description to gate nothing, so it is not used here to fail this UCC, and it is not quietly dropped either: it is recorded as a negative signal on the counterpart.",
+        "Every reported cell has a relative standard error of at least 25 percent. The estimates are carried with their intervals and are not to be quoted as point figures.",
+        "910103 and 910107 are not the same estimand. 910103 is the rental value of the whole property; 910107 is the share of it this consumer unit owns. Neither may be substituted for the other, in either direction, and the published counterpart is not a plausibility check on the concordance code's level."
+      ]
+    }
+  },
+  "counterpart_ratio_consistency": {
+    "910050": {
+      "all_cu_ratio": 0.998982780682323,
+      "consistent": true,
+      "max_deviation_pct": 1.4148024196868334,
+      "max_ratio": 1.0068221453449926,
+      "min_ratio": 0.9848491481289747,
+      "published_periodicity": "MONTHLY"
+    },
+    "910101": {
+      "all_cu_ratio": 1.0059925489125372,
+      "consistent": true,
+      "max_deviation_pct": 3.380100176789343,
+      "max_ratio": 1.0173283328905214,
+      "min_ratio": 0.9719889929882569,
+      "published_periodicity": "MONTHLY"
+    },
+    "910102": {
+      "all_cu_ratio": 1.019325494821692,
+      "consistent": true,
+      "max_deviation_pct": 9.52134287007469,
+      "max_ratio": 1.0311329472418735,
+      "min_ratio": 0.9222720194976334,
+      "published_periodicity": "MONTHLY"
+    },
+    "910103": {
+      "all_cu_ratio": 0.992844173044926,
+      "consistent": false,
+      "max_deviation_pct": 11.052941590996026,
+      "max_ratio": 1.1025826595811892,
+      "min_ratio": 0.9705388720492837,
+      "published_periodicity": "ANNUAL"
+    }
+  },
+  "frozen_estimator_commit": "95111fd675f2d0287e5cc89398411e3322ad65a3",
+  "pair_structure": {
+    "910104": {
+      "comparable_keys": 36740,
+      "concordance_only_keys": 0,
+      "concordance_ucc": "910104",
+      "exact_twelve_keys": 32284,
+      "exact_twelve_share": 0.8787152966793685,
+      "integer_week_keys": 32945,
+      "integer_week_share": 0.8967065868263473,
+      "published_only_keys": 8,
+      "published_ucc": "910050",
+      "ratio_max": 17.014914243176733,
+      "ratio_median": 12.0,
+      "ratio_min": 0.12,
+      "relation": "TWELVE_TIMES",
+      "rows_concordance": 36740,
+      "rows_published": 36748,
+      "shared_keys": 36740,
+      "week_tally": {
+        "156": 25,
+        "312": 617,
+        "468": 12,
+        "624": 32291
+      }
+    },
+    "910105": {
+      "comparable_keys": 1425,
+      "concordance_only_keys": 0,
+      "concordance_ucc": "910105",
+      "exact_twelve_keys": 1134,
+      "exact_twelve_share": 0.7957894736842105,
+      "integer_week_keys": 1273,
+      "integer_week_share": 0.8933333333333333,
+      "published_only_keys": 0,
+      "published_ucc": "910101",
+      "ratio_max": 12.061898098541052,
+      "ratio_median": 12.0,
+      "ratio_min": 0.8391959798532864,
+      "relation": "TWELVE_TIMES",
+      "rows_concordance": 1425,
+      "rows_published": 1425,
+      "shared_keys": 1425,
+      "week_tally": {
+        "156": 9,
+        "208": 1,
+        "312": 125,
+        "624": 1138
+      }
+    },
+    "910106": {
+      "comparable_keys": 40,
+      "concordance_only_keys": 0,
+      "concordance_ucc": "910106",
+      "exact_twelve_keys": 0,
+      "exact_twelve_share": 0.0,
+      "integer_week_keys": 9,
+      "integer_week_share": 0.225,
+      "published_only_keys": 167,
+      "published_ucc": "910102",
+      "ratio_max": 4.08799999989824,
+      "ratio_median": 2.05960619452107,
+      "ratio_min": 0.13104524180885463,
+      "relation": "NO_CLEAN_RELATION",
+      "rows_concordance": 40,
+      "rows_published": 207,
+      "shared_keys": 40,
+      "week_tally": {
+        "96": 3,
+        "144": 6
+      }
+    },
+    "910107": {
+      "comparable_keys": 590,
+      "concordance_only_keys": 0,
+      "concordance_ucc": "910107",
+      "exact_twelve_keys": 0,
+      "exact_twelve_share": 0.0,
+      "integer_week_keys": 517,
+      "integer_week_share": 0.8762711864406779,
+      "published_only_keys": 3,
+      "published_ucc": "910103",
+      "ratio_max": 0.5179914529871795,
+      "ratio_median": 0.019230769231079883,
+      "ratio_min": 0.000769230769235841,
+      "relation": "WEEKS_OWNED_SHARE",
+      "rows_concordance": 590,
+      "rows_published": 593,
+      "shared_keys": 590,
+      "week_tally": {
+        "1": 304,
+        "2": 140,
+        "3": 20,
+        "4": 24,
+        "6": 13,
+        "7": 10,
+        "12": 6
+      }
+    }
+  },
+  "pair_structure_note": "The pairing came into this task as a DMI_INFERENCE resting on matching concept names and matching order. These are measurements of it, made after the estimates existed, which is stated rather than hidden. They changed no estimate: the runner's outputs were written before any of this was computed and are byte-identical on recomputation.",
+  "phase": "C6",
+  "published_item_text": {
+    "910050": "Estimated monthly rental value of owned home",
+    "910101": "Estimated monthly rental value of vacation home not available for rent",
+    "910102": "Estimated monthly rental value of vacation home available for rent",
+    "910103": "Estimated annual rental value of timeshare"
+  },
+  "published_item_text_source": "LABSTAT cx.item, subcategory_code TITLEOFI, display_level 1, selectable T",
+  "quality_is_not_usability": "pumd_quantitative_usability describes whether a validated aggregation procedure reaches this UCC's records. pumd_estimate_quality describes how precise the resulting cell is. The frozen plan required these to stay apart and forbade the 25 percent RSE flag from becoming a usability rule. The RSE bands appear only in the quality field; the usability tests do not read an RSE anywhere.",
+  "quality_scale_definition": {
+    "HIGH": "Relative standard error below 10 percent, variance estimator non-degenerate.",
+    "LOW": "Relative standard error at least 25 percent, variance estimator non-degenerate. The point estimate is real but wide; it may be carried with its interval and may not be quoted bare.",
+    "MODERATE": "Relative standard error at least 10 and below 25 percent, variance estimator non-degenerate.",
+    "UNUSABLE": "Either the cell has no records at all, or the variance estimator is degenerate on it. No figure is offered."
+  },
+  "spec_version": "v0.1",
+  "status": "RESEARCH_ONLY",
+  "track_a_admitted": [
+    "910104",
+    "910105",
+    "910107"
+  ],
+  "track_a_withheld": [
+    "910106"
+  ],
+  "usability_definitions": {
+    "BENCHMARKED": "The CE annual weighting and income-quintile procedure has been implemented and shown to reproduce published LABSTAT aggregates for this UCC's concept, so an aggregate derived for it can be defended.",
+    "NOT_ESTABLISHED": "No validated aggregation procedure exists for this UCC. Observing records is not the same as being able to weight them."
+  }
+}
