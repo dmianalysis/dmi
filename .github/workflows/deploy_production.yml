@@ -128,10 +128,26 @@ jobs:
           mkdir -p ~/.ssh
           echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # §3: strict host verification. `ssh-keyscan` MUST succeed;
-          # its failure is a fatal error, not something to swallow with
-          # `|| true`. StrictHostKeyChecking stays enabled.
-          ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" >> ~/.ssh/known_hosts
+          # §3: strict host verification. ssh-keyscan MUST succeed and
+          # its failure is fatal — never swallowed with `|| true`.
+          #
+          # Exit status alone is not sufficient evidence: ssh-keyscan
+          # exits 0 when it cannot reach the host, writing nothing and
+          # leaving an empty known_hosts. So we capture to a temp file,
+          # require a non-zero exit to fail, AND require at least one
+          # host key to have been written before installing it.
+          if ! ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" > /tmp/dmi_known_hosts; then
+            echo "ERROR: ssh-keyscan failed for $IFASTNET_SSH_HOST:1394"
+            exit 1
+          fi
+          if [ ! -s /tmp/dmi_known_hosts ]; then
+            echo "ERROR: ssh-keyscan produced no host key for" \
+                 "$IFASTNET_SSH_HOST:1394; refusing to deploy with an" \
+                 "empty known_hosts."
+            exit 1
+          fi
+          cat /tmp/dmi_known_hosts >> ~/.ssh/known_hosts
+          rm -f /tmp/dmi_known_hosts
           chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to iFastNet via rsync (strict host verification)

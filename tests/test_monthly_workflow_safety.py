@@ -380,3 +380,549 @@ class TestDeployProductionWorkflow(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Round-3 §2 / §3 / §14: coverage for EVERY workflow, not just the two above.
+#
+# §2 requires "structural tests for all workflows, not only
+# monthly_dmi.yml". Before this section, `deploy_web_dashboard.yml` and
+# `deploy_wp_plugins.yml` had no tests at all — both could deploy to
+# production, and neither was pinned by anything.
+#
+# §3 requires "a repository-wide test that fails if an active workflow,
+# deployment script or runbook contains StrictHostKeyChecking=no". The
+# existing coverage checked a single step of a single workflow.
+# ---------------------------------------------------------------------------
+
+DASHBOARD_PATH = WORKFLOWS / "deploy_web_dashboard.yml"
+WP_PLUGINS_PATH = WORKFLOWS / "deploy_wp_plugins.yml"
+
+#: Every workflow that must obey the deployment-safety policy.
+ALL_WORKFLOWS = (
+    MONTHLY_PATH,
+    DEPLOY_PATH,
+    DASHBOARD_PATH,
+    WP_PLUGINS_PATH,
+)
+
+#: Workflows that are allowed to touch production at all.
+DEPLOY_WORKFLOWS = (DEPLOY_PATH, DASHBOARD_PATH, WP_PLUGINS_PATH)
+
+
+def _steps_of(path: Path) -> list:
+    doc = yaml.safe_load(path.read_text())
+    steps = []
+    for job in (doc.get("jobs") or {}).values():
+        steps.extend(job.get("steps") or [])
+    return steps
+
+
+def _run_scripts(path: Path) -> str:
+    return "\n".join(
+        step.get("run", "") for step in _steps_of(path)
+    )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestEveryWorkflowIsDiscovered(unittest.TestCase):
+    """Guard the guards: the workflow list must not go stale.
+
+    If a new workflow is added and this list is not updated, every
+    policy test below would silently skip it. So the list is checked
+    against the directory itself.
+    """
+
+    def test_all_workflow_files_are_covered(self):
+        on_disk = sorted(
+            p.name for p in WORKFLOWS.glob("*.yml")
+        ) + sorted(p.name for p in WORKFLOWS.glob("*.yaml"))
+        covered = sorted(p.name for p in ALL_WORKFLOWS)
+        self.assertEqual(
+            sorted(on_disk), covered,
+            "§2: a workflow exists that no policy test covers. Add it to "
+            "ALL_WORKFLOWS (and DEPLOY_WORKFLOWS if it can deploy).",
+        )
+
+    def test_every_covered_workflow_exists(self):
+        for path in ALL_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                self.assertTrue(path.is_file(), f"{path} missing")
+
+    def test_every_workflow_parses(self):
+        for path in ALL_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                doc = yaml.safe_load(path.read_text())
+                self.assertIsInstance(doc, dict)
+                self.assertIn("jobs", doc)
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestRepositoryWideStrictHostKeyChecking(unittest.TestCase):
+    """§3: no active workflow, deployment script, or runbook may disable
+    strict host verification."""
+
+    #: Trees that are not part of the active repair: frozen archives,
+    #: vendored code, caches. Documented rather than silently skipped.
+    EXCLUDED_PARTS = {
+        ".git", "venv", ".venv", "node_modules", "__pycache__",
+        ".pytest_cache", "dmi-v0.1.10-deployment",
+        "dmi-v0.1.11-external-deployment",
+    }
+
+    #: This test file necessarily contains the forbidden string in its
+    #: own assertions, so it is the single named exemption.
+    SELF = Path(__file__).name
+
+    FORBIDDEN = "StrictHostKeyChecking=no"
+
+    #: §3 scopes this sweep to "an active workflow, deployment script or
+    #: runbook". Those are enumerated as directories rather than as a
+    #: whole-repo glob, because a whole-repo glob also picks up audit
+    #: records whose job is to DESCRIBE the check — flagging the
+    #: documentation of a control as a violation of it. The
+    #: `docs/repair/` and `docs/` runbooks that carry executable SSH
+    #: recipes are in scope; the directories are listed so adding a new
+    #: one is a deliberate act.
+    SCOPED_DIRS = (
+        ".github/workflows",
+        "scripts",
+        "docs/repair",
+        "docs/runbooks",
+        "docs/deployment",
+    )
+
+    #: Individual runbook files outside the scoped directories.
+    SCOPED_FILES = (
+        "docs/DEPLOYMENT_GUIDE.md",
+        "docs/deployment-workflows.md",
+    )
+
+    def _candidate_files(self):
+        seen = set()
+        for rel_dir in self.SCOPED_DIRS:
+            base = ROOT / rel_dir
+            if not base.is_dir():
+                continue
+            for path in sorted(base.rglob("*")):
+                if not path.is_file():
+                    continue
+                if set(path.relative_to(ROOT).parts) & self.EXCLUDED_PARTS:
+                    continue
+                if path.suffix.lower() not in (
+                    ".yml", ".yaml", ".sh", ".py", ".md", ".bash",
+                ):
+                    continue
+                if path.name == self.SELF:
+                    continue
+                if path not in seen:
+                    seen.add(path)
+                    yield path
+        for rel in self.SCOPED_FILES:
+            path = ROOT / rel
+            if path.is_file() and path not in seen:
+                seen.add(path)
+                yield path
+
+    def test_no_active_file_disables_strict_host_checking(self):
+        offenders = []
+        for path in self._candidate_files():
+            try:
+                text = path.read_text(errors="ignore")
+            except OSError:
+                continue
+            if self.FORBIDDEN in text:
+                offenders.append(str(path.relative_to(ROOT)))
+        self.assertEqual(
+            offenders, [],
+            f"§3: {self.FORBIDDEN} is forbidden in active workflows, "
+            f"deployment scripts, and runbooks. Offenders: {offenders}",
+        )
+
+    def test_scan_is_not_vacuous(self):
+        """The sweep must actually be reading the workflow files."""
+        scanned = {p.name for p in self._candidate_files()}
+        for path in ALL_WORKFLOWS:
+            self.assertIn(
+                path.name, scanned,
+                f"§3: sweep did not reach {path.name}; it would pass "
+                f"vacuously.",
+            )
+
+    def test_every_ssh_invocation_requests_strict_checking(self):
+        """Absence of `=no` is not presence of `=yes`.
+
+        Any workflow that invokes ssh/rsync-over-ssh must say
+        StrictHostKeyChecking=yes explicitly, so an omitted option
+        cannot fall back to a permissive default.
+        """
+        for path in DEPLOY_WORKFLOWS:
+            script = _run_scripts(path)
+            if "ssh " not in script and "rsync" not in script:
+                continue
+            with self.subTest(workflow=path.name):
+                self.assertIn(
+                    "StrictHostKeyChecking=yes", script,
+                    f"§3: {path.name} invokes ssh/rsync without "
+                    f"explicitly requesting strict host verification.",
+                )
+
+    def test_known_hosts_acquisition_failure_is_never_swallowed(self):
+        """§3/§14: failed host-key acquisition must not be ignored."""
+        for path in DEPLOY_WORKFLOWS:
+            script = _run_scripts(path)
+            if "ssh-keyscan" not in script:
+                continue
+            with self.subTest(workflow=path.name):
+                for line in script.splitlines():
+                    if "ssh-keyscan" in line:
+                        self.assertNotIn(
+                            "|| true", line,
+                            f"§3: {path.name} swallows ssh-keyscan "
+                            f"failure with `|| true`.",
+                        )
+
+    def test_empty_known_hosts_is_treated_as_failure(self):
+        """ssh-keyscan exits 0 when it cannot reach the host.
+
+        Checking only the exit status therefore proves nothing: the run
+        would proceed with an empty known_hosts. Each deploy workflow
+        must also assert the file is non-empty.
+        """
+        for path in DEPLOY_WORKFLOWS:
+            script = _run_scripts(path)
+            if "ssh-keyscan" not in script:
+                continue
+            with self.subTest(workflow=path.name):
+                self.assertIn(
+                    "-s /tmp/dmi_known_hosts", script,
+                    f"§3: {path.name} must fail when ssh-keyscan "
+                    f"produced no host key (exit 0 is not enough).",
+                )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestNoWorkflowAutoMergesOrAutoApproves(unittest.TestCase):
+    """§1/§14: no workflow may merge, approve, or close a PR."""
+
+    FORBIDDEN_FRAGMENTS = (
+        "gh pr merge",
+        "gh pr review",
+        "gh pr close",
+        "--auto-merge",
+        "--admin",
+        "pull-request-merge",
+        "automerge",
+        "auto-merge",
+        "enablePullRequestAutoMerge",
+    )
+
+    def test_no_workflow_contains_a_merge_or_approve_action(self):
+        """Inspect what the workflow EXECUTES, not what it says.
+
+        A raw-text scan cannot express this: the monthly workflow's PR
+        body legitimately contains the words "never auto-merged", and
+        flagging that would mean the workflow gets safer by deleting the
+        sentence promising it is safe. So this checks the parsed `uses:`
+        action references and `run:` shell scripts — the only two places
+        a workflow can actually merge something.
+        """
+        offenders = []
+        for path in ALL_WORKFLOWS:
+            for step in _steps_of(path):
+                uses = str(step.get("uses", ""))
+                run = str(step.get("run", ""))
+                # Strip comment lines from run scripts; a comment cannot
+                # merge a PR.
+                run_code = "\n".join(
+                    line for line in run.splitlines()
+                    if not line.strip().startswith("#")
+                )
+                for fragment in self.FORBIDDEN_FRAGMENTS:
+                    if fragment in uses:
+                        offenders.append(
+                            f"{path.name}: uses {uses!r} ({fragment})"
+                        )
+                    if fragment in run_code:
+                        offenders.append(
+                            f"{path.name}: run contains {fragment!r} "
+                            f"in step {step.get('name')!r}"
+                        )
+        self.assertEqual(
+            offenders, [],
+            f"§1/§14: no workflow may auto-merge or auto-approve a PR: "
+            f"{offenders}",
+        )
+
+    def test_no_workflow_grants_pr_write_it_does_not_need(self):
+        """Deployment workflows must not be able to touch PRs at all."""
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                doc = yaml.safe_load(path.read_text())
+                perms = doc.get("permissions") or {}
+                self.assertNotEqual(
+                    perms.get("pull-requests"), "write",
+                    f"§2: {path.name} does not need pull-request write "
+                    f"access.",
+                )
+                self.assertEqual(
+                    perms.get("contents"), "read",
+                    f"§2: {path.name} should only need read access to "
+                    f"contents.",
+                )
+
+    def test_scan_sees_the_pr_creating_step(self):
+        """Non-vacuity: the sweep must reach the step that opens the PR."""
+        found = any(
+            "create-pull-request" in str(s.get("uses", ""))
+            for s in _steps_of(MONTHLY_PATH)
+        )
+        self.assertTrue(
+            found,
+            "expected to find the PR-creating step; the merge sweep "
+            "would otherwise be inspecting nothing relevant.",
+        )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestAllDeploymentWorkflowsDefaultToDryRun(unittest.TestCase):
+    """§2/§14: every manual deployment defaults to dry-run."""
+
+    def test_manual_dispatch_defaults_to_non_production(self):
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                doc = yaml.safe_load(path.read_text())
+                dispatch = (_on_block(doc) or {}).get("workflow_dispatch")
+                self.assertIsInstance(
+                    dispatch, dict,
+                    f"§2: {path.name} must expose workflow_dispatch with "
+                    f"an explicit production input.",
+                )
+                inputs = dispatch.get("inputs") or {}
+                self.assertIn(
+                    "production", inputs,
+                    f"§2: {path.name} needs a `production` input.",
+                )
+                self.assertEqual(
+                    str(inputs["production"].get("default")).lower(),
+                    "false",
+                    f"§2: {path.name} manual dispatch must default to "
+                    f"dry-run.",
+                )
+
+    def test_production_resolver_falls_through_to_false(self):
+        """An unset input must resolve to false, not empty-and-truthy."""
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                script = _run_scripts(path)
+                self.assertIn(
+                    'PROD="${INPUT_PRODUCTION:-false}"', script,
+                    f"§2: {path.name} must default PROD to false when "
+                    f"the input is unset.",
+                )
+
+    def test_every_production_step_is_gated_on_the_flag(self):
+        """No ssh/rsync step may run unless production resolved true."""
+        for path in DEPLOY_WORKFLOWS:
+            for step in _steps_of(path):
+                run = step.get("run", "") or ""
+                if "ssh-keyscan" not in run and "rsync -avz" not in run:
+                    continue
+                with self.subTest(workflow=path.name,
+                                  step=step.get("name")):
+                    condition = str(step.get("if", ""))
+                    self.assertIn(
+                        "production == 'true'", condition,
+                        f"§2: {path.name} step {step.get('name')!r} "
+                        f"performs a remote action without being gated "
+                        f"on the production flag.",
+                    )
+
+    def test_deploy_workflows_only_auto_trigger_from_main(self):
+        """§2: deployment happens post-merge, never from a branch push."""
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                push = (_on_block(yaml.safe_load(path.read_text()))
+                        or {}).get("push") or {}
+                self.assertEqual(
+                    push.get("branches"), ["main"],
+                    f"§2: {path.name} must auto-trigger only from main.",
+                )
+
+    def test_no_deploy_workflow_triggers_on_pull_request(self):
+        """A PR trigger would deploy unreviewed code."""
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                on = _on_block(yaml.safe_load(path.read_text())) or {}
+                for trigger in ("pull_request", "pull_request_target"):
+                    self.assertNotIn(
+                        trigger, on,
+                        f"§2: {path.name} must not deploy from a "
+                        f"{trigger} event.",
+                    )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestNoWorkflowHardcodesRefMain(unittest.TestCase):
+    """§1/§2: checkout must never pin `ref: main`."""
+
+    def test_no_checkout_hardcodes_ref_main(self):
+        offenders = []
+        for path in ALL_WORKFLOWS:
+            for step in _steps_of(path):
+                uses = str(step.get("uses", ""))
+                if "actions/checkout" not in uses:
+                    continue
+                ref = str((step.get("with") or {}).get("ref", ""))
+                if ref.strip() == "main":
+                    offenders.append(f"{path.name}: {step.get('name')}")
+        self.assertEqual(
+            offenders, [],
+            f"§1/§2: `ref: main` must not be hardcoded in checkout: "
+            f"{offenders}",
+        )
+
+    def test_deploy_workflows_check_out_the_triggering_commit(self):
+        for path in DEPLOY_WORKFLOWS:
+            with self.subTest(workflow=path.name):
+                refs = [
+                    str((s.get("with") or {}).get("ref", ""))
+                    for s in _steps_of(path)
+                    if "actions/checkout" in str(s.get("uses", ""))
+                ]
+                self.assertTrue(refs, f"{path.name} has no checkout step")
+                for ref in refs:
+                    self.assertIn(
+                        "github.sha", ref,
+                        f"§2: {path.name} must check out the exact "
+                        f"triggering commit, got {ref!r}.",
+                    )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestDashboardWorkflowUsesTheSingleBuilder(unittest.TestCase):
+    """§2: the ad-hoc staging recipe must be gone."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.script = _run_scripts(DASHBOARD_PATH)
+
+    def test_staging_is_built_by_prepare_deployment(self):
+        self.assertIn(
+            "scripts.prepare_deployment", self.script,
+            "§2: deploy_web_dashboard.yml must call the single "
+            "deployment builder.",
+        )
+
+    def test_no_independent_staging_recipe(self):
+        """No hand-rolled mkdir/cp tree assembly before deployment."""
+        forbidden = ("mkdir -p deploy/data/outputs", "cp -r data/outputs")
+        for fragment in forbidden:
+            self.assertNotIn(
+                fragment, self.script,
+                f"§2: ad-hoc staging recipe fragment {fragment!r} must "
+                f"be removed; use the central builder.",
+            )
+
+    def test_core_guard_runs_against_the_built_tree(self):
+        self.assertIn("deploy", self.script)
+        self.assertIn("core", self.script.lower())
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestMonthlyWorkflowHasValidationGates(unittest.TestCase):
+    """§1 steps 4 and 6: QA runs and every artifact is validated."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.steps = _steps_of(MONTHLY_PATH)
+        cls.names = [str(s.get("name", "")) for s in cls.steps]
+        cls.script = _run_scripts(MONTHLY_PATH)
+
+    def test_qa_reports_are_validated(self):
+        self.assertIn(
+            "qa_report.schema.json", self.script,
+            "§1: the monthly workflow must validate QA reports.",
+        )
+
+    def test_public_timeseries_is_validated(self):
+        self.assertIn(
+            "dmi_timeseries_schema.json", self.script,
+            "§1/§15: the monthly workflow must validate the public "
+            "timeseries the dashboard fetches.",
+        )
+
+    def test_release_artifacts_are_schema_validated(self):
+        for schema in ("dmi_output.schema.json", "releases.schema.json",
+                       "specifications.schema.json"):
+            with self.subTest(schema=schema):
+                self.assertIn(schema, self.script)
+
+    def test_validation_gates_run_in_every_mode(self):
+        """Gates must not be skipped in fixture/validate mode."""
+        for step in self.steps:
+            name = str(step.get("name", ""))
+            if not name.lower().startswith("validate"):
+                continue
+            with self.subTest(step=name):
+                self.assertNotIn(
+                    "data_source == 'live'", str(step.get("if", "")),
+                    f"§1: validation gate {name!r} must run in every "
+                    f"mode, including fixture/offline.",
+                )
+
+    def test_qa_gate_fails_when_it_validates_nothing(self):
+        """A gate that silently checks zero files is not a gate."""
+        self.assertIn(
+            "no QA report was validated", self.script,
+            "§1: the QA gate must fail if it validated nothing.",
+        )
+
+    def test_deployment_candidate_is_built_after_validation(self):
+        build_idx = next(
+            i for i, n in enumerate(self.names)
+            if "deployment candidate" in n.lower()
+        )
+        validate_indices = [
+            i for i, n in enumerate(self.names)
+            if n.lower().startswith("validate")
+        ]
+        self.assertTrue(validate_indices)
+        self.assertGreater(
+            build_idx, max(validate_indices),
+            "§1: the deployment candidate must be built after the "
+            "artifact validation gates.",
+        )
+
+    def test_pr_creation_is_the_last_gated_step(self):
+        """§1: a release PR may be created only after every gate passes."""
+        pr_idx = next(
+            i for i, s in enumerate(self.steps)
+            if "create-pull-request" in str(s.get("uses", ""))
+        )
+        for i, name in enumerate(self.names):
+            if name.lower().startswith("validate") or \
+                    "deployment candidate" in name.lower():
+                self.assertLess(
+                    i, pr_idx,
+                    f"§1: gate {name!r} runs after PR creation.",
+                )
+
+    def test_pr_body_does_not_claim_the_site_was_updated(self):
+        """§1: PR text must not say the live site was already updated."""
+        pr_step = next(
+            s for s in self.steps
+            if "create-pull-request" in str(s.get("uses", ""))
+        )
+        body = str((pr_step.get("with") or {}).get("body", "")).lower()
+        for claim in (
+            "live site has been updated",
+            "site is live",
+            "deployed to production",
+            "deployment complete",
+        ):
+            self.assertNotIn(
+                claim, body,
+                f"§1: PR body must not claim {claim!r} before merge.",
+            )
+        self.assertIn("does not deploy", body)
