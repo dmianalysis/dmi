@@ -1,0 +1,92 @@
+{
+  "artifact_id": "SHELTER_RESIDUAL_VERDICT_2024",
+  "b4_category_coverage": {
+    "elsewhere": {
+      "improvements_and_capital_additions": "Adjudicated at the shelter milestone by OS_CPI_CAPITAL_IMPROVEMENT_v0_1, ACCEPTED. Not reopened.",
+      "other_owner_housing_services": "Security-system management 340911 is mapped to HP090 and retained. It is listed under the open item on mapped owner maintenance rather than here.",
+      "service_contracts_and_warranties": "No UCC in the CE shelter stub tree carries this concept for owned housing. Appliance repair 230142 is the nearest, and it is mapped to HP041 and retained, so it was never a member of the predecessor rule."
+    },
+    "in_this_matrix": {
+      "ground_rent_and_parking": "OS_CPI_OWNER_SITE_PAYMENTS_v0_2",
+      "maintenance_and_repair_commodities": "OS_CPI_OWNER_ROOF_MATERIALS_ANOMALY_v0_2",
+      "maintenance_and_repair_services": "OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2",
+      "property_management": "OS_CPI_OWNER_PROPERTY_MANAGEMENT_v0_2"
+    },
+    "note": "The task named seven owner-housing categories to be distinguished. Four of them are members of the predecessor rule and appear in the UCC matrix. The other three are recorded here so that their absence from the matrix reads as a fact about where they live, not as an omission."
+  },
+  "issue_outcomes": {
+    "homeowners_insurance": {
+      "amount_all_cu": 100026.0,
+      "b5_outcome": "C",
+      "outcome": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+      "summary": "Conceptual treatment established by current BLS authority; numerical transformation blocked. The historical 43 percent factor is superseded as of January 2025, so it is affirmatively wrong for 2024 rather than merely unconfirmed, and the replacement factor is not published. Track A continues to retain 100 percent, now labelled an upper bound."
+    },
+    "owner_maintenance_and_structure_investment": {
+      "outcome": "PARTIALLY_RESOLVED_BY_SPLIT",
+      "predecessor_amount_all_cu": 232781.0,
+      "predecessor_rule": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "resolved_amount_all_cu": 199079.0,
+      "still_pending_amount_all_cu": 33702.0,
+      "summary": "The single rule is replaced by four narrower successors because it combined four materially different concepts under one criterion, and that criterion is falsified. Maintenance services clear on current BLS evidence. Roof materials, site payments and property management do not, for three different reasons, each recorded separately."
+    },
+    "secondary_residence": {
+      "outcome": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+      "outlay_amount_all_cu": 12620.0,
+      "rental_equivalence_amount_all_cu": 102234.815688,
+      "summary": "Secondary-residence rental equivalence is confirmed present in the current CPI, under one unsampled ELI covering all three residence types, with all three source UCCs named by BLS. That resolves the milestone's REPLACE-versus-EXCLUDE ambiguity. The consumption-portion factor remains historical only, and the 910106 variance defect is separated from it as a distinct blocker."
+    }
+  },
+  "no_balancing": "Delta_scope and Delta_shelter are byte-identical before and after. That is not a result of tuning: an amount promoted from the pending bucket to the accepted-out-of-scope bucket moves between two buckets that both sit outside the CPI-basis total, so the CPI basis and both deltas cannot move. The one adjudication in this task that would have changed a delta -- accepting the secondary-residence replacement rule -- would have made the reported understatement larger, and it was declined on evidence, not on its effect. No rescaling, renormalisation, balancing factor or residual-allocating step exists in this module.",
+  "open_items": [
+    {
+      "action_taken": "NONE",
+      "boundary_is_dmi": "Which codes count as 'home maintenance and repair' for Casey's sentence is a DMI reading of CE stub containers OWNREPSV, OWNREPSP and OWNMISC. Casey also names major appliances for owned housing, which sit outside shelter under CE stub parent MAJAPPL and are not counted here.",
+      "evidence_ids": [
+        "CASEY_NOTE_5_MAINTENANCE_ALLOCATION_FACTOR",
+        "RENTER_MEAN_WEIGHTING_CURRENT_VINTAGE"
+      ],
+      "finding": "OPENED BY THIS TASK, NOT CLOSED. The owner maintenance UCCs that ARE mapped are retained in Track A at their full published CE value. Casey 2010 states that owner expenditures on home maintenance and repair are weighted from 'the corresponding mean expenditures of renters', and that an allocation factor removes the investment element. If that procedure still operates, the CPI weight for these codes is not their CE amount and Track A overstates them. No current-vintage source restating the procedure was located, and none denying it was located either, so the direction is known and the size is not. Nothing is applied. This item did not exist before this task: the milestone asked whether the unmapped maintenance codes should leave, and answering that surfaced a question about the ones that stay.",
+      "issue": "owner_maintenance",
+      "open_item_id": "MAPPED_OWNER_MAINTENANCE_RETAINED_AT_CE_VALUE",
+      "uccs": [
+        "230112",
+        "230142",
+        "320625",
+        "240112",
+        "240122",
+        "240212",
+        "240222",
+        "240312",
+        "240322",
+        "320612",
+        "320632"
+      ]
+    },
+    {
+      "action_taken": "NONE",
+      "boundary_is_dmi": "That the January 2025 method governs the 2024 weighting vintage is a DMI inference from three current BLS statements, recorded as INSURANCE_METHOD_APPLIES_TO_2024_WEIGHTS.",
+      "evidence_ids": [
+        "INSURANCE_PARTIAL_INCLUSION_CURRENT",
+        "INSURANCE_NAIC_METHOD_SINCE_2025",
+        "INSURANCE_FACTOR_VALUE_2024_VINTAGE",
+        "INSURANCE_METHOD_APPLIES_TO_2024_WEIGHTS"
+      ],
+      "finding": "NARROWED BY THIS TASK, NOT CLOSED. The milestone recorded that historical authority for a renter's-part allocation was established while 2024 applicability was not. Both halves now move. The conceptual allocation IS current: BLS states that only a portion of homeowner insurance spending is included, and that the in-scope part is contents coverage. The 43 percent factor is NOT current: the derivation was replaced in January 2025. And the replacement factor's value is not published. Track A's 100,026 million dollars is therefore an upper bound whose excess is real and unquantifiable, rather than an amount of unknown correctness.",
+      "issue": "homeowners_insurance",
+      "open_item_id": "HOMEOWNERS_INSURANCE_UPPER_BOUND",
+      "uccs": [
+        "220121"
+      ]
+    }
+  ],
+  "quantities_unchanged_by_this_task": {
+    "delta_scope": 0.0,
+    "delta_shelter": 0.0,
+    "e_cpi": 0.0,
+    "e_source": 0.0
+  },
+  "residual_shelter_status": "PARTIAL",
+  "status": "RESEARCH_ONLY",
+  "units": "millions of 2024 dollars, published CE aggregate basis",
+  "verdict_reasoning": "PARTIAL, not PASS and not BLOCKED. One of the three questions is resolved on current BLS evidence: owner maintenance services, 199,079 million dollars, moves from PROPOSED to ACCEPTED and out of scope. The other two are not resolved, and in both cases the reason is a parameter that BLS describes and does not publish rather than an absence of concept. Calling this PASS would overstate it; calling it BLOCKED would hide that the largest single block did clear and that both remaining blockers are now named, dated and separated."
+}

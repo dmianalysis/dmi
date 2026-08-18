@@ -1,0 +1,1497 @@
+{
+  "artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+  "attribution": "UCC codes and titles, ELI codes and titles, the CE hierarchical grouping (stub) files, the CPI Handbook of Methods, and the CE-CPI concordance are published by the U.S. Bureau of Labor Statistics. The grouping of UCCs into the scope rules below, the rule identifiers, and the DMI computation-node assignments are DMI research metadata and are not a BLS product.",
+  "coverage": {
+    "introduce_rules_claim_no_expend_ucc": "910104 to 910107 are CE ADDENDA lines and are not members of the EXPEND basis, so the introduce rules do not claim any UCC claimed by an exclusion or replacement rule and the Milestone-1 exception partition is unchanged.",
+    "milestone_1_exception_count": 58,
+    "reconciliation_all_cu": {
+      "basis_total": 6836520.0,
+      "exception_total": 1326642.0,
+      "identity": "transformed_reassign + transformed_combine + transformed_replace + out_of_scope + unresolved == exception_total",
+      "note": "This identity is exact on published values. Suppressed cells are never coerced to zero; they are excluded from every total and are accounted for separately by suppression_status.",
+      "out_of_scope": 1182268.0,
+      "transformed_combine": 28734.0,
+      "transformed_reassign": 92069.0,
+      "transformed_replace": 12620.0,
+      "unresolved": 10951.0
+    },
+    "rules_in_v0_2": 12,
+    "uccs_claimed_by_rules": 58,
+    "uccs_claimed_more_than_once": 0
+  },
+  "description": "Explicit CE->CPI scope treatments for the 58 Milestone-1 exception UCCs. Every exception UCC is claimed by exactly one rule. Rules are evidence-bearing: each records the authoritative BLS source that supports the treatment, the transformation formula where one exists, the assumptions taken, and the validation test that must pass.",
+  "evidence_strength_scale": {
+    "MODERATE": "A BLS methodological publication states a principle that determines the treatment, but BLS does not name the affected UCCs; or the naming source is a superseded BLS document whose principle is corroborated by current structural evidence.",
+    "STRONG": "A current BLS methodological publication states the treatment explicitly and the affected UCCs are unambiguously instances of the stated concept.",
+    "WEAK": "Only structural or circumstantial evidence. Not sufficient for OUT_OF_SCOPE under Section 5.2 and not used for any EXCLUDE rule here."
+  },
+  "falsified_predecessor_criterion": {
+    "consequence": "The check was run and it does not separate the excluded UCCs from the included ones, so it could not have cleared the rule in either direction. The successor rules do not use it. It is recorded rather than deleted, because a criterion that failed is part of why the successors are shaped the way they are.",
+    "criterion": "The predecessor rule's review_blocker offered a clearing path: 'an independent check that no renter counterpart exists for the five maintenance members'.",
+    "evidence_id": "COUNTERPART_TEST_FALSIFIED",
+    "verdict": "FALSIFIED"
+  },
+  "governing_constraints": [
+    "Milestone 2 Section 5.2: OUT_OF_SCOPE may be used only where authoritative evidence supports exclusion from the selected Track-A CPI consumption universe. Absence of a row in the concordance is not, by itself, sufficient evidence. Every OUT_OF_SCOPE rule below therefore cites a positive scope statement from a BLS methodological source, not merely the absence of a concordance row.",
+    "Milestone 2 Section 5.3: a classification must never be invented merely to drive unresolved expenditure to zero. UNRESOLVED_v0_2 is retained deliberately.",
+    "Milestone 2 Section 6.5: owner shelter financing and owner shelter capital expenditure must not coexist with rental-equivalence expenditure. Rules whose effect is coupled to the Track-A shelter transformation are marked review_status PROPOSED and take effect only jointly with the Track-A rental-equivalence rule.",
+    "Milestone 2 Section 19.3: this registry does not normalize weights and does not construct DMI weights."
+  ],
+  "milestone": "Detailed Inflation Substrate v0.1, shelter task, Phase D",
+  "predecessor": {
+    "artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+    "note": "The predecessor is preserved byte-for-byte at its own path and remains the frozen shelter-milestone state. It is regenerated unchanged by scripts/build_shelter_tracks_2024.py, which this task did not modify. Every difference is listed in residual_transitions below.",
+    "path": "registry/research/ce_cpi_scope_rules_v0_2.json",
+    "version": "0.2.0"
+  },
+  "residual_evidence_reference": "registry/research/shelter_residual_evidence_v0_1.json holds the full evidence records, each with a vintage class. Rule outcomes here are derived from those classes: a rule may be ACCEPTED only on CURRENT_2024_COMPATIBLE evidence, never on HISTORICAL_ONLY evidence however primary its source.",
+  "residual_transitions": [
+    {
+      "blocker_kinds": [],
+      "materiality_all_cu": 199079.0,
+      "numerical_treatment_became_computable": true,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2",
+      "source_vintage": [
+        "CURRENT_2024_COMPATIBLE"
+      ],
+      "successor_status": "ACCEPTED",
+      "triggering_evidence": [
+        "OER_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "TENANTS_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "CONCORDANCE_2024_UNMAPPED_MAINTENANCE_SERVICES",
+        "COUNTERPART_TEST_FALSIFIED"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_CONTRADICTORY_MEMBERSHIP"
+      ],
+      "materiality_all_cu": 3440.0,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_ROOF_MATERIALS_ANOMALY_v0_2",
+      "source_vintage": [
+        "CURRENT_2024_COMPATIBLE"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "OER_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "COUNTERPART_TEST_FALSIFIED"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_UNESTABLISHED_CONCEPT"
+      ],
+      "materiality_all_cu": 12574.0,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_SITE_PAYMENTS_v0_2",
+      "source_vintage": [
+        "NOT_FOUND"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "RENTER_MEAN_WEIGHTING_CURRENT_VINTAGE"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_UNESTABLISHED_CONCEPT"
+      ],
+      "materiality_all_cu": 17688.0,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_PROPERTY_MANAGEMENT_v0_2",
+      "source_vintage": [
+        "NOT_FOUND"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "RENTER_MEAN_WEIGHTING_CURRENT_VINTAGE"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_UNPUBLISHED_PARAMETER"
+      ],
+      "materiality_all_cu": 100026.0,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": null,
+      "predecessor_status": "NONE",
+      "rule_id": "TR_CPI_HOMEOWNERS_INSURANCE_CONTENTS_PORTION_v0_1",
+      "source_vintage": [
+        "CURRENT_2024_COMPATIBLE",
+        "CURRENT_BUT_NONNUMERIC",
+        "DMI_INFERENCE",
+        "HISTORICAL_ONLY",
+        "NOT_FOUND"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "CASEY_NOTE_3_INSURANCE_43_PCT",
+        "INSURANCE_PARTIAL_INCLUSION_CURRENT",
+        "INSURANCE_NAIC_METHOD_SINCE_2025",
+        "INSURANCE_CONTENTS_ONLY_SCOPE",
+        "INSURANCE_FACTOR_VALUE_2024_VINTAGE",
+        "INSURANCE_METHOD_APPLIES_TO_2024_WEIGHTS"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_DEGENERATE_VARIANCE",
+        "BLOCKED_BY_UNPUBLISHED_PARAMETER"
+      ],
+      "materiality_all_cu": null,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "source_vintage": [
+        "CURRENT_2024_COMPATIBLE",
+        "DMI_INFERENCE",
+        "HISTORICAL_ONLY",
+        "NOT_FOUND"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "SECONDARY_OER_IN_CURRENT_CPI",
+        "SECONDARY_TYPES_POOLED_AND_UNSAMPLED",
+        "OWNED_VACATION_BRANCH_FULLY_UNMAPPED",
+        "CASEY_NOTE_2_CONSUMPTION_PORTION",
+        "SECONDARY_CONSUMPTION_FACTOR_CURRENT_VINTAGE",
+        "UCC_910106_DEGENERATE_VARIANCE"
+      ]
+    },
+    {
+      "blocker_kinds": [
+        "BLOCKED_BY_DEGENERATE_VARIANCE",
+        "BLOCKED_BY_UNPUBLISHED_PARAMETER"
+      ],
+      "materiality_all_cu": null,
+      "numerical_treatment_became_computable": false,
+      "predecessor_rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1",
+      "predecessor_status": "PROPOSED",
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1",
+      "source_vintage": [
+        "CURRENT_2024_COMPATIBLE",
+        "DMI_INFERENCE",
+        "HISTORICAL_ONLY",
+        "NOT_FOUND"
+      ],
+      "successor_status": "PROPOSED",
+      "triggering_evidence": [
+        "SECONDARY_OER_IN_CURRENT_CPI",
+        "SECONDARY_TYPES_POOLED_AND_UNSAMPLED",
+        "CASEY_NOTE_2_CONSUMPTION_PORTION",
+        "SECONDARY_CONSUMPTION_FACTOR_CURRENT_VINTAGE",
+        "UCC_910106_DEGENERATE_VARIANCE"
+      ]
+    }
+  ],
+  "rule_reviews_from_v0_1": [
+    {
+      "evidence": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE. The recorded blocker was that the PUMD annual-weighting and income-quintile procedure had not been benchmarked against published 2024 LB01 estimates. It has been: the frozen estimator passed the Phase-B confirmation on 111 previously unused UCCs and 666 cells, and reproduces the published shelter counterpart 910050 to within 1.41 percent.",
+      "from": {
+        "evidence_strength": "STRONG",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      },
+      "remaining_blocker": null,
+      "rule_id": "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+      "status_changed": true,
+      "to": {
+        "evidence_strength": "STRONG",
+        "resolution_state": "EFFECTIVE",
+        "review_status": "ACCEPTED"
+      }
+    },
+    {
+      "evidence": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE, on the same cleared benchmark blocker as the mortgage-interest rule.",
+      "from": {
+        "evidence_strength": "STRONG",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      },
+      "remaining_blocker": null,
+      "rule_id": "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+      "status_changed": true,
+      "to": {
+        "evidence_strength": "STRONG",
+        "resolution_state": "EFFECTIVE",
+        "review_status": "ACCEPTED"
+      }
+    },
+    {
+      "evidence": "PROPOSED/PENDING preserved. One of its two recorded blockers is cleared and the other is untouched, so its status does not move.",
+      "from": {
+        "evidence_strength": "MODERATE",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      },
+      "remaining_blocker": "The shelter dependency is cleared but the evidence blocker is not. BLS does not enumerate these eight UCCs; the membership rests on the DMI owner/renter counterpart test. Milestone 2 flagged the rule for reviewer attention on its own merits and nothing produced in this task speaks to it. Clearing requires either a BLS source naming the codes, or an independent check that no renter counterpart exists for the five maintenance members.",
+      "rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "status_changed": false,
+      "to": {
+        "evidence_strength": "MODERATE",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      }
+    },
+    {
+      "evidence": "PROPOSED/PENDING preserved. The benchmark blocker is cleared; the replacement this rule has to add is still not statable.",
+      "from": {
+        "evidence_strength": "MODERATE",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      },
+      "remaining_blocker": "The replacement amount this rule must add is not available. The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible. Separately, whether these outlays are replaced or simply excluded is not settled by the published record, and the two readings differ in what the rule has to supply.",
+      "rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "status_changed": false,
+      "to": {
+        "evidence_strength": "MODERATE",
+        "resolution_state": "PENDING",
+        "review_status": "PROPOSED"
+      }
+    }
+  ],
+  "rule_reviews_note": "All four shelter-coupled rules were reviewed. Two changed status and two did not. The two that did not are listed here anyway, with status_changed false, because a review that reaches 'no change' is a result and the reason it reached that result is the useful part. Calling all four entries transitions would have implied movement where there was none.",
+  "rule_type_semantics": {
+    "COMBINE": "Two or more source UCCs are summed into a single successor concept that carries the concordance mapping.",
+    "EXCLUDE": "Source expenditure leaves the CPI-compatible basis entirely. It remains in the CE-outlay basis and must be reported in the out_of_scope reconciliation column.",
+    "INTRODUCE": "The rule adds a concept to Track A that has no counterpart in the CE outlay basis. It removes nothing. Introduction and removal are separate rules on purpose, so that neither can be made to justify the other's size.",
+    "REASSIGN": "Source expenditure is retained in full but is allocated to one or more DMI computation nodes other than the one a naive CE-parent reading would give.",
+    "REPLACE": "Source expenditure is removed and substituted by a different, CPI-adjusted expenditure concept. The replacement amount is not required to equal the removed amount.",
+    "RETAIN": "Source expenditure is retained and mapped unchanged. Not used in this registry: retained UCCs are not Milestone-1 exceptions.",
+    "UNRESOLVED": "No authoritative treatment was found. Expenditure is neither retained nor excluded; it is carried explicitly as unresolved."
+  },
+  "rules": [
+    {
+      "assumptions": [
+        "790690 'Construction materials for jobs not started' is grouped here on a second ground as well: the materials have been purchased but the job has not been performed, so under the CPI's acquisition framing there is no completed consumption acquisition to price. This is a DMI reading; BLS does not comment on this code.",
+        "The boundary between maintenance (in scope, weighted from the renter counterpart) and capital improvement (excluded) is drawn on the CE title wording of these four codes. BLS does not publish an explicit boundary definition."
+      ],
+      "authoritative_basis": [
+        "CPI_HOM_CONCEPTS",
+        "CASEY_2010",
+        "CE_CPI_CONCORDANCE_2024"
+      ],
+      "evidence_notes": "The Handbook excludes 'investment items, such as stocks, bonds, real estate' and states that 'Purchases of houses... are viewed as investment expenditures and therefore excluded'. Additions, basement finishing and room remodeling add to the structure rather than maintain it, so they are capital expenditure on real estate. Casey Appendix B note 5 supplies the same principle for home maintenance generally. Decisive structural evidence: this is the only maintenance-commodity concept that is unmapped on all three tenures. The renter branch is otherwise 100 percent mapped (see structural_evidence.OWNER_RENTER_COUNTERPART_TEST), yet 990920 (renter) is unmapped alongside 990930 (owner) and 990940 (owned vacation). Tenure therefore cannot explain the exclusion; the concept does.",
+      "evidence_strength": "MODERATE",
+      "final_status": "OUT_OF_SCOPE",
+      "materiality_all_cu": 641.0,
+      "materiality_by_quintile": {
+        "Q1": 89.0,
+        "Q2": 105.0,
+        "Q3": 145.0,
+        "Q4": 80.0,
+        "Q5": 222.0
+      },
+      "output_node": null,
+      "output_uccs": [],
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_CAPITAL_IMPROVEMENT_v0_1",
+      "rule_type": "EXCLUDE",
+      "share_of_basis_pct": 0.0094,
+      "source_document_titles": [
+        "Handbook of Methods, Consumer Price Index: Concepts, 'Scope and exclusions'",
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey, Appendix B note 5"
+      ],
+      "source_labels": [
+        "Construction materials for jobs not started (renter)",
+        "Materials for additions, finishing basements, and remodeling rooms (renter)",
+        "Materials to finish basements, remodel rooms, or build patios or walkways (owned home)",
+        "Material for finishing basements and remodeling rooms (owned vacation)"
+      ],
+      "source_uccs": [
+        "790690",
+        "990920",
+        "990930",
+        "990940"
+      ],
+      "suppression_disposition": "AGGREGATE_TO_STABLE_LEVEL",
+      "suppression_note": "Computed by dmi_research.detailed_inflation.resolution: 13 of this rule's 24 population cells are suppressed, and in the worst population up to 52.2% of the rule's own possible total is unobserved, above the 25% threshold. Two of the four members (990930, 990940) are suppressed in all six populations. Spec section 16 requires such a rule to find an alternative source, aggregate to a sufficiently stable level, or remain blocked. The disposition here is to aggregate: the rule is not blocked because the EXCLUDE decision rests on the concordance evidence that capital improvement is unmapped on all three tenures, not on the magnitudes, and the magnitudes are bounded from the published BLS parent at no more than 0.0123% of the expenditure basis in any population. The suppressed cells are carried as bounded unknowns and are never coerced to zero. Any future use of this rule must consume it at the rule total, not at the individual UCC, because the individual UCC amounts are not published.",
+      "suppression_status": "MATERIAL",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "This is the one Track-A exclusion that Track B also excludes. Additions, finished basements, remodeled rooms and materials bought for jobs not started are capital acquisition that adds to the asset, not a recurring payment for current housing services. Milestone 2 section 7 requires current expense to be distinguished from capital acquisition, and this rule is where that distinction binds. Note that the labor component of these jobs is not in this rule; only materials UCCs appear as Milestone-1 exceptions.",
+        "treatment": "EXCLUDE_CAPITAL_ACQUISITION"
+      },
+      "transformation_formula": null,
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_capital_improvement_unmapped_on_all_tenures",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "Late fees on a mortgage payment (830111, 830112) are treated as a charge on the credit instrument, so they follow the interest treatment. This is the weaker member of the family: BLS does not name these codes, and they were introduced in CE quarter 2024-Q2. Their combined All-CU materiality is 21 million dollars, or 0.0003 percent of the basis, so the classification risk is negligible. Recorded here rather than silently absorbed.",
+        "This rule removes owner financing expenditure. Per Milestone 2 Section 6.5 it must not be applied independently of the Track-A rental-equivalence rule, or owner shelter cost would be removed without a replacement concept."
+      ],
+      "authoritative_basis": [
+        "CPI_HOM_CONCEPTS",
+        "CASEY_2010",
+        "CE_STUB_2024"
+      ],
+      "evidence_notes": "Two independent grounds, either of which is sufficient. First, scope: the CPI Handbook of Methods states 'Interest costs and finance charges are also out-of-scope', and mortgage interest, home-equity-loan interest and HELOC interest are interest by name and by CE stub placement (all eight UCCs sit under OWNMORTG or OWNVMORT, 'Mortgage interest and charges'). Second, method: Casey 2010 states that owned housing is 'adjusted from net out-of-pocket expense to eliminate investment elements', and the CPI prices owner shelter by rental equivalence rather than by the owner's financing outlay, so mortgage interest is displaced by the Track-A rental-equivalence concept rather than double counted.",
+      "evidence_strength": "STRONG",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": true,
+      "materiality_all_cu": 504695.0,
+      "materiality_by_quintile": {
+        "Q1": 19850.0,
+        "Q2": 37945.0,
+        "Q3": 72997.0,
+        "Q4": 126808.0,
+        "Q5": 247095.0
+      },
+      "output_node": null,
+      "output_uccs": [],
+      "phase_d_adjudication": {
+        "questions": [
+          {
+            "answer": "YES",
+            "finding": "Unchanged and independent of shelter. The CPI Handbook of Methods states that 'interest costs and finance charges are also out-of-scope', and all eight UCCs are interest or charges on a credit instrument by name and by CE stub placement. Milestone 2 graded this STRONG on two independent grounds and neither has moved.",
+            "question": "Is its BLS scope rationale still supported?"
+          },
+          {
+            "answer": "YES FOR THE PRIMARY RESIDENCE, NO FOR THE SECONDARY",
+            "finding": "494,917 million dollars of the 504,695 million claimed by this rule is primary-residence financing, whose replacement TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1 is now EFFECTIVE. 9,778 million is secondary-residence financing, whose replacement rule is PENDING. This rule is an EXCLUDE rule and adds no term, so its arithmetic does not require the replacement; the residual is nonetheless quantified in the accounting summary rather than absorbed.",
+            "question": "Is the required replacement estimate now available?"
+          },
+          {
+            "answer": "YES",
+            "finding": "The removed amounts are published CE aggregates, not estimates, so they carry no sampling error of this task's making. One member, 830112, is suppressed; its published sibling 830111 is 21 million dollars, which bounds the unobserved amount far below materiality.",
+            "question": "Is uncertainty adequately represented?"
+          },
+          {
+            "answer": "YES, AND IT IS WHAT PREVENTS IT",
+            "finding": "Retaining mortgage interest alongside the introduced rental equivalence would count owner shelter twice, since rental equivalence prices the whole flow of housing services including the financing embedded in a market rent. The audit matrix records that no member of this rule survives in Track A.",
+            "question": "Does acceptance avoid double counting?"
+          },
+          {
+            "answer": "YES",
+            "finding": "Each UCC is claimed by exactly one rule, which Milestone 2 verified and which is re-checked here. The owned-vacation members sit in this rule rather than in RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1 because the interest ground is STRONG and does not depend on the secondary-residence argument, which is Milestone 2's stated reason and is unchanged.",
+            "question": "Does the rule interact correctly with the other three?"
+          },
+          {
+            "answer": "YES, RECORDED, NOT BLOCKING",
+            "finding": "The secondary-residence members leave the basis while their rental-equivalence replacement is PENDING. That understates Track-A shelter by an amount that is reported, not corrected. It is not a reason to retain interest, because the CPI excludes interest for both tenures regardless of how the shelter flow is priced.",
+            "question": "Does any unresolved conceptual issue remain?"
+          }
+        ],
+        "transition": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE. The recorded blocker was that the PUMD annual-weighting and income-quintile procedure had not been benchmarked against published 2024 LB01 estimates. It has been: the frozen estimator passed the Phase-B confirmation on 111 previously unused UCCs and 666 cells, and reproduces the published shelter counterpart 910050 to within 1.41 percent.",
+        "warnings": [
+          "9,778 million dollars of owned-vacation financing leaves the basis under this rule while TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1 is PENDING. The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible."
+        ]
+      },
+      "resolution_state": "EFFECTIVE",
+      "review_blocker": null,
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+      "rule_type": "EXCLUDE",
+      "share_of_basis_pct": 7.3823,
+      "source_document_titles": [
+        "Handbook of Methods, Consumer Price Index: Concepts, 'Scope and exclusions'",
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey"
+      ],
+      "source_labels": [
+        "Mortgage interest (owned home)",
+        "Mortgage interest (owned vacation)",
+        "Interest paid, home equity loan (owned home)",
+        "Interest paid, home equity loan (owned vacation)",
+        "Late fee mortgage pay (owned home)",
+        "Late fee mortgage pay (owned vacation)",
+        "Interest paid, home equity line of credit (owned home)",
+        "Interest paid, home equity line of credit (owned vacation)"
+      ],
+      "source_uccs": [
+        "220311",
+        "220312",
+        "220313",
+        "220314",
+        "830111",
+        "830112",
+        "880110",
+        "880310"
+      ],
+      "suppression_note": "830112 (late fee, owned vacation) is suppressed for All Consumer Units and for four quintiles. Its published sibling 830111 is 21 million dollars, so the suppressed amount is bounded far below materiality.",
+      "suppression_status": "IMMATERIAL",
+      "track": "SHELTER_COUPLED",
+      "track_b": {
+        "price_index_needed": [
+          "A mortgage interest cost index. No published CPI series measures this. It would have to be constructed from a contract mortgage interest rate series and a loan-balance or house-price series, as the BLS HCI research work does. Constructing it is not authorized in Milestone 2.",
+          "A home-equity borrowing rate series for UCCs 220313, 220314, 880110 and 880310, which track a different instrument from first-lien mortgages and would move with short-term rates rather than 30-year mortgage rates."
+        ],
+        "rationale": "This expenditure is out of scope for Track A because the CPI prices owner-occupied shelter by rental equivalence and treats mortgage interest as the cost of an investment asset. Under a household-payments concept the opposite holds: contractual mortgage interest, home-equity interest and mortgage late fees are contemporaneous cash outlays that a household must meet, and the BLS Homeowner Cost Index research series retains mortgage interest for exactly this reason. This is the single largest concept difference between the two tracks.",
+        "treatment": "RETAIN_CURRENT_PAYMENT"
+      },
+      "transformation_formula": null,
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
+      "version": "0.1.0"
+    },
+    {
+      "blocker_kind": null,
+      "blocker_semantics": null,
+      "category": "maintenance_and_repair_services",
+      "effect_state": "EFFECTIVE",
+      "evidence_ids": [
+        "OER_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "TENANTS_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "CONCORDANCE_2024_UNMAPPED_MAINTENANCE_SERVICES",
+        "COUNTERPART_TEST_FALSIFIED"
+      ],
+      "evidence_strength": "MODERATE",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": true,
+      "materiality_all_cu": 199079.0,
+      "numerical_treatment_computable": true,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rationale": "Two independent current BLS factsheets state that most owner maintenance is out of scope and attribute the exclusion to rental equivalence. The pinned 2024-vintage concordance supplies the code-level membership the word 'most' leaves open: these four map to no ELI and so carry no CPI weight. That is the same evidentiary shape as the already-accepted mortgage-interest and property-tax rules, a current BLS scope statement joined to unmapped status, and the required transformation is removal, which needs no parameter. The predecessor's own criterion, the renter-counterpart test, is discarded rather than relied on: it is falsified by 230112, which shares the identical counterpart structure and is mapped. Graded MODERATE, not STRONG, because BLS nowhere states that these four UCCs are the maintenance it means; the join between the sentence and the codes is ours.",
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2",
+      "rule_type": "EXCLUDE",
+      "source_uccs": [
+        "230113",
+        "230114",
+        "230115",
+        "230151"
+      ],
+      "track": "SHELTER_COUPLED"
+    },
+    {
+      "blocker_kind": "BLOCKED_BY_UNESTABLISHED_CONCEPT",
+      "blocker_semantics": "No BLS source states how the CPI treats this concept at all. Not a missing number: a missing treatment.",
+      "category": "property_management",
+      "effect_state": "PENDING",
+      "evidence_ids": [
+        "RENTER_MEAN_WEIGHTING_CURRENT_VINTAGE"
+      ],
+      "evidence_strength": "WEAK",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": false,
+      "materiality_all_cu": 17688.0,
+      "numerical_treatment_computable": true,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rationale": "Property management is a purchased service, not maintenance of the structure, so the maintenance sentence does not reach it either. It is held separately from ground rent and parking because its evidentiary situation is different and worse: its own CE stub sibling under OWNMNAGE, 340911 'Management and upkeep services for security (owner)', IS mapped, to HP090. Two owner-only management services under one container, one mapped and one not, is precisely the pattern that falsified the counterpart test. Nothing here is strong enough to act on in either direction. Held at 17,688 million dollars.",
+      "review_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_PROPERTY_MANAGEMENT_v0_2",
+      "rule_type": "EXCLUDE",
+      "source_uccs": [
+        "230901"
+      ],
+      "track": "SHELTER_COUPLED"
+    },
+    {
+      "blocker_kind": "BLOCKED_BY_CONTRADICTORY_MEMBERSHIP",
+      "blocker_semantics": "The BLS concept is stated, but the code-level signals point both ways, so which side of the boundary this UCC falls on is not determinable from the published record.",
+      "category": "maintenance_and_repair_commodities",
+      "effect_state": "PENDING",
+      "evidence_ids": [
+        "OER_FS_MAINTENANCE_OUT_OF_SCOPE",
+        "COUNTERPART_TEST_FALSIFIED"
+      ],
+      "evidence_strength": "WEAK",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": false,
+      "materiality_all_cu": 3440.0,
+      "numerical_treatment_computable": true,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rationale": "Separated from the services because its code-level signals point the other way. 240213 is the only unmapped maintenance commodity in the owner branch: 240112, 240122, 240212, 240222, 240312, 240322, 320612 and 320632 are all mapped. Its renter counterpart 240211 names 'roofing, and gutters' explicitly and is mapped to HM090, and its nearest owner sibling 240212 is mapped to HM090 too. A clerical omission by BLS is at least as plausible as a scope decision, and this workstream has already recorded one such anomaly rather than resolving it. Excluding it would treat an absent row as permission. Held at 3,440 million dollars, visible, unapplied.",
+      "review_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_ROOF_MATERIALS_ANOMALY_v0_2",
+      "rule_type": "EXCLUDE",
+      "source_uccs": [
+        "240213"
+      ],
+      "track": "SHELTER_COUPLED"
+    },
+    {
+      "blocker_kind": "BLOCKED_BY_UNESTABLISHED_CONCEPT",
+      "blocker_semantics": "No BLS source states how the CPI treats this concept at all. Not a missing number: a missing treatment.",
+      "category": "ground_rent_and_parking",
+      "effect_state": "PENDING",
+      "evidence_ids": [
+        "RENTER_MEAN_WEIGHTING_CURRENT_VINTAGE"
+      ],
+      "evidence_strength": "WEAK",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": false,
+      "materiality_all_cu": 12574.0,
+      "numerical_treatment_computable": true,
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rationale": "Ground rent and parking at an owned dwelling are neither maintenance nor improvement nor interest nor tax, so the current factsheet sentence that carries the maintenance members does not reach them. Both are unmapped, but unmapped status on its own was graded MODERATE throughout this workstream and here there is no BLS principle to join it to. Two readings remain live and no published source chooses between them: out-of-scope payment for land, or a shelter cost already subsumed inside owners' equivalent rent. The second has a real hook -- the CPI's OER question asks what the home would rent for, and the CE rent question for renters explicitly includes garage and parking charges -- but that hook is a DMI reading, not a BLS statement, and it is recorded as a lead rather than applied.",
+      "review_status": "PROPOSED",
+      "rule_id": "OS_CPI_OWNER_SITE_PAYMENTS_v0_2",
+      "rule_type": "EXCLUDE",
+      "source_uccs": [
+        "210901",
+        "220901"
+      ],
+      "track": "SHELTER_COUPLED"
+    },
+    {
+      "assumptions": [
+        "Residential property tax is classified as a direct tax rather than an indirect tax on a consumer product. This follows the Handbook's own contrast between direct taxes and 'sales taxes and other indirect taxes paid on consumer products'.",
+        "This treatment is deliberately not extended to the vehicle personal property tax (950024). BLS itself bundles that levy into the vehicle registration fee concept and maps it to TF011, and the Handbook states that government fees are in scope. See TR_VEHICLE_REGISTRATION_FEES_v0_1.",
+        "Per Milestone 2 Section 6.5 this rule must not be applied independently of the Track-A rental-equivalence rule."
+      ],
+      "authoritative_basis": [
+        "CPI_HOM_CONCEPTS",
+        "CASEY_2010"
+      ],
+      "evidence_notes": "CPI Handbook of Methods, Concepts: 'The CPI excludes income tax and other direct taxes; however, it does include the effects of changes in sales taxes and other indirect taxes paid on consumer products.' Residential property tax is a direct tax on the owner. Independently, Casey 2010 establishes that owner housing cost is converted to rental equivalence to eliminate investment elements, which displaces property tax as a separately weighted item.",
+      "evidence_strength": "STRONG",
+      "final_status": "OUT_OF_SCOPE",
+      "is_applicable": true,
+      "materiality_all_cu": 387438.0,
+      "materiality_by_quintile": {
+        "Q1": 29410.0,
+        "Q2": 46225.0,
+        "Q3": 59585.0,
+        "Q4": 84772.0,
+        "Q5": 167445.0
+      },
+      "output_node": null,
+      "output_uccs": [],
+      "phase_d_adjudication": {
+        "questions": [
+          {
+            "answer": "YES",
+            "finding": "Unchanged. The Handbook states that 'the CPI excludes income tax and other direct taxes', and residential property tax is a direct tax on the owner. Graded STRONG at Milestone 2 and not revisited here.",
+            "question": "Is its BLS scope rationale still supported?"
+          },
+          {
+            "answer": "YES FOR THE PRIMARY RESIDENCE, NO FOR THE SECONDARY",
+            "finding": "371,669 million dollars is primary-residence property tax and 15,769 million is owned-vacation property tax. The same asymmetry as the mortgage rule, reported the same way.",
+            "question": "Is the required replacement estimate now available?"
+          },
+          {
+            "answer": "YES",
+            "finding": "Both members are published, unsuppressed CE aggregates.",
+            "question": "Is uncertainty adequately represented?"
+          },
+          {
+            "answer": "YES",
+            "finding": "A market rent embeds the landlord's property tax. Pricing owner shelter by rental equivalence and also charging the owner's tax bill would count it twice.",
+            "question": "Does acceptance avoid double counting?"
+          },
+          {
+            "answer": "YES",
+            "finding": "Milestone 2 deliberately did not extend this treatment to the vehicle personal property tax, which BLS itself bundles into the registration-fee concept. That boundary is untouched.",
+            "question": "Does the rule interact correctly with the other three?"
+          },
+          {
+            "answer": "YES, RECORDED, NOT BLOCKING",
+            "finding": "The owned-vacation member, as with the mortgage rule.",
+            "question": "Does any unresolved conceptual issue remain?"
+          }
+        ],
+        "transition": "PROPOSED/PENDING -> ACCEPTED/EFFECTIVE, on the same cleared benchmark blocker as the mortgage-interest rule.",
+        "warnings": [
+          "15,769 million dollars of owned-vacation property tax leaves the basis while TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1 is PENDING."
+        ]
+      },
+      "resolution_state": "EFFECTIVE",
+      "review_blocker": null,
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+      "rule_type": "EXCLUDE",
+      "share_of_basis_pct": 5.6672,
+      "source_document_titles": [
+        "Handbook of Methods, Consumer Price Index: Concepts, 'Scope and exclusions'",
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey"
+      ],
+      "source_labels": [
+        "Property taxes (owned home)",
+        "Property taxes (owned vacation)"
+      ],
+      "source_uccs": [
+        "220211",
+        "220212"
+      ],
+      "suppression_status": "NONE",
+      "track": "SHELTER_COUPLED",
+      "track_b": {
+        "price_index_needed": [
+          "An effective residential property tax index, i.e. assessed value multiplied by the applicable millage rate. No published CPI series measures this and no BLS series is pinned for it in this milestone."
+        ],
+        "rationale": "Out of scope for Track A because the CPI treats residential property tax as a cost of owning the asset rather than a price of shelter consumption. Under a payments concept property tax is a recurring compulsory outlay tied to occupancy of the dwelling and is retained, consistent with the BLS HCI treatment.",
+        "treatment": "RETAIN_CURRENT_PAYMENT"
+      },
+      "transformation_formula": null,
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_shelter_rules_are_not_yet_accepted",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "The CE titles are taken at face value: a 'finance charge' line in the CE is the interest and carrying cost of vehicle credit, not a fee for a separable service. The CE stub parent VEHFINCH corroborates this.",
+        "Vehicle-related fees that are not finance charges are handled elsewhere. In particular, registration and personal property tax are handled by TR_VEHICLE_REGISTRATION_FEES_v0_1 and are not excluded here."
+      ],
+      "authoritative_basis": [
+        "CPI_HOM_CONCEPTS",
+        "CASEY_2010"
+      ],
+      "evidence_notes": "CPI Handbook of Methods, Concepts: 'Interest costs and finance charges are also out-of-scope.' Casey 2010: 'interest payments are also excluded.' All four UCCs sit under CE stub parent VEHFINCH 'Vehicle finance charges' and each title states a finance charge explicitly, satisfying the Milestone 2 Section 9 requirement that each affected UCC be verified as genuinely a finance or interest charge rather than assumed from its parent. None appears in any of the five concordance vintages examined.",
+      "evidence_strength": "STRONG",
+      "final_status": "OUT_OF_SCOPE",
+      "materiality_all_cu": 56713.0,
+      "materiality_by_quintile": {
+        "Q1": 2747.0,
+        "Q2": 6498.0,
+        "Q3": 10128.0,
+        "Q4": 17188.0,
+        "Q5": 20152.0
+      },
+      "output_node": null,
+      "output_uccs": [],
+      "review_status": "ACCEPTED",
+      "rule_id": "OS_CPI_VEHICLE_FINANCE_CHARGES_v0_1",
+      "rule_type": "EXCLUDE",
+      "share_of_basis_pct": 0.8296,
+      "source_document_titles": [
+        "Handbook of Methods, Consumer Price Index: Concepts, 'Scope and exclusions'",
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey"
+      ],
+      "source_labels": [
+        "Automobile finance charges",
+        "Truck finance charges",
+        "Motorcycle and plane finance charges",
+        "Other vehicle finance charges"
+      ],
+      "source_uccs": [
+        "510110",
+        "510901",
+        "510902",
+        "850300"
+      ],
+      "suppression_status": "NONE",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
+        "treatment": "NOT_APPLICABLE"
+      },
+      "transformation_formula": null,
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_finance_uccs_are_unmapped",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "This is classified REPLACE rather than EXCLUDE. BLS documents that secondary-residence owner cost is priced by rental equivalence, so the expenditure is displaced by a different concept rather than removed from the consumption universe. The competing reading, that these are simply excluded as investment in real estate, cannot be ruled out from the published record; it is recorded here as the documented alternative. Under either reading the amount leaves the CE-outlay basis, so the reconciliation identity is unaffected. What differs is only whether the amount is reported as replaced or as out of scope.",
+        "Owned-vacation-home mortgage interest (220312, 220314, 830112, 880310) and property tax (220212) are members of this same CE branch but are claimed by OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1 and OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1 respectively, because those have independent STRONG scope grounds that do not depend on the secondary-residence argument. Each UCC is claimed by exactly one rule.",
+        "990940 'Material for finishing basements and remodeling rooms (owned vacation)' is a member of this CE branch but is claimed by OS_CPI_CAPITAL_IMPROVEMENT_v0_1, so that the capital-improvement concept is treated identically across all three tenures.",
+        "Per Milestone 2 Section 6.5 this rule must not be applied independently of the Track-A rental-equivalence rule."
+      ],
+      "authoritative_basis": [
+        "CASEY_2010",
+        "CE_STUB_2024",
+        "CE_CPI_CONCORDANCE_2024"
+      ],
+      "evidence_notes": "Casey Appendix B note 2: 'In order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure.' Structural corroboration: every single UCC under the CE stub branch 'Shelter > Other lodging > Owned vacation homes' (containers OWVHOME, OWVEXPEN, OWVREPSV, OWVREPSP, OWVMISC, OWVMNAGE, OWNVMORT) is unmapped in the pinned concordance, while the corresponding primary-residence codes are largely mapped (for example 240112, 240212, 240222, 240312, 240322, 320612, 320625, 320632, 220121, 340911). The branch is excluded as a whole, not item by item, which is what a single aggregate consumption factor applied to total secondary-home owner expenditure would produce.",
+      "evidence_strength": "MODERATE",
+      "final_status": "TRANSFORMED",
+      "is_applicable": false,
+      "materiality_all_cu": 12620.0,
+      "materiality_by_quintile": {
+        "Q1": 451.0,
+        "Q2": 1221.0,
+        "Q3": 1314.0,
+        "Q4": 5347.0,
+        "Q5": 4291.0
+      },
+      "output_node": "SHELTER",
+      "output_uccs": [],
+      "phase_d_adjudication": {
+        "questions": [
+          {
+            "answer": "YES",
+            "finding": "Casey 2010 Appendix B note 2 documents that the CPI prices secondary homes and timeshares by rental equivalence, and Milestone 2's structural check that the entire owned-vacation CE stub branch is unmapped in the concordance is unchanged.",
+            "question": "Is its BLS scope rationale still supported?"
+          },
+          {
+            "answer": "NO",
+            "finding": "This is a REPLACE rule. Its transformation formula removes the fifteen owned-vacation outlays and adds the secondary-residence rental-equivalence amount. That addend is supplied by TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1, which is PENDING because 910106 failed adjudication and because the BLS consumption factor is unpublished. Executing the formula would require substituting zero for the missing component or inferring it from 910102, both of which are forbidden.",
+            "question": "Is the required replacement estimate now available?"
+          },
+          {
+            "answer": "PARTLY",
+            "finding": "The removed side is published and exact, though 320633 is suppressed and eight of fifteen members are suppressed in Q1. The added side has no defensible value, which is not a wide interval but an absence.",
+            "question": "Is uncertainty adequately represented?"
+          },
+          {
+            "answer": "NOT REACHED",
+            "finding": "The question does not arise while the rule is PENDING.",
+            "question": "Does acceptance avoid double counting?"
+          },
+          {
+            "answer": "YES",
+            "finding": "It claims only the owned-vacation codes that the STRONG interest and direct-tax rules do not claim, and it cedes 990940 to the capital-improvement rule so that concept is treated identically across tenures. That partition is unchanged.",
+            "question": "Does the rule interact correctly with the other three?"
+          },
+          {
+            "answer": "YES, BLOCKING",
+            "finding": "Milestone 2 recorded a competing reading under which these outlays are simply excluded as real-estate investment rather than replaced. Under that reading the rule needs no addend and could be accepted today. The published record does not settle which reading is right, and choosing the convenient one to obtain closure is not an argument.",
+            "question": "Does any unresolved conceptual issue remain?"
+          }
+        ],
+        "transition": "PROPOSED/PENDING preserved. The benchmark blocker is cleared; the replacement this rule has to add is still not statable.",
+        "warnings": []
+      },
+      "replacement_concept": "Secondary-residence rental equivalence, supplied by the Track-A shelter rule.",
+      "residual_review": {
+        "blockers": [
+          {
+            "affects_uccs": [
+              "910105",
+              "910106",
+              "910107"
+            ],
+            "blocker_id": "SECONDARY_CONSUMPTION_PORTION_FACTOR_UNPUBLISHED",
+            "blocker_kind": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+            "blocker_semantics": "BLS states that a transformation is applied but does not publish the number. The concept is established; the arithmetic is not available. Parameter uncertainty.",
+            "independent_of": "UCC_910106_DEGENERATE_VARIANCE",
+            "uncertainty_kind": "PARAMETER",
+            "what_would_clear_it": "A current BLS source stating the consumption-portion factor, or stating that the CE addenda amounts enter the CPI weight unmodified for this concept."
+          },
+          {
+            "affects_uccs": [
+              "910106"
+            ],
+            "blocker_id": "UCC_910106_DEGENERATE_VARIANCE",
+            "blocker_kind": "BLOCKED_BY_DEGENERATE_VARIANCE",
+            "blocker_semantics": "A microdata estimate this rule depends on failed its usability tests because the replicate-based variance estimator is degenerate rather than merely imprecise. Sampling uncertainty.",
+            "independent_of": "SECONDARY_CONSUMPTION_PORTION_FACTOR_UNPUBLISHED",
+            "uncertainty_kind": "SAMPLING",
+            "what_would_clear_it": "A PUMD vintage in which 910106 has records in Q1 and a non-degenerate replicate variance in Q2, or a published BLS aggregate for the concept that does not depend on the DMI estimator."
+          }
+        ],
+        "evidence_ids": [
+          "SECONDARY_OER_IN_CURRENT_CPI",
+          "SECONDARY_TYPES_POOLED_AND_UNSAMPLED",
+          "OWNED_VACATION_BRANCH_FULLY_UNMAPPED",
+          "CASEY_NOTE_2_CONSUMPTION_PORTION",
+          "SECONDARY_CONSUMPTION_FACTOR_CURRENT_VINTAGE",
+          "UCC_910106_DEGENERATE_VARIANCE"
+        ],
+        "evidence_strength": "MODERATE",
+        "numerical_treatment_computable": false,
+        "predecessor_review_blocker_note": "The predecessor's review_blocker field is retained above, unedited. It ran two distinct limitations together in one paragraph. The blockers list here separates them without deleting the original wording.",
+        "rationale": "Status unchanged, evidence improved. The milestone recorded that the REPLACE reading could not be separated from a plain EXCLUDE reading on the published record; the current OER factsheet separates them, because the displacing item demonstrably exists, is named, and carries weight. The structural check that the whole owned-vacation branch is unmapped is re-verified against the pinned concordance rather than restated. The rule nonetheless stays PROPOSED, and the reason is the task's own standard: a REPLACE rule may be accepted only when all its required transformations are reproducible, and the replacement is not.",
+        "review_status": "PROPOSED",
+        "reviewed_by": "SHELTER_RESIDUALS_2024",
+        "status_changed": false,
+        "track_a_effect": "None. The fifteen members stay in the pending bucket. Accepting this rule would have moved 12,620 million dollars out of the basis with nothing entering in its place, enlarging the already-reported understatement to 38,167. That is the direction the evidence would have pushed, and it was not taken, because the evidence does not reach the replacement."
+      },
+      "resolution_state": "PENDING",
+      "review_blocker": "The replacement amount this rule must add is not available. The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible. Separately, whether these outlays are replaced or simply excluded is not settled by the published record, and the two readings differ in what the rule has to supply.",
+      "review_status": "PROPOSED",
+      "rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "rule_type": "REPLACE",
+      "share_of_basis_pct": 0.1846,
+      "source_document_titles": [
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey, Appendix B note 2",
+        "Consumer Expenditure Surveys hierarchical grouping file CE-HG-Integ-2024.txt, branch Shelter > Other lodging > Owned vacation homes"
+      ],
+      "source_labels": [
+        "Ground rent (owned vacation)",
+        "Homeowners insurance (owned vacation)",
+        "Parking (owned vacation)",
+        "Repair and remodeling services (owned vacation)",
+        "Property management (owned vacation)",
+        "Paints, wallpaper, and supplies (owned vacation)",
+        "Tools and equipment for painting and wallpapering (owned vacation)",
+        "Materials for plastering, paneling, roofing, gutters, downspouts, siding, windows, doors, screens, and awnings (owned vacation)",
+        "Material for patio, walk, fence, drive, masonry, brick, and stucco (owned vacation)",
+        "Plumbing supplies and equipment (owned vacation)",
+        "Electrical supplies, heating, and cooling equipment (owned vacation)",
+        "Material for insulation, other maintenance, and repair (owned vacation)",
+        "Flooring installation, repair, and replacement (owned vacation)",
+        "Materials for landscaping maintenance (owned vacation)",
+        "Management and upkeep services for security (owned vacation)"
+      ],
+      "source_uccs": [
+        "210902",
+        "220122",
+        "220902",
+        "230152",
+        "230902",
+        "240113",
+        "240123",
+        "240214",
+        "240223",
+        "240313",
+        "240323",
+        "320613",
+        "320626",
+        "320633",
+        "340912"
+      ],
+      "suppression_note": "320633 is suppressed for All Consumer Units and several quintiles; 8 of 15 UCCs are suppressed in Q1. The suppressed members are the smallest codes in a branch whose published total is 0.18 percent of basis, so the exposure is bounded well below materiality.",
+      "suppression_status": "IMMATERIAL",
+      "track": "SHELTER_COUPLED",
+      "track_b": {
+        "price_index_needed": [
+          "The same CPI maintenance, repair, insurance and utility component indexes used for the primary-residence counterparts would apply. No secondary-residence-specific CPI series exists, so Track B would have to assume primary-residence price change applies to secondary residences. That assumption is untested here."
+        ],
+        "rationale": "Track A replaces these owner outlays with rental equivalence for the secondary residence. A payments concept performs no such substitution: the household's actual outlays on the vacation or secondary home are the contemporaneous payments, so the recorded CE amounts are retained as-is. Track B therefore does not inherit the Track-A replacement and is not blocked by the unresolved rental-equivalence question.",
+        "treatment": "RETAIN_CURRENT_PAYMENT"
+      },
+      "transformation_formula": "Removed: sum of E(u) over the source UCCs. Added: the Track-A secondary-residence rental-equivalence amount, which is supplied by the Track-A shelter rule and is not computed here. Per the Milestone 2 amendment, the replacement amount is not required to equal the removed amount.",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owned_vacation_branch_is_wholly_unmapped",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "The amount introduced is the CE ADDENDA rental-equivalence aggregate. Whether BLS applies a further adjustment before this becomes a CPI expenditure weight is not established; the provenance registry records cpi_adjustment_status as INFERRED.",
+        "A withheld UCC is not replaced by zero. Where one is listed in withheld_uccs the introduced amount is incomplete by that item and the rule says so rather than presenting a total."
+      ],
+      "authoritative_basis": [
+        "CE_CPI_CONCORDANCE_2024",
+        "CASEY_2010"
+      ],
+      "destination_eli": "HC011",
+      "destination_eli_title": "Owners' Equivalent Rent Of Primary Residence",
+      "estimate_quality": {
+        "910104": "HIGH"
+      },
+      "evidence_strength": "STRONG",
+      "final_status": "INTRODUCED",
+      "is_applicable": true,
+      "materiality_all_cu": 2493830.812994,
+      "materiality_by_quintile": {
+        "Q1": 238213.442108,
+        "Q2": 348688.881735,
+        "Q3": 409607.013756,
+        "Q4": 565762.947078,
+        "Q5": 931558.528318
+      },
+      "materiality_source": "Estimated from the 2024 CE Interview PUMD by the frozen estimator, spec v0.1. These are DMI estimates, not published BLS aggregates, and the distinction is why they are recorded in their own field rather than alongside the published materialities of the exclusion rules.",
+      "output_node": "SHELTER",
+      "output_uccs": [
+        "910104"
+      ],
+      "resolution_state": "EFFECTIVE",
+      "review_blocker": null,
+      "review_status": "ACCEPTED",
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1",
+      "rule_type": "INTRODUCE",
+      "source_labels": [
+        "Estimated monthly rental value of owned home"
+      ],
+      "source_uccs": [
+        "910104"
+      ],
+      "suppression_status": "NONE",
+      "tenure": "PRIMARY_RESIDENCE",
+      "track": "SHELTER_COUPLED",
+      "track_b": {
+        "rationale": "A household-payments concept imputes no rent. The absence is by construction, not a gap in the data.",
+        "treatment": "NOT_INTRODUCED"
+      },
+      "transformation_formula": "Added: the estimated annual rental-equivalence aggregate for the admitted UCCs above. Removed: nothing. This rule introduces a concept; the outlays it displaces are removed by their own rules and no arithmetic here depends on those amounts.",
+      "transition": "NEW. Milestone 2 made four rules conditional on a Track-A rental-equivalence rule that the v0.1 registry does not contain. This is that rule for the primary residence.",
+      "version": "0.1.0",
+      "withheld_uccs": []
+    },
+    {
+      "assumptions": [
+        "The amount introduced is the CE ADDENDA rental-equivalence aggregate. Whether BLS applies a further adjustment before this becomes a CPI expenditure weight is not established; the provenance registry records cpi_adjustment_status as INFERRED.",
+        "A withheld UCC is not replaced by zero. Where one is listed in withheld_uccs the introduced amount is incomplete by that item and the rule says so rather than presenting a total."
+      ],
+      "authoritative_basis": [
+        "CE_CPI_CONCORDANCE_2024",
+        "CASEY_2010"
+      ],
+      "destination_eli": "HC090",
+      "destination_eli_title": "Unsampled residual shelter ELI",
+      "estimate_quality": {
+        "910105": "MODERATE",
+        "910106": "UNUSABLE",
+        "910107": "LOW"
+      },
+      "evidence_strength": "MODERATE",
+      "final_status": "INTRODUCED",
+      "is_applicable": false,
+      "materiality_all_cu": 102234.815688,
+      "materiality_by_quintile": {
+        "Q1": 5644.978548,
+        "Q2": 11114.301339,
+        "Q3": 11083.088795,
+        "Q4": 20948.843428,
+        "Q5": 53443.603578999995
+      },
+      "materiality_source": "Estimated from the 2024 CE Interview PUMD by the frozen estimator, spec v0.1. These are DMI estimates, not published BLS aggregates, and the distinction is why they are recorded in their own field rather than alongside the published materialities of the exclusion rules.",
+      "output_node": "SHELTER",
+      "output_uccs": [
+        "910105",
+        "910106",
+        "910107"
+      ],
+      "residual_review": {
+        "blockers": [
+          {
+            "affects_uccs": [
+              "910105",
+              "910106",
+              "910107"
+            ],
+            "blocker_id": "SECONDARY_CONSUMPTION_PORTION_FACTOR_UNPUBLISHED",
+            "blocker_kind": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+            "blocker_semantics": "BLS states that a transformation is applied but does not publish the number. The concept is established; the arithmetic is not available. Parameter uncertainty.",
+            "independent_of": "UCC_910106_DEGENERATE_VARIANCE",
+            "uncertainty_kind": "PARAMETER",
+            "what_would_clear_it": "A current BLS source stating the consumption-portion factor, or stating that the CE addenda amounts enter the CPI weight unmodified for this concept."
+          },
+          {
+            "affects_uccs": [
+              "910106"
+            ],
+            "blocker_id": "UCC_910106_DEGENERATE_VARIANCE",
+            "blocker_kind": "BLOCKED_BY_DEGENERATE_VARIANCE",
+            "blocker_semantics": "A microdata estimate this rule depends on failed its usability tests because the replicate-based variance estimator is degenerate rather than merely imprecise. Sampling uncertainty.",
+            "independent_of": "SECONDARY_CONSUMPTION_PORTION_FACTOR_UNPUBLISHED",
+            "uncertainty_kind": "SAMPLING",
+            "what_would_clear_it": "A PUMD vintage in which 910106 has records in Q1 and a non-degenerate replicate variance in Q2, or a published BLS aggregate for the concept that does not depend on the DMI estimator."
+          }
+        ],
+        "evidence_ids": [
+          "SECONDARY_OER_IN_CURRENT_CPI",
+          "SECONDARY_TYPES_POOLED_AND_UNSAMPLED",
+          "CASEY_NOTE_2_CONSUMPTION_PORTION",
+          "SECONDARY_CONSUMPTION_FACTOR_CURRENT_VINTAGE",
+          "UCC_910106_DEGENERATE_VARIANCE"
+        ],
+        "evidence_strength": "MODERATE",
+        "numerical_treatment_computable": false,
+        "predecessor_review_blocker_note": "The predecessor's review_blocker field is retained above, unedited. It ran two distinct limitations together in one paragraph. The blockers list here separates them without deleting the original wording.",
+        "rationale": "Status unchanged. What changes is that its single blocker is split into two, because the milestone's wording ran them together and they are not the same kind of problem and will not be fixed by the same thing. Parameter uncertainty: the consumption-portion factor is historical only, with no current counterpart located. Sampling uncertainty: 910106 has no records in Q1 and a degenerate replicate variance in Q2. Clearing either one alone leaves the rule blocked on the other.",
+        "review_status": "PROPOSED",
+        "reviewed_by": "SHELTER_RESIDUALS_2024",
+        "status_changed": false,
+        "track_a_effect": "None. The secondary rental-equivalence amount of 102,235 million dollars still does not enter Track A."
+      },
+      "resolution_state": "PENDING",
+      "review_blocker": "The secondary-residence rental-equivalence concept has three components and 910106 is not admissible: it failed both usability tests in Phase C6. Its Q1 cell has no records and its Q2 cell has 22 of 44 replicate estimates at exactly zero, so the variance estimator is degenerate rather than merely imprecise. Substituting zero for it is forbidden, and inferring it from its published counterpart 910102 is forbidden, so the replacement amount cannot be stated. Casey 2010 Appendix B note 2 states that 'in order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure'. The factor is not published. BLS therefore does not use the CE addenda amounts unmodified for this concept, and this task has no basis for reconstructing what it does use. This blocker is independent of the 910106 problem and would remain even if 910106 were admissible.",
+      "review_status": "PROPOSED",
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1",
+      "rule_type": "INTRODUCE",
+      "source_labels": [
+        "Estimated monthly rental value of vacation home not available for rent",
+        "Estimated monthly rental value of vacation home available for rent",
+        "Estimated annual rental value of timeshare"
+      ],
+      "source_uccs": [
+        "910105",
+        "910106",
+        "910107"
+      ],
+      "suppression_status": "NONE",
+      "tenure": "SECONDARY_RESIDENCE",
+      "track": "SHELTER_COUPLED",
+      "track_b": {
+        "rationale": "A household-payments concept imputes no rent. The absence is by construction, not a gap in the data.",
+        "treatment": "NOT_INTRODUCED"
+      },
+      "transformation_formula": "Added: the estimated annual rental-equivalence aggregate for the admitted UCCs above. Removed: nothing. This rule introduces a concept; the outlays it displaces are removed by their own rules and no arithmetic here depends on those amounts.",
+      "transition": "NEW. The secondary-residence half of the Track-A rental-equivalence dependency Milestone 2 named. It is written down so that the rules depending on it have something real to depend on, and it is written down PENDING because it is.",
+      "version": "0.1.0",
+      "withheld_uccs": [
+        "910106"
+      ]
+    },
+    {
+      "b5_outcome": "C",
+      "blocker_kind": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+      "blocker_semantics": "BLS states that a transformation is applied but does not publish the number. The concept is established; the arithmetic is not available. Parameter uncertainty.",
+      "blockers": [
+        {
+          "blocker_id": "INSURANCE_CONTENTS_FACTOR_UNPUBLISHED",
+          "blocker_kind": "BLOCKED_BY_UNPUBLISHED_PARAMETER",
+          "blocker_semantics": "BLS states that a transformation is applied but does not publish the number. The concept is established; the arithmetic is not available. Parameter uncertainty.",
+          "uncertainty_kind": "PARAMETER",
+          "what_would_clear_it": "BLS publishing the median ratio it derives from the National Association of Insurance Commissioners data, or publishing the derived in-scope share of homeowner insurance spending, for the 2024 weighting vintage."
+        }
+      ],
+      "category": "homeowners_insurance",
+      "effect_state": "PENDING",
+      "evidence_ids": [
+        "CASEY_NOTE_3_INSURANCE_43_PCT",
+        "INSURANCE_PARTIAL_INCLUSION_CURRENT",
+        "INSURANCE_NAIC_METHOD_SINCE_2025",
+        "INSURANCE_CONTENTS_ONLY_SCOPE",
+        "INSURANCE_FACTOR_VALUE_2024_VINTAGE",
+        "INSURANCE_METHOD_APPLIES_TO_2024_WEIGHTS"
+      ],
+      "evidence_strength": "STRONG_CONCEPT_NO_PARAMETER",
+      "factor_applied": null,
+      "factor_not_applied_note": "No factor is stored on this rule, deliberately. Storing 0.43 with is_applicable false would leave a superseded number one edit away from being used.",
+      "final_status": "TRANSFORMED",
+      "is_applicable": false,
+      "materiality_all_cu": 100026.0,
+      "numerical_treatment_computable": false,
+      "predecessor_rule_id": null,
+      "rationale": "New rule, written because the shelter milestone had no rule for this at all: 220121 was simply retained at 100 percent. Outcome C of the five the task allows. The conceptual treatment is established by a current BLS factsheet -- only a portion of homeowner insurance spending enters the weight, and the in-scope part is contents coverage -- while the numerical transformation is blocked, because the factor's value is not published. Outcome A is excluded affirmatively rather than left unproven: the derivation was replaced in January 2025 with a National Association of Insurance Commissioners method, so 43 percent is superseded, not merely unconfirmed.",
+      "review_status": "PROPOSED",
+      "rule_id": "TR_CPI_HOMEOWNERS_INSURANCE_CONTENTS_PORTION_v0_1",
+      "rule_type": "TRANSFORM",
+      "source_uccs": [
+        "220121"
+      ],
+      "track": "SHELTER_COUPLED",
+      "track_a_effect": "None. 220121 stays RETAINED at its full 100,026 million dollars and is flagged an upper bound. This is not an exception to the rule that a PROPOSED rule has no effect; it is that rule applied correctly to a transform. Not applying a partial-retention transform leaves the amount as recorded. Moving it to the pending bucket instead would remove it from the CPI basis entirely, which would assert that none of it is in scope -- a claim current BLS text directly contradicts. The pending bucket is the right home for an amount whose direction is unknown; a retained upper bound is the right home for an amount BLS confirms is partly in scope by an unpublished fraction."
+    },
+    {
+      "assumptions": [
+        "BLS does not publish a concordance row for 470311 in any of the five vintages examined. TB022's expenditure weight is instead carried by 470111 and 470113 under the special adjustment factors of trailer note (1). The concordance is therefore acting as a weight-source mapping here, not as a scope statement, and its silence on 470311 does not place EV charging out of scope. The two Handbook and factsheet quotations are what establish scope.",
+        "No double count arises: 470111, 470113 and 470311 are disjoint CE leaves that reconcile to the published GASFUEL parent.",
+        "Away-from-home charging only. Home charging is measured inside residential electricity (HF011) and is not affected by this rule."
+      ],
+      "authoritative_basis": [
+        "CPI_HOM_APPENDIX_2",
+        "CPI_FACTSHEET_MOTOR_FUEL",
+        "CE_STUB_2024"
+      ],
+      "evidence_notes": "Milestone 2 Section 11 forbids assigning EV charging by analogy alone and requires an authoritative treatment. Two current BLS sources name electricity as a motor fuel explicitly. Appendix 2, TB022 'Alternative motor fuels': 'All automotive motor fuels other than gasoline and diesel. Includes biodiesel, ethanol, electric, CNG (compressed natural gas) and hydrogen that is sold for use in consumer automobiles for use on public roads/streets.' The CPI motor fuel factsheet: 'The other motor fuels index is composed of automotive diesel fuel and alternative motor fuels such as Ethanol..., biodiesel, natural gas, and electricity that is sold for use in consumer automobiles.' The CPI item structure places TB022 under SETB02 'Other motor fuels' within SETB 'Motor fuel'. On the CE side, 470311 sits under stub parent GASFUEL 'Gasoline and other fuels' alongside 470111, 470112 and 470113. The CE question wording (VOPELEC) restricts 470311 to charging away from home, so it does not overlap residential electricity (HF011).",
+      "evidence_strength": "MODERATE",
+      "evidence_strength_note": "Scope is established by tier-1 current BLS sources naming electricity as an alternative motor fuel, which is STRONG. It is graded MODERATE overall because BLS does not name UCC 470311 anywhere, so the link from this specific CE code to TB022 rests on the CE stub placement and the away-from-home question wording rather than on a BLS statement.",
+      "final_status": "TRANSFORMED",
+      "materiality_all_cu": 1352.0,
+      "materiality_by_quintile": {
+        "Q1": 1.0,
+        "Q2": 102.0,
+        "Q3": 80.0,
+        "Q4": 180.0,
+        "Q5": 990.0
+      },
+      "open_questions": [
+        "BLS has published no statement on how, or whether, 470311 enters the CPI weight for TB022.",
+        "BLS has published no EV-charging price-collection methodology, and there is no published CPI series more granular than SETB02 'Other motor fuels'.",
+        "The date at which 'electric' was added to the TB022 definition could not be established: the Internet Archive availability and CDX APIs returned HTTP 503 throughout the attempt."
+      ],
+      "output_eli": "TB022",
+      "output_node": "MOTOR_FUEL",
+      "output_uccs": [
+        "470311"
+      ],
+      "review_status": "ACCEPTED",
+      "rule_id": "TR_EV_CHARGING_v0_1",
+      "rule_type": "REASSIGN",
+      "share_of_basis_pct": 0.0198,
+      "source_document_titles": [
+        "Handbook of Methods, Consumer Price Index, Appendix 2: Content of CPI Entry Level Items, TB022 'Alternative motor fuels'",
+        "Measuring Price Change in the CPI: Motor fuel",
+        "Consumer Expenditure Surveys hierarchical grouping file CE-HG-Integ-2024.txt, parent GASFUEL"
+      ],
+      "source_labels": [
+        "Electric vehicle charging"
+      ],
+      "source_uccs": [
+        "470311"
+      ],
+      "suppression_status": "NONE",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
+        "treatment": "NOT_APPLICABLE"
+      },
+      "transformation_formula": "E_node(MOTOR_FUEL) += E(470311). No amount is created or destroyed.",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_ev_charging_node_and_disjointness",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "BLS does not publish the special adjustment factors used to split trip food across food ELIs. DMI does not need them: every food ELI prefix maps to node FOOD and both alcohol prefixes map to node ALCOHOLIC_BEVERAGES, so the destination node is invariant to the split. See structural_evidence.TRIP_FOOD_NODE_INVARIANCE.",
+        "Alcohol purchased on trips is assumed to follow the same allocation mechanism as trip food. Casey attaches the same footnote marker to the alcohol groups FW and FX, which supports this."
+      ],
+      "authoritative_basis": [
+        "CASEY_2010",
+        "CE_CPI_CONCORDANCE_2024"
+      ],
+      "evidence_notes": "Casey Appendix B note 1: 'CE collects food at home while on vacation expenditures as a separate category. For CPI use, these expenditures are allocated across all food expenditure classes.' The pinned concordance carries the corresponding BLS trailer note: '(1) - These CE expenditures are allocated to multiple ELIs in the CPI using special adjustment factors.' Footnote marker (1) is attached at group level to every food and alcohol group in Casey Appendix B (FA, FB, FC through FV for food, FW and FX for alcohol). These three UCCs are absent from Casey Appendix B's UCC lists, which is consistent with their being distributed into other classes rather than carried as their own mapped line. This expenditure is in scope for the CPI; it is not excluded.",
+      "evidence_strength": "STRONG",
+      "final_status": "TRANSFORMED",
+      "materiality_all_cu": 90717.0,
+      "materiality_by_quintile": {
+        "Q1": 5121.0,
+        "Q2": 7221.0,
+        "Q3": 13478.0,
+        "Q4": 22430.0,
+        "Q5": 42465.0
+      },
+      "output_node": {
+        "190903": "FOOD",
+        "190904": "FOOD",
+        "200900": "ALCOHOLIC_BEVERAGES"
+      },
+      "output_uccs": [
+        "190903",
+        "190904",
+        "200900"
+      ],
+      "review_status": "ACCEPTED",
+      "rule_id": "TR_TRIP_FOOD_ALCOHOL_v0_1",
+      "rule_type": "REASSIGN",
+      "share_of_basis_pct": 1.327,
+      "source_document_titles": [
+        "An Overview of the CPI's Requirements of the Consumer Expenditure Survey, Appendix B note 1",
+        "Appendix 5. CE UCC to CPI ELI concordance, BLS trailer note (1)"
+      ],
+      "source_labels": [
+        "Food on out of town trips",
+        "Food prepared by consumer unit on out of town trips",
+        "Alcoholic beverages purchased on trips"
+      ],
+      "source_uccs": [
+        "190903",
+        "190904",
+        "200900"
+      ],
+      "suppression_status": "NONE",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
+        "treatment": "NOT_APPLICABLE"
+      },
+      "transformation_formula": "E_node(FOOD) += E(190903) + E(190904); E_node(ALCOHOLIC_BEVERAGES) += E(200900). No amount is created or destroyed.",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_trip_food_allocation_is_node_invariant",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "510115 does not appear in cx.item because it carries PUBFLAG=1 ('Not published') in the CE microdata. It is therefore a CONCORDANCE_ONLY_UCC rather than a published CE UCC, and its absence from the published item file is expected, not an error.",
+        "The record-level identity was verified on 2024 Interview data. The rule asserts the identity for 2024 only; a later CE vintage must be re-verified before the rule version is carried forward.",
+        "Combining at the population level assumes the identity holds within each income quintile, which follows from its holding on every individual record."
+      ],
+      "authoritative_basis": [
+        "CE_CPI_CONCORDANCE_2024",
+        "CPI_HOM_APPENDIX_2",
+        "CPI_HOM_CONCEPTS",
+        "CE_CPI_CONCORDANCE_ARCHIVE",
+        "CASEY_2010"
+      ],
+      "evidence_notes": "Four independent legs. (1) The pinned concordance maps CE successor code 510115 'Veh Registration Incl Prop Tax' to TF011. (2) CE 2024 Interview PUMD: 510115 equals 520110 plus 950024 on 4785 of 4785 records, 100.0 percent, aggregate 894639 + 383417 = 1278056. (3) The 2020, 2022 and 2024 concordance vintages mapped the predecessor codes 520111 + 520112 + 950024 to the same TF011; only the CE coding changed, not the CPI concept. (4) BLS ELI definition for TF011: 'Includes the price for initial issue and renewal of private passenger vehicle registration, operator license, and learner permit as required by the state government... Includes all fees and surcharges which must be paid simultaneously with registration and licensing.' This also resolves the apparent tension with the CPI's exclusion of direct taxes: BLS classifies the vehicle personal property levy as part of a registration fee, and the Handbook states government fees are in scope.",
+      "evidence_strength": "STRONG",
+      "final_status": "TRANSFORMED",
+      "materiality_all_cu": 28734.0,
+      "materiality_by_quintile": {
+        "Q1": 2413.0,
+        "Q2": 3900.0,
+        "Q3": 5323.0,
+        "Q4": 7076.0,
+        "Q5": 10023.0
+      },
+      "output_eli": "TF011",
+      "output_node": "TRANSPORT_SERVICES",
+      "output_uccs": [
+        "510115"
+      ],
+      "review_status": "ACCEPTED",
+      "rule_id": "TR_VEHICLE_REGISTRATION_FEES_v0_1",
+      "rule_type": "COMBINE",
+      "share_of_basis_pct": 0.4203,
+      "source_document_titles": [
+        "Appendix 5. CE UCC to CPI ELI concordance (August 2026), row 510115 -> TF011",
+        "Handbook of Methods, Consumer Price Index, Appendix 2: Content of CPI Entry Level Items, TF011",
+        "Handbook of Methods, Consumer Price Index: Concepts, 'Scope and exclusions'"
+      ],
+      "source_labels": [
+        "State and local vehicle registration",
+        "Vehicle personal property taxes"
+      ],
+      "source_uccs": [
+        "520110",
+        "950024"
+      ],
+      "suppression_status": "NONE",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "Track B is a sensitivity on owner-occupied shelter only (Milestone 2 section 3.2 and section 7). This rule covers no owner-occupied shelter expenditure, so it carries no Track-B treatment and is unaffected by the shelter concept choice.",
+        "treatment": "NOT_APPLICABLE"
+      },
+      "transformation_formula": "E(510115, p) = E(520110, p) + E(950024, p) for each population p. The combined amount maps to ELI TF011 and thence to node TRANSPORT_SERVICES.",
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_registration_combine_destination",
+      "version": "0.1.0"
+    },
+    {
+      "assumptions": [
+        "A Diary-versus-Interview source-selection explanation was tested for 300900 and 340913 and rejected: Diary-sourced UCCs are widely mapped in the pinned concordance (190 Diary rows against 434 Interview rows), so the collection instrument alone does not explain the omission."
+      ],
+      "authoritative_basis": [],
+      "evidence_notes": "No authoritative BLS treatment was found for these eleven UCCs. Per Milestone 2 Section 5.3 no classification is invented for them. Each carries a candidate destination recorded purely as a research lead; candidates are never applied and never enter any reconciliation total.",
+      "evidence_strength": "WEAK",
+      "final_status": "UNRESOLVED",
+      "go_no_go_note": "Milestone 2 Section 20.1 targets zero unresolved expenditure but forbids distorting the methodology to reach it. The residual is 0.1602 percent of the 6836520 million dollar basis. It is recommended for approval as a known limitation under Section 20.1, with 340915 (0.088 percent) as the single item that would most reduce it if BLS confirms a destination.",
+      "materiality_all_cu": 10951.0,
+      "materiality_by_quintile": {
+        "Q1": 822.0,
+        "Q2": 1192.0,
+        "Q3": 1819.0,
+        "Q4": 2767.0,
+        "Q5": 4351.0
+      },
+      "members": [
+        {
+          "candidate_eli": "HP090",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Home security system service fees",
+          "materiality_all_cu": 6028.0,
+          "note": "Largest unresolved item. Sibling 340911 'Management and upkeep services for security (owned)' maps to HP090, and 340903, 340914, 340420, 340421, 340422 also map to HP090, so HP090 is the obvious candidate. It is not applied: BLS has never mapped this code in any of the five vintages examined, and a monitored-alarm subscription is a plausible distinct concept from the mapped siblings. Recommended BLS query.",
+          "share_of_basis_pct": 0.0882,
+          "ucc": "340915"
+        },
+        {
+          "candidate_eli": "HP041",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Home warranties, maintenance, repairs, or services contracts on household appliances (owner), new UCC 2024-Q2",
+          "materiality_all_cu": 2827.0,
+          "note": "Successor concept to 230142 'Repair of built-in appliances (through 2024-Q1)', which maps to HP041. Not applied: a warranty or service contract is an insurance-like prepayment rather than a repair purchase, and BLS has not stated how the recoding is handled.",
+          "share_of_basis_pct": 0.0414,
+          "ucc": "230143"
+        },
+        {
+          "candidate_eli": "HP041",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Home warranties, maintenance, repairs, or services contracts on household appliances (renter), new UCC 2024-Q2",
+          "materiality_all_cu": 146.0,
+          "note": "Renter counterpart of 230143; same reasoning. Notable because it is one of only three unmapped codes in an otherwise fully mapped renter maintenance branch.",
+          "share_of_basis_pct": 0.0021,
+          "ucc": "230144"
+        },
+        {
+          "candidate_eli": "HK090",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Miscellaneous household appliances",
+          "materiality_all_cu": 1378.0,
+          "note": "Diary-sourced residual under CE stub parent MAJAPPL, where every named appliance pair maps to an HK ELI. HK090 'unsampled' is the natural residual. Not applied: BLS has never mapped it, and Casey 2010 records that owner appliance expenditure is adjusted using renter means, so a residual code spanning both tenures may be handled differently.",
+          "share_of_basis_pct": 0.0202,
+          "ucc": "300900"
+        },
+        {
+          "candidate_eli": "HP090",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Repair of miscellaneous household equipment and furnishings",
+          "materiality_all_cu": 341.0,
+          "note": "Diary-sourced. Siblings 340620 (appliance repair) map to HP041 and 340901 (tool and lawn equipment repair and rental) maps to HM090, so the concept is split across two existing ELIs and no single destination is determinable.",
+          "share_of_basis_pct": 0.005,
+          "ucc": "340913"
+        },
+        {
+          "candidate_eli": "TA031",
+          "candidate_node": "TRANSPORT_SERVICES",
+          "label": "Extra fees for car/truck lease",
+          "materiality_all_cu": 200.0,
+          "note": "All four siblings under CE stub parent LEASVEH (450350, 450352, 450353, 450354) map to TA031. Not applied because 'extra fees' is undefined in the CE documentation and may consist of finance charges, which the CPI excludes; assigning it to TA031 would be an analogy, not evidence.",
+          "share_of_basis_pct": 0.0029,
+          "ucc": "450351"
+        },
+        {
+          "anomaly": true,
+          "candidate_eli": "HP090",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Septic tank cleaning (renter), new UCC 2024-Q2",
+          "materiality_all_cu": 31.0,
+          "note": "Probable BLS clerical omission, recorded as an anomaly rather than resolved. Its owner twin 270907 'Septic tank cleaning (owner), new UCC 2024-Q2' maps to HP090, and both predecessors 270901 (renter) and 270902 (owner) map to HP090. BLS mapped both the owner and renter members of the parallel water-softening 2024-Q2 recoding (340421 and 340422). No scope rationale excludes a renter code while including its owner twin, since the investment adjustment runs in the opposite direction. Per Section 5.3 no assignment is invented. Recommended BLS query.",
+          "share_of_basis_pct": 0.0005,
+          "ucc": "270906"
+        },
+        {
+          "candidate_eli": "ED041",
+          "candidate_node": "EDUCATION_COMMUNICATION",
+          "label": "Phone cards",
+          "materiality_all_cu": null,
+          "note": "Suppressed for All Consumer Units. The 2020 concordance vintage mapped 270104 to ED041; the 2022 and later vintages dropped it. Sibling 270106 'Residential telephone including VOIP' maps to ED041. The mapping was withdrawn by BLS, so re-applying it would contradict the pinned concordance.",
+          "ucc": "270104"
+        },
+        {
+          "candidate_eli": null,
+          "candidate_node": null,
+          "label": "Septic tank cleaning (owned vacation), through 2024-Q1",
+          "materiality_all_cu": null,
+          "note": "Suppressed for All Consumer Units. Discontinued code with no 2024-Q2 successor in the stub.",
+          "ucc": "270903"
+        },
+        {
+          "candidate_eli": null,
+          "candidate_node": null,
+          "label": "Septic tank cleaning (rented vacation), through 2024-Q1",
+          "materiality_all_cu": null,
+          "note": "Suppressed for All Consumer Units. Discontinued code with no 2024-Q2 successor in the stub.",
+          "ucc": "270904"
+        },
+        {
+          "candidate_eli": "HK090",
+          "candidate_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+          "label": "Rental and installation of dishwashers, range hoods, and garbage disposals",
+          "materiality_all_cu": null,
+          "note": "Suppressed for All Consumer Units. Sibling 340907 'Appliance rentals' maps to HK090, but 990900 conflates rental with installation, and installation of built-in appliances maps to HP043 via 230117 and 230118. The concept spans two ELIs, so no single destination is determinable.",
+          "ucc": "990900"
+        }
+      ],
+      "output_node": null,
+      "output_uccs": [],
+      "review_status": "OPEN",
+      "rule_id": "UNRESOLVED_v0_2",
+      "rule_type": "UNRESOLVED",
+      "share_of_basis_pct": 0.1602,
+      "source_document_titles": [],
+      "source_uccs": [
+        "230143",
+        "230144",
+        "270104",
+        "270903",
+        "270904",
+        "270906",
+        "300900",
+        "340913",
+        "340915",
+        "450351",
+        "990900"
+      ],
+      "suppression_note": "Computed by dmi_research.detailed_inflation.resolution: 27 suppressed cells, but at most 9.4% of the rule's possible total is unobserved and the bound is at most 0.0123% of the expenditure basis. This field grades exposure to suppression only. That these UCCs have no established CE-to-CPI scope treatment is a separate defect recorded by review_status OPEN and by the per-member notes; it is not a suppression problem and must not be conflated with one.",
+      "suppression_status": "IMMATERIAL",
+      "track": "NON_SHELTER",
+      "track_b": {
+        "price_index_needed": [],
+        "rationale": "These UCCs have no established Track-A scope treatment, and with the exception of the one transportation member their Track-B relevance cannot be stated without the same missing evidence. Assigning them a Track-B treatment would be a guess dressed as a finding.",
+        "treatment": "UNRESOLVED",
+        "treatment_by_ucc": {
+          "450351": "NOT_APPLICABLE"
+        }
+      },
+      "transformation_formula": null,
+      "validation_test": "tests/test_detailed_inflation_milestone_2.py::TestScopeRuleRegistry::test_candidate_nodes_are_never_applied",
+      "version": "0.2.0"
+    }
+  ],
+  "rules_added_in_v0_2": [
+    "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1",
+    "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1"
+  ],
+  "sources": {
+    "CASEY_2010": {
+      "author": "Casey, W.",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "quoted_passages": [
+        "CPI's expenditure scope is net out-of-pocket-expense for market goods and services.",
+        "Investments like stocks, bonds, real estate, business expenses, and life insurance are considered non-consumption by the CPI.",
+        "Illegal goods, gambling winnings and losses, fines, cash gifts, child support, alimony payments, and interest payments are also excluded.",
+        "There are several exceptions to the net out-of-pocket expense approach: owned housing, maintenance and repair of owned housing, and major appliances for owned housing are adjusted from net out-of-pocket expense to eliminate investment elements.",
+        "Owner expenditures on major appliances and home maintenance and repair are based on the corresponding mean expenditures of renters and likelihood of renters to purchase those types of appliances.",
+        "Appendix B note 1: CE collects food at home while on vacation expenditures as a separate category. For CPI use, these expenditures are allocated across all food expenditure classes.",
+        "Appendix B note 2: In order to price the rental equivalence of secondary homes and timeshares, CPI uses a factor to account for the consumption portion of a homeowner's total expenditure.",
+        "Appendix B note 3: It is required that CPI reduce the homeowners insurance weight to reflect only the renter's part of the owner's expenditure. The factor applied is 43%.",
+        "Appendix B note 4: Renter UCCs are paired with homeowner UCCs for calculation of rental equivalence adjustments.",
+        "Appendix B note 5: Maintenance to one's home can be considered an investment. For this reason, an allocation factor is applied to remove investment expense from the total consumption expenditure."
+      ],
+      "tier": "4 (BLS methodological paper). Used for principles and for corroborating structural evidence. Its Appendix B UCC lists describe a superseded CE vintage and are never used on their own to determine a current mapping.",
+      "title": "An Overview of the CPI's Requirements of the Consumer Expenditure Survey"
+    },
+    "CE_CPI_CONCORDANCE_2024": {
+      "pinned_artifact": "registry/research/ucc_eli_concordance_2024_v0_1.tsv",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "source_sha256": "769d578cd7964cbbe24330cc4cac1e068a6fc68f426615d41ae533d8cd13f430",
+      "tier": "3 (official concordance)",
+      "title": "Appendix 5. CE UCC to CPI ELI concordance (August 2026 publication, sheet UTEM_2024)"
+    },
+    "CE_CPI_CONCORDANCE_ARCHIVE": {
+      "finding": "Across five concordance vintages spanning 2020 to the pinned August-2026 file, only 2 of the 58 Milestone-1 exception UCCs ever carried a row: 270104 (ED041, 2020 vintage only) and 950024 (TF011, 2020/2022/2024 vintages). The other 56 have never been mapped in any vintage examined. This makes the absence a stable multi-year pattern rather than a lag in the current file, which is separately confirmed by the fact that 11 of the 16 UCCs newly introduced in CE quarter 2024-Q2 are already mapped in the pinned concordance.",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "tier": "5 (archived BLS documents). Used only as negative/corroborating historical evidence, never to determine a current mapping.",
+      "title": "Archived CE-CPI concordance vintages (2020, 2022, 2024, 2025 publications)"
+    },
+    "CE_STUB_2024": {
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "tier": "2 (current CE program documentation)",
+      "title": "Consumer Expenditure Surveys hierarchical grouping file CE-HG-Integ-2024.txt",
+      "url": "https://www.bls.gov/cex/pumd/stubs.zip"
+    },
+    "CPI_FACTSHEET_MOTOR_FUEL": {
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "tier": "1 (current BLS factsheet)",
+      "title": "Measuring Price Change in the CPI: Motor fuel",
+      "url": "https://www.bls.gov/cpi/factsheets/motor-fuel.htm"
+    },
+    "CPI_HOM_APPENDIX_2": {
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "tier": "1 (current BLS Handbook of Methods)",
+      "title": "Handbook of Methods, Consumer Price Index, Appendix 2: Content of CPI Entry Level Items",
+      "url": "https://www.bls.gov/cpi/additional-resources/entry-level-item-descriptions.htm",
+      "workbook": "entry-level-item-descriptions.xlsx, sheet 'webfile'"
+    },
+    "CPI_HOM_CONCEPTS": {
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "quoted_passages": [
+        "The CPI covers the consumption sector of the U.S. economy, which is defined as the purchase of goods and services for use by households. Consequently, the CPI excludes investment items, such as stocks, bonds, real estate, and business expenses.",
+        "Purchases of houses, antiques, and collectibles are viewed as investment expenditures and therefore excluded.",
+        "Interest costs and finance charges are also out-of-scope.",
+        "The CPI excludes income tax and other direct taxes; however, it does include the effects of changes in sales taxes and other indirect taxes paid on consumer products.",
+        "The CPI treats any changes to fees that the government charges for items, such as admission to a national park, as in-scope changes in price."
+      ],
+      "tier": "1 (current BLS Handbook of Methods)",
+      "title": "Handbook of Methods, Consumer Price Index: Concepts, section 'Scope and exclusions'",
+      "url": "https://www.bls.gov/opub/hom/cpi/concepts.htm"
+    }
+  },
+  "status": "RESEARCH_ONLY",
+  "structural_evidence": {
+    "OWNER_RENTER_COUNTERPART_TEST": {
+      "description": "A reproducible test over the 2024 CE stub and the pinned concordance. It evaluates Casey Appendix B note 4 ('Renter UCCs are paired with homeowner UCCs for calculation of rental equivalence adjustments') against the actual mapping pattern of the owned-dwellings and rented-dwellings maintenance branches.",
+      "interpretation": "The CE renter branch carries a single generic maintenance-service code (230150) while the CE owner branch is split into structure-system trades. CPI weights the owner side from the renter counterpart per Casey notes 3 to 5. Where no renter counterpart exists, there is no consumption portion to pair and the owner amount is treated as investment in the structure. This is the documented basis for OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1.",
+      "known_exception_to_the_pattern": "340911 (management and upkeep services for security, owned) is mapped to HP090 'Unsampled Household Operations' without an explicit renter counterpart. HP090 is a residual 'unsampled' ELI, so this does not contradict the pairing principle for sampled ELIs, but it is recorded here rather than suppressed.",
+      "reproduced_by_test": true,
+      "result_owned_dwellings": "Under OWNDWELL, an owner maintenance UCC is mapped if and only if a renter UCC expressing the same concept exists. Mapped owner/renter pairs: 240112/240111, 240122/240121, 240212/240211, 240222/240221, 240312/240311, 240322/240321, 320612/320611, 320625/320624, 320632/320631, 230142/230141, 230112->HP043 alongside 230150->HP043, 220121->HD011 alongside 350110->HD011. Unmapped owner UCCs having no renter counterpart: 230113 (plumbing service), 230114 (heat/AC/electrical service), 230115 (roofing service), 230151 (other repair service), 240213 (roof and gutter materials), 230901 (property management), 210901 (ground rent), 220901 (parking).",
+      "result_rented_dwellings": "Every maintenance and repair commodity and service UCC under RNTDWELL is mapped, with exactly three exceptions: 230144 (home warranties, introduced 2024-Q2), 990920 (materials for additions/finishing basements/remodeling), and 790690 (construction materials for jobs not started).",
+      "validation_test": [
+        "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owner_renter_counterpart_structure",
+        "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_owner_renter_counterexception_is_disclosed",
+        "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_rented_dwelling_branch_has_exactly_three_unmapped_codes"
+      ]
+    },
+    "TRIP_FOOD_NODE_INVARIANCE": {
+      "description": "Casey Appendix B note 1 states that vacation food expenditure is allocated across all food expenditure classes using special adjustment factors that BLS does not publish. The DMI node assignment is nonetheless determinate.",
+      "reproduced_by_test": true,
+      "result": "Every ELI prefix reachable from the CE food groups (FA through FT and FV) resolves to node FOOD in eli_to_node_map_v0_1, and both alcohol prefixes (FW, FX) resolve to node ALCOHOLIC_BEVERAGES. The allocation is therefore node-invariant: whatever weights BLS uses internally, the destination node is unchanged.",
+      "validation_test": [
+        "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_trip_food_allocation_is_node_invariant"
+      ]
+    },
+    "VEHICLE_REGISTRATION_COMBINE_IDENTITY": {
+      "corroboration": "The 2020, 2022 and 2024 concordance vintages map 520111 + 520112 + 950024 to TF011. The 2025 and pinned August-2026 vintages map the single successor code 510115 to TF011. The CPI concept is unchanged across the CE recoding.",
+      "description": "CE 2024 Interview PUMD record-level identity supporting the COMBINE transformation.",
+      "not_reproduced_reason": "The record-level identity is asserted from the 2024 CE Interview PUMD MTBI files, which are not distributed with this repository, so no committed test reproduces it. The concordance-side claim the COMBINE rule depends on, that 510115 resolves to the single ELI TF011, is reproduced by tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_registration_combine_destination. Reproducing the 4785-of-4785 record identity as a regression test is outstanding work.",
+      "reproduced_by_test": false,
+      "result": "In the 2024 Interview MTBI files, UCC 510115 equals UCC 520110 plus UCC 950024 on 4785 of 4785 records (100.0%). Aggregate check: 894639 + 383417 = 1278056.",
+      "validation_test": [
+        "tests/test_detailed_inflation_milestone_2.py::TestStructuralEvidence::test_vehicle_registration_combine_destination"
+      ]
+    }
+  },
+  "suppression_status_semantics": {
+    "IMMATERIAL": "Suppressed cells exist but are bounded below both thresholds.",
+    "MATERIAL": "Suppressed cells breach a threshold. Section 16 then requires an alternative source, aggregation to a stable level, or a block; the choice is recorded in suppression_disposition.",
+    "NONE": "No member has a suppressed aggregate in any population.",
+    "_bound_method": "BLS publishes the parent aggregate even where it suppresses child cells. Suppressed children therefore cannot jointly exceed max(0, published_parent - sum_of_published_children) + rounding_bound.",
+    "_note": "Milestone 2 section 16. These values are computed by dmi_research.detailed_inflation.resolution from published BLS parent aggregates and are asserted equal to the values declared here by tests/test_detailed_inflation_milestone_2.py. They are not hand-graded.",
+    "_thresholds": {
+      "basis_share_pct": 0.05,
+      "rule_unobserved_share_pct": 25.0
+    }
+  },
+  "track_b_treatment_semantics": {
+    "EXCLUDE_CAPITAL_ACQUISITION": "Capital acquisition that adds to the housing asset. Excluded from a current-payments measure as well as from Track A.",
+    "NOT_APPLICABLE": "The rule covers no owner-occupied shelter expenditure.",
+    "RETAIN_CURRENT_PAYMENT": "A contemporaneous household outlay on housing, retained under a payments/HCI-style concept even where Track A excludes or replaces it.",
+    "UNRESOLVED": "Track-B relevance cannot be established on the available evidence.",
+    "_note": "Milestone 2 section 7. Track B is a research comparison only; section 3.3 forbids treating it as authorization to change Baseline or Core. No inflation calculation is performed in this milestone."
+  },
+  "version": "0.3",
+  "why_two_rules_were_added": "Every one of the four shelter-coupled rules in v0.1 was made conditional on 'the Track-A rental-equivalence rule'. No such rule was ever written. The condition could not be met by producing evidence, because there was nothing for the evidence to attach to. These two rules are that missing dependency, split along the split the pinned BLS concordance already makes between HC011 and HC090."
+}

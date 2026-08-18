@@ -1415,6 +1415,7 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
             Path("dmi_research/detailed_inflation/provenance.py"),
             Path("registry/research/ucc_provenance_classes_v0_1.json"),
             Path("registry/research/ucc_provenance_classes_v0_3.json"),
+            Path("registry/research/ucc_provenance_classes_v0_4.json"),
             Path("tests/test_detailed_inflation_milestone_2.py"),
             Path("docs/research/DETAILED_INFLATION_MILESTONE_2.md"),
         }
@@ -1456,6 +1457,7 @@ class TestProvenanceClassIsNotAnEvidenceClaim(unittest.TestCase):
         for path in (
             REPO_ROOT / "registry/research/ucc_provenance_classes_v0_1.json",
             REPO_ROOT / "registry/research/ucc_provenance_classes_v0_3.json",
+            REPO_ROOT / "registry/research/ucc_provenance_classes_v0_4.json",
         ):
             with self.subTest(registry=path.name):
                 registry = json.loads(path.read_text(encoding="utf-8"))
