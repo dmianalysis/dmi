@@ -1,0 +1,309 @@
+{
+  "archive_members_verified": {
+    "mtbi241x.csv": "4c16f43f908c1d45cb0d26f5708719f43d2acef8dc9c607a7a6d7be379564f06",
+    "mtbi242.csv": "a4d5f82b0f77fe22ea1b76f22905df32663b3331d44da8e41fff484f498f85d0",
+    "mtbi243.csv": "b89c9f6afab262d5173da04d1e15981f2e15fa57da6be043e3a25c386b3bb539",
+    "mtbi244.csv": "90f8102af12cd60a211ce8055f96040a0a8701388723ddc1b751c2d92e16c136",
+    "mtbi251.csv": "40bf770c31a286ac9b07c41ab79dc74a3a57d7a85d6ebb14a828ee10e6010a33"
+  },
+  "benchmark_year": 2024,
+  "observations": {
+    "910050": {
+      "distinct_newids_all_reference_years": 15378,
+      "distinct_newids_in_benchmark_year": 14299,
+      "pubflag_tally": {
+        "2": 46134
+      },
+      "records_all_reference_years": 46134,
+      "records_by_file": {
+        "mtbi241x.csv": 9336,
+        "mtbi242.csv": 9219,
+        "mtbi243.csv": 9054,
+        "mtbi244.csv": 9213,
+        "mtbi251.csv": 9312
+      },
+      "records_by_reference_year": {
+        "2023": 6322,
+        "2024": 36748,
+        "2025": 3064
+      },
+      "records_in_benchmark_year": 36748,
+      "ucc": "910050"
+    },
+    "910101": {
+      "distinct_newids_all_reference_years": 614,
+      "distinct_newids_in_benchmark_year": 565,
+      "pubflag_tally": {
+        "2": 2070
+      },
+      "records_all_reference_years": 2070,
+      "records_by_file": {
+        "mtbi241x.csv": 525,
+        "mtbi242.csv": 411,
+        "mtbi243.csv": 390,
+        "mtbi244.csv": 384,
+        "mtbi251.csv": 360
+      },
+      "records_by_reference_year": {
+        "2023": 347,
+        "2024": 1603,
+        "2025": 120
+      },
+      "records_in_benchmark_year": 1603,
+      "ucc": "910101"
+    },
+    "910102": {
+      "distinct_newids_all_reference_years": 85,
+      "distinct_newids_in_benchmark_year": 79,
+      "pubflag_tally": {
+        "2": 291
+      },
+      "records_all_reference_years": 291,
+      "records_by_file": {
+        "mtbi241x.csv": 72,
+        "mtbi242.csv": 63,
+        "mtbi243.csv": 75,
+        "mtbi244.csv": 51,
+        "mtbi251.csv": 30
+      },
+      "records_by_reference_year": {
+        "2023": 47,
+        "2024": 233,
+        "2025": 11
+      },
+      "records_in_benchmark_year": 233,
+      "ucc": "910102"
+    },
+    "910103": {
+      "distinct_newids_all_reference_years": 253,
+      "distinct_newids_in_benchmark_year": 233,
+      "pubflag_tally": {
+        "2": 897
+      },
+      "records_all_reference_years": 897,
+      "records_by_file": {
+        "mtbi241x.csv": 219,
+        "mtbi242.csv": 192,
+        "mtbi243.csv": 156,
+        "mtbi244.csv": 180,
+        "mtbi251.csv": 150
+      },
+      "records_by_reference_year": {
+        "2023": 140,
+        "2024": 708,
+        "2025": 49
+      },
+      "records_in_benchmark_year": 708,
+      "ucc": "910103"
+    },
+    "910104": {
+      "distinct_newids_all_reference_years": 15373,
+      "distinct_newids_in_benchmark_year": 14296,
+      "pubflag_tally": {
+        "1": 46119
+      },
+      "records_all_reference_years": 46119,
+      "records_by_file": {
+        "mtbi241x.csv": 9327,
+        "mtbi242.csv": 9216,
+        "mtbi243.csv": 9051,
+        "mtbi244.csv": 9213,
+        "mtbi251.csv": 9312
+      },
+      "records_by_reference_year": {
+        "2023": 6315,
+        "2024": 36740,
+        "2025": 3064
+      },
+      "records_in_benchmark_year": 36740,
+      "ucc": "910104"
+    },
+    "910105": {
+      "distinct_newids_all_reference_years": 614,
+      "distinct_newids_in_benchmark_year": 565,
+      "pubflag_tally": {
+        "1": 2070
+      },
+      "records_all_reference_years": 2070,
+      "records_by_file": {
+        "mtbi241x.csv": 525,
+        "mtbi242.csv": 411,
+        "mtbi243.csv": 390,
+        "mtbi244.csv": 384,
+        "mtbi251.csv": 360
+      },
+      "records_by_reference_year": {
+        "2023": 347,
+        "2024": 1603,
+        "2025": 120
+      },
+      "records_in_benchmark_year": 1603,
+      "ucc": "910105"
+    },
+    "910106": {
+      "distinct_newids_all_reference_years": 15,
+      "distinct_newids_in_benchmark_year": 15,
+      "pubflag_tally": {
+        "1": 45
+      },
+      "records_all_reference_years": 45,
+      "records_by_file": {
+        "mtbi241x.csv": 9,
+        "mtbi242.csv": 3,
+        "mtbi243.csv": 18,
+        "mtbi244.csv": 6,
+        "mtbi251.csv": 9
+      },
+      "records_by_reference_year": {
+        "2023": 3,
+        "2024": 40,
+        "2025": 2
+      },
+      "records_in_benchmark_year": 40,
+      "ucc": "910106"
+    },
+    "910107": {
+      "distinct_newids_all_reference_years": 251,
+      "distinct_newids_in_benchmark_year": 231,
+      "pubflag_tally": {
+        "1": 891
+      },
+      "records_all_reference_years": 891,
+      "records_by_file": {
+        "mtbi241x.csv": 216,
+        "mtbi242.csv": 192,
+        "mtbi243.csv": 156,
+        "mtbi244.csv": 180,
+        "mtbi251.csv": 147
+      },
+      "records_by_reference_year": {
+        "2023": 139,
+        "2024": 705,
+        "2025": 47
+      },
+      "records_in_benchmark_year": 705,
+      "ucc": "910107"
+    }
+  },
+  "phase": "C1",
+  "preserved_claim_checks": [
+    {
+      "claim": "RECORD_COUNT",
+      "claimed": 46119,
+      "measured": 46119,
+      "note": "counting basis ALL_REFERENCE_YEARS; the calendar-year-eligible count the estimator consumes is 36740",
+      "status": "MATCH",
+      "ucc": "910104"
+    },
+    {
+      "claim": "RECORD_COUNT",
+      "claimed": 2070,
+      "measured": 2070,
+      "note": "counting basis ALL_REFERENCE_YEARS; the calendar-year-eligible count the estimator consumes is 1603",
+      "status": "MATCH",
+      "ucc": "910105"
+    },
+    {
+      "claim": "RECORD_COUNT",
+      "claimed": 45,
+      "measured": 45,
+      "note": "counting basis ALL_REFERENCE_YEARS; the calendar-year-eligible count the estimator consumes is 40",
+      "status": "MATCH",
+      "ucc": "910106"
+    },
+    {
+      "claim": "RECORD_COUNT",
+      "claimed": 891,
+      "measured": 891,
+      "note": "counting basis ALL_REFERENCE_YEARS; the calendar-year-eligible count the estimator consumes is 705",
+      "status": "MATCH",
+      "ucc": "910107"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "1",
+      "measured": "1",
+      "note": "uniform across 46119 rows",
+      "status": "MATCH",
+      "ucc": "910104"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "1",
+      "measured": "1",
+      "note": "uniform across 2070 rows",
+      "status": "MATCH",
+      "ucc": "910105"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "1",
+      "measured": "1",
+      "note": "uniform across 45 rows",
+      "status": "MATCH",
+      "ucc": "910106"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "1",
+      "measured": "1",
+      "note": "uniform across 891 rows",
+      "status": "MATCH",
+      "ucc": "910107"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "2",
+      "measured": "2",
+      "note": "uniform across 46134 rows",
+      "status": "MATCH",
+      "ucc": "910050"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "2",
+      "measured": "2",
+      "note": "uniform across 2070 rows",
+      "status": "MATCH",
+      "ucc": "910101"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "2",
+      "measured": "2",
+      "note": "uniform across 291 rows",
+      "status": "MATCH",
+      "ucc": "910102"
+    },
+    {
+      "claim": "PUBFLAG",
+      "claimed": "2",
+      "measured": "2",
+      "note": "uniform across 897 rows",
+      "status": "MATCH",
+      "ucc": "910103"
+    }
+  ],
+  "prior_manual_counting_basis": "ALL_REFERENCE_YEARS",
+  "prior_observation_citation": "registry/research/ucc_provenance_classes_v0_1.json :: pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE",
+  "pubflag_dictionary": {
+    "agrees_with_expectation": true,
+    "code_meanings": {
+      "1": "Not published",
+      "2": "Published in Integrated Bulletin"
+    },
+    "path": "/Users/tcw/dev/dmi-data/pumd/2024/docs/ce-pumd-interview-diary-dictionary.xlsx",
+    "rows_read": [
+      12899,
+      12901
+    ],
+    "sheet": "Codes ",
+    "variable_description": "Is amount included in published reports?",
+    "workbook_sha256": "613810d32de105bcd32fa9030d378472afb4dab23d1922be7b71b0c522d0334c",
+    "workbook_sha256_matches_registry": true
+  },
+  "pubflag_partition_corroborated": true,
+  "source_registry": "registry/research/pumd_2024_interview_source_v0_1.json",
+  "source_reproduction_status": "REPRODUCED",
+  "status": "RESEARCH_ONLY"
+}
