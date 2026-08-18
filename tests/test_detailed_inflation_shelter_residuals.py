@@ -41,6 +41,7 @@ from __future__ import annotations
 import ast
 import csv
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -487,6 +488,246 @@ class TestOwnerStructureSplit(BuiltOnce, unittest.TestCase):
         self.assertEqual(
             {row["category"] for row in rows}, set(coverage["in_this_matrix"])
         )
+
+
+# ---------------------------------------------------------------------------
+# Group 3b: concordance absence corroborates, it does not prove
+# ---------------------------------------------------------------------------
+
+
+# An absence marker says something is missing from the crosswalk. A conclusion
+# marker says a concept gets no CPI weight. A sentence asserting both, with no
+# qualifier, is the prohibited inference: no row therefore no weight.
+ABSENCE_MARKERS = (
+    "unmapped",
+    "no eli",
+    "no direct eli",
+    "no row",
+    "absence of a row",
+    "absence of a concordance row",
+    "map to no",
+    "maps to no",
+)
+CONCLUSION_MARKERS = (
+    "carries no cpi",
+    "carry no cpi",
+    "receives no cpi",
+    "receive no cpi",
+    "no cpi expenditure weight",
+    "no cpi weight",
+    "excluded from cpi",
+    "excluded from the cpi",
+    "is out of scope",
+    "are out of scope",
+)
+# Phrases that mark the sentence as disclaiming the inference rather than
+# making it. Deliberately explicit: a bare "not" would let a real violation
+# through on any sentence that happened to contain a negation elsewhere.
+QUALIFIER_MARKERS = (
+    "not by itself",
+    "not, by itself",
+    "corroborat",
+    "not a demonstration",
+    "not proof",
+    "not sufficient",
+    "does not establish",
+    "would also license",
+    "not independently",
+    "on its own",
+)
+
+
+def _sentences(text: str) -> list[str]:
+    """Split on full stops and semicolons only.
+
+    Deliberately not on the colon. The defect this guard exists to catch was
+    originally written as "Carries no CPI expenditure weight: no ELI row in
+    the concordance", which puts the conclusion and the absence on opposite
+    sides of a colon. Treating the colon as a sentence break would have made
+    the guard blind to the exact sentence that motivated it.
+    """
+    return [s for s in re.split(r"(?<=[.;])\s+|\n", text) if s.strip()]
+
+
+def _prohibited_sentences(text: str) -> list[str]:
+    """Sentences that draw a scope conclusion from crosswalk absence alone."""
+    bad = []
+    for sentence in _sentences(text):
+        low = sentence.lower()
+        if not any(m in low for m in ABSENCE_MARKERS):
+            continue
+        if not any(m in low for m in CONCLUSION_MARKERS):
+            continue
+        if any(m in low for m in QUALIFIER_MARKERS):
+            continue
+        bad.append(sentence.strip())
+    return bad
+
+
+class TestConcordanceAbsenceIsCorroborating(BuiltOnce, unittest.TestCase):
+    """Absence from the CE->CPI concordance may be recorded as a fact about the
+    crosswalk and used as corroboration. It may not, on its own, generate an
+    assertion that a concept carries no CPI expenditure weight, is excluded, or
+    is out of scope. A concept can receive weight through a production
+    transformation the crosswalk does not display.
+    """
+
+    def test_a_the_guard_fires_on_the_prohibited_inference(self) -> None:
+        """Non-vacuity, asserted first. A guard that never fires proves nothing,
+        and this one is built from phrase lists that a later edit could hollow
+        out without any other test noticing."""
+        specimens = (
+            "These UCCs are unmapped in the concordance, therefore they "
+            "carry no CPI expenditure weight.",
+            "The four map to no ELI and so carry no CPI weight.",
+            "Carries no CPI expenditure weight: no ELI row in the pinned "
+            "2024-vintage concordance.",
+            "No row exists for this UCC, so it is out of scope.",
+            "An unmapped UCC carries no CPI expenditure weight.",
+        )
+        for specimen in specimens:
+            with self.subTest(specimen=specimen[:48]):
+                self.assertTrue(
+                    _prohibited_sentences(specimen),
+                    "guard failed to catch the inference it exists to catch",
+                )
+
+    def test_b_the_guard_does_not_fire_on_a_properly_qualified_statement(
+        self,
+    ) -> None:
+        """The other half of non-vacuity. A guard that fires on everything is
+        just as useless, and would push a later author to delete the honest
+        disclaimers in order to get a green run."""
+        specimens = (
+            "Absence of a concordance row is corroborating evidence and is "
+            "not, by itself, proof that a concept receives no CPI "
+            "expenditure weight through any production transformation.",
+            "These four have no direct ELI mapping while nearby owner and "
+            "renter maintenance concepts do.",
+            "Unmapped status on its own was graded MODERATE throughout this "
+            "workstream.",
+        )
+        for specimen in specimens:
+            with self.subTest(specimen=specimen[:48]):
+                self.assertEqual(_prohibited_sentences(specimen), [])
+
+    def test_c_no_residual_artifact_draws_the_prohibited_inference(self) -> None:
+        for path in (
+            res.EVIDENCE_PATH,
+            res.SCOPE_RULES_V0_3_PATH,
+            res.VERDICT_PATH,
+            res.UCC_MATRIX_PATH,
+        ):
+            with self.subTest(path=path.name):
+                self.assertEqual(
+                    _prohibited_sentences(path.read_text(encoding="utf-8")), []
+                )
+
+    def test_d_the_documentation_does_not_draw_it_either(self) -> None:
+        doc = REPO_ROOT / "docs/research/DETAILED_INFLATION_SHELTER_RESIDUALS_2024.md"
+        self.assertTrue(doc.exists())
+        self.assertEqual(_prohibited_sentences(doc.read_text(encoding="utf-8")), [])
+
+    def test_e_the_matrix_states_mapping_status_not_scope(self) -> None:
+        """The specific defect this correction fixed: every unmapped row, including
+        rows whose own disposition is PENDING, was stamped with a scope
+        conclusion drawn from the missing row."""
+        rows = list(csv.DictReader(res.UCC_MATRIX_PATH.open(encoding="utf-8")))
+        unmapped = [r for r in rows if r["concordance_eli"] == "UNMAPPED"]
+        self.assertTrue(unmapped)
+        for row in unmapped:
+            with self.subTest(ucc=row["ucc"]):
+                low = row["cpi_scope_treatment"].lower()
+                self.assertIn("no direct eli mapping", low)
+                for forbidden in CONCLUSION_MARKERS:
+                    self.assertNotIn(forbidden, low)
+
+    def test_f_unmapped_rows_are_labelled_corroborating(self) -> None:
+        rows = list(csv.DictReader(res.UCC_MATRIX_PATH.open(encoding="utf-8")))
+        unmapped = [r for r in rows if r["concordance_eli"] == "UNMAPPED"]
+        self.assertTrue(unmapped)
+        for row in unmapped:
+            with self.subTest(ucc=row["ucc"]):
+                self.assertTrue(
+                    row["concordance_evidentiary_role"].startswith("CORROBORATING")
+                )
+
+    def test_g_the_pending_rows_carry_no_machine_readable_exclusion(self) -> None:
+        """The three held categories are the ones most at risk. If absence alone
+        were allowed to imply exclusion, these are precisely the rows it would
+        wrongly close, since absence is most of what is known about them."""
+        rows = list(csv.DictReader(res.UCC_MATRIX_PATH.open(encoding="utf-8")))
+        pending = [
+            r for r in rows if r["final_research_disposition"].startswith("PENDING")
+        ]
+        self.assertGreaterEqual(len(pending), 4)
+        for row in pending:
+            with self.subTest(ucc=row["ucc"]):
+                self.assertEqual(row["concordance_eli"], "UNMAPPED")
+                self.assertNotIn("ACCEPTED", row["final_research_disposition"])
+                self.assertTrue(
+                    _prohibited_sentences(row["cpi_scope_treatment"]) == []
+                )
+
+    def test_h_every_concordance_absence_record_is_corroborating(self) -> None:
+        by_id = {e["evidence_id"]: e for e in self.evidence["evidence"]}
+        for evidence_id in (
+            "CONCORDANCE_2024_UNMAPPED_MAINTENANCE_SERVICES",
+            "OWNED_VACATION_BRANCH_FULLY_UNMAPPED",
+        ):
+            with self.subTest(evidence_id=evidence_id):
+                self.assertEqual(
+                    by_id[evidence_id]["evidentiary_role"], "CORROBORATING"
+                )
+
+    def test_i_a_corroborating_record_never_establishes_exclusion(self) -> None:
+        """The role is only worth carrying if it constrains what the record is
+        allowed to claim."""
+        for record in self.evidence["evidence"]:
+            if record["evidentiary_role"] != "CORROBORATING":
+                continue
+            with self.subTest(evidence_id=record["evidence_id"]):
+                low = record["establishes"].lower()
+                for forbidden in CONCLUSION_MARKERS:
+                    self.assertNotIn(forbidden, low)
+
+    def test_j_the_accepted_rule_still_rests_on_the_factsheets(self) -> None:
+        """Correcting the inference must not quietly cost the rule its basis. The
+        two primary factsheets must still be cited, and the concordance must
+        still be cited alongside them rather than dropped."""
+        rule = self.rules_v0_3["OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2"]
+        cited = set(rule["evidence_ids"])
+        self.assertIn("OER_FS_MAINTENANCE_OUT_OF_SCOPE", cited)
+        self.assertIn("TENANTS_FS_MAINTENANCE_OUT_OF_SCOPE", cited)
+        self.assertIn("CONCORDANCE_2024_UNMAPPED_MAINTENANCE_SERVICES", cited)
+        by_id = {e["evidence_id"]: e for e in self.evidence["evidence"]}
+        primary = [
+            e for e in cited if by_id[e]["evidentiary_role"] == "PRIMARY"
+        ]
+        self.assertTrue(
+            primary, "an ACCEPTED rule may not rest on corroboration alone"
+        )
+
+    def test_k_the_role_vocabulary_is_closed_and_documented(self) -> None:
+        self.assertEqual(set(res.EVIDENTIARY_ROLES), {"PRIMARY", "CORROBORATING"})
+        for role in res.EVIDENTIARY_ROLES:
+            with self.subTest(role=role):
+                self.assertIn(role, res.EVIDENTIARY_ROLE_SEMANTICS)
+                self.assertTrue(res.EVIDENTIARY_ROLE_SEMANTICS[role].strip())
+        with self.assertRaises(ValueError):
+            res.Evidence(
+                evidence_id="X",
+                issue="owner_maintenance",
+                claim="c",
+                vintage_class="CURRENT_2024_COMPATIBLE",
+                source_title="t",
+                source_locator="l",
+                source_date="d",
+                quoted_passage="q",
+                establishes="e",
+                does_not_establish="d",
+                evidentiary_role="DECISIVE",
+            )
 
 
 # ---------------------------------------------------------------------------

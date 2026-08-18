@@ -108,6 +108,24 @@ VINTAGE_SEMANTICS = {
     ),
 }
 
+EVIDENTIARY_ROLES = ("PRIMARY", "CORROBORATING")
+
+EVIDENTIARY_ROLE_SEMANTICS = {
+    "PRIMARY": (
+        "A BLS source states the treatment itself. A record in this role can "
+        "carry a scope conclusion on its own."
+    ),
+    "CORROBORATING": (
+        "The record is consistent with a treatment stated elsewhere and "
+        "sharpens it, typically at the code level, but does not state the "
+        "treatment. A record in this role may not carry a scope conclusion "
+        "on its own. Concordance absence is the paradigm case: no row is a "
+        "fact about the crosswalk, and a concept can still receive CPI "
+        "expenditure weight through a production transformation that the "
+        "crosswalk does not display."
+    ),
+}
+
 BLOCKER_KINDS = {
     "BLOCKED_BY_UNPUBLISHED_PARAMETER": (
         "BLS states that a transformation is applied but does not publish the "
@@ -145,10 +163,15 @@ class Evidence:
     quoted_passage: str
     establishes: str
     does_not_establish: str
+    evidentiary_role: str = "PRIMARY"
 
     def __post_init__(self) -> None:
         if self.vintage_class not in VINTAGE_CLASSES:
             raise ValueError(f"unknown vintage class {self.vintage_class!r}")
+        if self.evidentiary_role not in EVIDENTIARY_ROLES:
+            raise ValueError(
+                f"unknown evidentiary role {self.evidentiary_role!r}"
+            )
 
 
 # --------------------------------------------------------------------------
@@ -223,9 +246,14 @@ EVIDENCE: tuple[Evidence, ...] = (
         issue="owner_maintenance",
         claim=(
             "In the pinned 2024-vintage concordance, owner maintenance "
-            "services 230113, 230114, 230115 and 230151 map to no CPI entry "
-            "level item, so they carry no CPI expenditure weight."
+            "services 230113, 230114, 230115 and 230151 have no direct CPI "
+            "entry level item mapping, while nearby owner and renter "
+            "maintenance concepts do. This corroborates the current BLS scope "
+            "statement at the code level. It is not by itself proof that a "
+            "concept receives no CPI expenditure weight through any "
+            "production transformation."
         ),
+        evidentiary_role="CORROBORATING",
         vintage_class="CURRENT_2024_COMPATIBLE",
         source_title="CPI Handbook of Methods Appendix 5, CE UCC to CPI ELI concordance",
         source_locator=CONCORDANCE_LOCATOR,
@@ -239,13 +267,17 @@ EVIDENCE: tuple[Evidence, ...] = (
             "quoted from a snapshot."
         ),
         establishes=(
-            "The code-level membership that the factsheet sentence leaves "
-            "open. BLS's own crosswalk supplies which maintenance is the "
-            "'most' that is out of scope."
+            "Corroboration, at the code level, for the membership the "
+            "factsheet sentence leaves open. BLS's own crosswalk publishes "
+            "no direct mapping for these four, which is what the factsheet "
+            "statement predicts."
         ),
         does_not_establish=(
-            "Why BLS drew the line where it did. Absence of a row is a fact "
-            "about the weight, not a stated rationale."
+            "Exclusion, by itself. Absence of a row is a fact about the "
+            "crosswalk, not a stated rationale and not a demonstration that "
+            "no CPI expenditure weight reaches the concept by some other "
+            "production route. The scope conclusion rests on the factsheets; "
+            "this record only agrees with them."
         ),
     ),
     Evidence(
@@ -595,6 +627,7 @@ EVIDENCE: tuple[Evidence, ...] = (
             "the three types. Pooling at the ELI does not entail pooling at "
             "the adjustment."
         ),
+        evidentiary_role="CORROBORATING",
     ),
     Evidence(
         evidence_id="OWNED_VACATION_BRANCH_FULLY_UNMAPPED",
@@ -613,14 +646,21 @@ EVIDENCE: tuple[Evidence, ...] = (
             "recomputed on every run by this module rather than asserted."
         ),
         establishes=(
-            "That the owned-vacation outlay concept carries no CPI weight of "
-            "its own, which is what a displacement by rental equivalence "
-            "predicts."
+            "Corroboration for a displacement by rental equivalence: the "
+            "outlay branch is absent from the crosswalk exactly where "
+            "displacement predicts it would be, and the displacing item "
+            "HC090 is present. The conclusion is carried by the footnote "
+            "that names HC090, not by this absence."
         ),
         does_not_establish=(
-            "The replacement amount. A complete absence on the outlay side "
-            "says nothing about the size of the equivalence side."
+            "That the outlay concept receives no CPI expenditure weight by "
+            "any route. A branch can be absent from the crosswalk and still "
+            "be reached by a production transformation the crosswalk does "
+            "not display. Nor the replacement amount: a complete absence on "
+            "the outlay side says nothing about the size of the equivalence "
+            "side."
         ),
+        evidentiary_role="CORROBORATING",
     ),
     Evidence(
         evidence_id="CASEY_NOTE_2_CONSUMPTION_PORTION",
@@ -768,13 +808,20 @@ SUCCESSOR_RULES: tuple[SuccessorRule, ...] = (
         numerical_treatment_computable=True,
         blocker_kind=None,
         rationale=(
-            "Two independent current BLS factsheets state that most owner "
-            "maintenance is out of scope and attribute the exclusion to "
-            "rental equivalence. The pinned 2024-vintage concordance supplies "
-            "the code-level membership the word 'most' leaves open: these "
-            "four map to no ELI and so carry no CPI weight. That is the same "
-            "evidentiary shape as the already-accepted mortgage-interest and "
-            "property-tax rules, a current BLS scope statement joined to "
+            "Current BLS methodology places most owner maintenance outside "
+            "CPI consumption scope: two independent current factsheets state "
+            "it and attribute the exclusion to rental equivalence. The "
+            "pinned 2024-vintage CE-to-CPI concordance provides corroborating "
+            "UCC-level evidence for the membership the word 'most' leaves "
+            "open: these four have no direct ELI mapping while nearby owner "
+            "and renter maintenance concepts do. DMI accepts these four as "
+            "out of scope on the combined evidence. Absence of a concordance "
+            "row is corroborating evidence and is not, by itself, proof that "
+            "a concept receives no CPI expenditure weight through any "
+            "production transformation; the scope conclusion here rests on "
+            "the factsheets, which the crosswalk agrees with. That is the "
+            "same evidentiary shape as the already-accepted mortgage-interest "
+            "and property-tax rules, a current BLS scope statement joined to "
             "unmapped status, and the required transformation is removal, "
             "which needs no parameter. The predecessor's own criterion, the "
             "renter-counterpart test, is discarded rather than relied on: it "
@@ -1244,6 +1291,7 @@ class MatrixRow:
     current_proposed_treatment: str
     bls_concept: str
     cpi_scope_treatment: str
+    concordance_evidentiary_role: str
     evidence_source: str
     evidence_vintage: str
     allocation_factor: str
@@ -1294,10 +1342,19 @@ def build_ucc_matrix(
                 ),
                 bls_concept=UCC_BLS_CONCEPT[ucc],
                 cpi_scope_treatment=(
-                    "Carries no CPI expenditure weight: no ELI row in the "
-                    "pinned 2024-vintage concordance."
+                    "No direct ELI mapping in the pinned 2024-vintage "
+                    "concordance."
                     if eli == "UNMAPPED"
                     else f"Mapped to {eli}"
+                ),
+                concordance_evidentiary_role=(
+                    "CORROBORATING. Absence of a row records what the "
+                    "crosswalk does not display. It does not by itself "
+                    "establish exclusion, and the scope disposition in this "
+                    "row is not derived from it alone."
+                    if eli == "UNMAPPED"
+                    else "PRIMARY. A mapping is a positive fact about the "
+                    "crosswalk."
                 ),
                 evidence_source="; ".join(rule.evidence_ids),
                 evidence_vintage="; ".join(vintages),

@@ -107,10 +107,23 @@ scope:
 > — *Rent and rental equivalence* factsheet
 
 That establishes the concept. It does not establish membership, because
-"most" is not a list. The pinned 2024 concordance supplies the list: an
-unmapped UCC carries no CPI expenditure weight. This is the same evidentiary
-shape that already underpins the `ACCEPTED` mortgage-interest and
-property-tax rules.
+"most" is not a list. The pinned 2024 concordance corroborates the list at
+the code level: UCCs 230113, 230114, 230115 and 230151 have no direct ELI
+mapping, while nearby owner and renter maintenance concepts do. DMI accepts
+these four as out of scope on the **combined** evidence. This is the same
+evidentiary shape that already underpins the `ACCEPTED` mortgage-interest
+and property-tax rules.
+
+The direction of that inference matters, so it is worth stating flatly what
+the concordance is not doing here. Absence of a concordance row is
+corroborating evidence. It is not, by itself, proof that a concept receives
+no CPI expenditure weight through any production transformation. A crosswalk
+records the mappings BLS publishes; a concept can in principle pick up
+weight by a route the crosswalk does not display. The load in this rule is
+carried by the two factsheets, and the crosswalk agrees with them. Read the
+other way round — absence alone licensing exclusion — it would also license
+excluding roof materials, site payments and property management, and this
+task holds all three precisely because it does not accept that inference.
 
 ### 3.3 The rule is split four ways
 
