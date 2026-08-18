@@ -1,28 +1,27 @@
-name: Deploy Web Dashboard
+name: Deploy Web Dashboard (component)
 
-# ROUND-3 REPAIR (§2/§3). This workflow no longer maintains an
-# independent ad-hoc staging recipe. It delegates staging to the single
-# deployment builder (`scripts.prepare_deployment`) — the same builder
-# used by `deploy_production.yml` and by the monthly preparation
-# workflow's local validation step — and then rsyncs a scoped subset of
-# the built tree (dashboard shell + release manifests + release notes)
-# for the paths that specifically trigger this workflow.
+# ROUND-4 REPAIR (§2). This workflow has NO automatic trigger and no
+# production authority of its own.
 #
-# It runs only after a reviewed change to `main` (or an explicitly
-# authorized manual dispatch). Manual dispatch defaults to dry-run.
-# Strict SSH host verification is required (§3); ssh-keyscan failure is
-# fatal.
+# It previously carried its own `push: branches: [main]` trigger, which
+# meant a single merge to `main` started THREE workflows that could each
+# independently rsync to the live site — overlapping uploads of the same
+# commit, with no ordering and no single place to revoke authorization.
+#
+# On the post-merge path the dashboard shell is now deployed by
+# `deploy_production.yml`'s `deploy-site` job, which uploads the whole
+# canonical `./deploy/` tree (dashboard.html, dashboard/.htaccess,
+# health.json, the manifests and the release notes are all in it). This
+# workflow is deliberately NOT invoked from there: doing so would upload
+# the same files twice in the same run, which is precisely the
+# overlapping-authority problem §2 exists to remove.
+#
+# What remains here is a manual, scoped maintenance tool for pushing just
+# the dashboard shell without a full site deployment. It runs only when a
+# human dispatches it, defaults to dry-run, and can never infer
+# authorization from an event type.
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'web/dashboard.html'
-      - 'web/dashboard/.htaccess'
-      - 'web/health.json'
-      - 'data/outputs/releases.json'
-      - 'data/outputs/latest.json'
-      - 'data/outputs/releases/*.html'
   workflow_dispatch:
     inputs:
       production:
@@ -48,8 +47,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # §2: check out the exact triggering commit; do not hardcode ref.
-      - name: Checkout triggering commit
+      # §2: deploy the exact commit named by the caller. On manual
+      # dispatch that is the ref the operator selected. `ref: main` is
+      # never hardcoded.
+      - name: Checkout target commit
         uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
@@ -68,26 +69,24 @@ jobs:
       - name: Resolve production flag
         id: mode
         env:
-          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
+          # §2: authorization comes from the caller or from an explicit
+          # manual choice. It is NEVER inferred from `github.event_name`,
+          # which is how a push became an implicit production grant.
+          CALLER_PRODUCTION: ${{ github.event.inputs.production }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ "$EVENT_NAME" = "push" ]; then
-            PROD="true"
-          else
-            PROD="${INPUT_PRODUCTION:-false}"
-          fi
-          case "$PROD" in
-            true) PROD="true" ;;
-            *)    PROD="false" ;;
+          case "$CALLER_PRODUCTION" in
+            true|True|TRUE) PROD="true" ;;
+            *)              PROD="false" ;;
           esac
           echo "production=$PROD" >> "$GITHUB_OUTPUT"
+          echo "Event: $EVENT_NAME; production deployment: $PROD"
 
-      - name: Build staging via central builder
+      - name: Build staging via the canonical builder
         run: |
-          # §2: reuse the single deployment builder. This guarantees
-          # the dashboard workflow ships exactly the same file bytes
-          # (with the same closure guarantees) as the full deploy
-          # workflow.
+          # §2: one builder, one recipe. This workflow ships exactly the
+          # same bytes, with the same closure guarantees, as the full
+          # deployment workflow.
           python -m scripts.prepare_deployment --output-dir deploy --verify
 
       - name: Guard against Core artifacts in staged tree
@@ -122,44 +121,27 @@ jobs:
         run: |
           echo "Dry-run: skipping SSH setup and rsync. Staging is at ./deploy/."
 
-      - name: Setup SSH key (strict host verification)
+      - name: Install pinned host key (no trust-on-first-use)
         if: steps.mode.outputs.production == 'true'
         env:
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
           IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
+          IFASTNET_KNOWN_HOSTS: ${{ secrets.IFASTNET_KNOWN_HOSTS }}
         run: |
+          python -m scripts.install_known_hosts \
+            --host "$IFASTNET_SSH_HOST" --port 1394 \
+            --known-hosts "$HOME/.ssh/dmi_known_hosts"
           mkdir -p ~/.ssh
-          echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s' "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # §3: strict host verification. ssh-keyscan MUST succeed and
-          # its failure is fatal — never swallowed with `|| true`.
-          #
-          # Exit status alone is not sufficient evidence: ssh-keyscan
-          # exits 0 when it cannot reach the host, writing nothing and
-          # leaving an empty known_hosts. So we capture to a temp file,
-          # require a non-zero exit to fail, AND require at least one
-          # host key to have been written before installing it.
-          if ! ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" > /tmp/dmi_known_hosts; then
-            echo "ERROR: ssh-keyscan failed for $IFASTNET_SSH_HOST:1394"
-            exit 1
-          fi
-          if [ ! -s /tmp/dmi_known_hosts ]; then
-            echo "ERROR: ssh-keyscan produced no host key for" \
-                 "$IFASTNET_SSH_HOST:1394; refusing to deploy with an" \
-                 "empty known_hosts."
-            exit 1
-          fi
-          cat /tmp/dmi_known_hosts >> ~/.ssh/known_hosts
-          rm -f /tmp/dmi_known_hosts
-          chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy dashboard shell to iFastNet (strict host verification)
+      - name: Deploy dashboard shell to iFastNet (pinned host key)
         if: steps.mode.outputs.production == 'true'
         env:
           IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
-          SSH_CMD="ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts"
 
           rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/dashboard.html \
@@ -192,7 +174,3 @@ jobs:
           else
             echo "Dry-run complete (nothing deployed)."
           fi
-          echo "  https://dmianalysis.org/dashboard.html"
-          echo "  https://dmianalysis.org/health.json"
-          echo "  https://dmianalysis.org/data/outputs/releases.json"
-          echo "  https://dmianalysis.org/data/outputs/latest.json"

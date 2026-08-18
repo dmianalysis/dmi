@@ -163,14 +163,27 @@ Snapshot the remote `data/outputs/` tree before any deletion.
 BACKUP_DIR="./backup-preremoval-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$BACKUP_DIR"
 
-# §3 (Round-3): strict host verification is mandatory. Pin the host
-# key up front; a failure to reach the host is fatal.
-KNOWN_HOSTS="$HOME/.ssh/known_hosts"
-mkdir -p "$(dirname "$KNOWN_HOSTS")" && touch "$KNOWN_HOSTS" && chmod 600 "$KNOWN_HOSTS"
-if ! ssh-keygen -F "[$DMI_REMOTE_HOST]:$DMI_REMOTE_PORT" -f "$KNOWN_HOSTS" >/dev/null 2>&1 \
-   && ! ssh-keygen -F "$DMI_REMOTE_HOST" -f "$KNOWN_HOSTS" >/dev/null 2>&1; then
-  ssh-keyscan -p "$DMI_REMOTE_PORT" "$DMI_REMOTE_HOST" >> "$KNOWN_HOSTS"
-fi
+# §3 (Round-4): host authentication is PINNED, not acquired.
+#
+# An earlier revision of this runbook fetched the host key with
+# `ssh-keyscan` when it was not already known. That authenticates
+# nothing: `ssh-keyscan` asks whoever answers the connection to
+# introduce itself and believes the reply, so an intercepting party
+# simply answers and their key becomes the trusted one. Strict checking
+# then verifies the session against the attacker's key.
+#
+# Supply the expected key out of band. Get it from the hosting control
+# panel or from a known-good prior session, NOT by scanning the host you
+# are about to authenticate.
+KNOWN_HOSTS="$HOME/.ssh/dmi_known_hosts"
+export DMI_KNOWN_HOSTS="$KNOWN_HOSTS"
+export DMI_KNOWN_HOSTS_DATA="$(cat /secure/path/to/ifastnet_known_hosts)"
+
+python -m scripts.install_known_hosts \
+  --host "$DMI_REMOTE_HOST" --port "$DMI_REMOTE_PORT" \
+  --known-hosts "$KNOWN_HOSTS"
+# Fails if the pinned material is absent, empty, malformed, or issued
+# for a different host or port. There is no fallback.
 
 rsync -avz \
   -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN_HOSTS" \

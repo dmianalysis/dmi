@@ -181,20 +181,37 @@ jobs:
           echo "Computing slack-plus DMI for ${{ steps.period.outputs.period }}..."
           python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec slack_plus --weights-year "$WEIGHTS_YEAR"
 
-      - name: Build specifications manifest (live only)
-        if: steps.mode.outputs.data_source == 'live'
-        run: |
-          python -m scripts.build_specifications_manifest ${{ steps.period.outputs.period }}
+      # §1: specifications.json, the release note and the timeseries are
+      # NOT built here. They are mutable public artifacts, and building
+      # them before QA has been evaluated is what let a failing release
+      # reach the public tree. They are produced by the finalization
+      # step below, after every gate has passed.
 
-      - name: Generate release note (live only)
-        if: steps.mode.outputs.data_source == 'live'
-        run: |
-          python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --release-note-only
+      # -------- Finalization: gates first, publication second --------
 
-      - name: Update timeseries (live only)
+      - name: Finalize release (gates, then publish) — live only
         if: steps.mode.outputs.data_source == 'live'
         run: |
-          python -m scripts.update_timeseries ${{ steps.period.outputs.period }}
+          # §1: runs, in order — validate both raw outputs against their
+          # schema; validate both QA reports against theirs; enforce QA
+          # OUTCOME policy (not merely JSON shape); enforce the
+          # Baseline/Slack-Plus cross-specification identity gate; and
+          # only then generate CSV/Parquet, releases.json, latest.json,
+          # specifications.json, the release note, the public timeseries,
+          # web/health.json and the deployment staging tree.
+          #
+          # On any gate failure nothing is published and every mutable
+          # public artifact is left byte-identical to its pre-run state.
+          python -m scripts.finalize_release ${{ steps.period.outputs.period }}
+
+      - name: Verify release gates against committed artifacts — fixture only
+        if: steps.mode.outputs.data_source == 'fixture'
+        run: |
+          # §1: fixture/offline mode exercises the SAME gates against the
+          # artifacts already committed to the repository, but publishes
+          # nothing. This is what makes a manual validation run a real
+          # test of the release path rather than a syntax check.
+          python -m scripts.finalize_release ${{ steps.period.outputs.period }} --dry-run
 
       # -------- Validation gates: run in every mode against on-disk artifacts --------
 
@@ -357,13 +374,37 @@ jobs:
         run: |
           # §4/§5: builds and verifies the deployment tree LOCALLY inside
           # the runner. Nothing here talks to the live site.
-          python -m scripts.prepare_deployment --output-dir deploy --verify
+          #
+          # In prepare_release mode the finalization step above already
+          # rebuilt ./deploy/ as part of the published set, so this is a
+          # verification pass over that tree. In validate mode nothing
+          # may be published, so the candidate is built into a scratch
+          # directory and the committed staging tree is left untouched.
+          if [ "${{ steps.mode.outputs.mode }}" = "prepare_release" ]; then
+            python -m scripts.prepare_deployment --output-dir deploy --verify
+            echo "CANDIDATE_DIR=deploy" >> "$GITHUB_ENV"
+          else
+            CANDIDATE="$RUNNER_TEMP/dmi-deploy-candidate"
+            rm -rf "$CANDIDATE"
+            python -m scripts.prepare_deployment --output-dir "$CANDIDATE" --verify
+            echo "CANDIDATE_DIR=$CANDIDATE" >> "$GITHUB_ENV"
+          fi
+
+      - name: Confirm committed deployment tree matches a fresh build
+        run: |
+          # §8: the committed staging tree must equal a fresh verified
+          # build byte-for-byte. Checked in every mode.
+          FRESH="$RUNNER_TEMP/dmi-deploy-fresh"
+          rm -rf "$FRESH"
+          python -m scripts.prepare_deployment --output-dir "$FRESH" --verify
+          diff -r deploy "$FRESH"
+          echo "committed deploy/ is byte-identical to a fresh build"
 
       - name: Show deployment candidate summary
         run: |
           echo "Deployment candidate files:"
-          find deploy -type f | wc -l
-          find deploy -type f | sed -n '1,80p'
+          find "$CANDIDATE_DIR" -type f | wc -l
+          find "$CANDIDATE_DIR" -type f | sed -n '1,80p'
 
       # -------- PR creation: prepare_release mode only, no auto-merge --------
 

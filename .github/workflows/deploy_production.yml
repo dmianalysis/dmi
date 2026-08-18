@@ -1,34 +1,42 @@
 name: Deploy Production Site
 
-# ROUND-3 REPAIR (§2). Production deployment is split out of the
-# monthly-preparation workflow. This workflow runs ONLY after a
-# reviewed change has been merged to `main`, or when an operator
-# explicitly runs `workflow_dispatch` with production=true. Manual
-# dispatch defaults to dry-run so that ad-hoc invocations never touch
-# the live site by accident.
+# ROUND-4 REPAIR (§2). This is the SINGLE authoritative production
+# deployment workflow. It is the only workflow in this repository with an
+# automatic push-to-`main` trigger, and therefore the only place where
+# production authorization originates.
 #
-# It rebuilds the deployment tree from canonical repository artifacts
-# via `scripts.prepare_deployment` (the single deployment builder),
-# validates the full staged surface, refuses to deploy if any advertised
-# endpoint is missing or if any Core artifact is present, and only then
-# rsyncs over SSH with strict host verification.
+# Before this refactor, three workflows each carried their own
+# `push: branches: [main]` trigger. One merge started three runs that
+# could independently rsync to the live site: overlapping uploads of the
+# same commit, in no defined order, with three separate places to revoke
+# access and no single audit point. Strict SSH options did not fix that;
+# the problem was the number of authorities, not the transport.
+#
+# The dashboard and WordPress plugin deployments are now reusable
+# `workflow_call` components. They cannot grant themselves production
+# authority: each takes `production` as a required input and never infers
+# it from `github.event_name`. Their manual dispatch entry points remain,
+# defaulting to dry-run.
+#
+# Host authentication is PINNED (§3): the expected host key is supplied
+# out of band via the IFASTNET_KNOWN_HOSTS secret. Nothing here trusts
+# whatever `ssh-keyscan` returns at deploy time.
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'data/outputs/**'
-      - 'web/dashboard.html'
-      - 'web/dashboard/.htaccess'
-      - 'web/health.json'
+      - 'web/**'
       - 'scripts/prepare_deployment.py'
+      - 'deploy/**'
   workflow_dispatch:
     inputs:
       production:
         description: >-
-          Set to true to actually rsync to the live site. Default false
-          is a dry-run: staging is built and validated locally, nothing
-          is uploaded.
+          Set to true to actually deploy to the live site. Default false
+          is a dry-run: every component builds and validates its staging
+          locally and uploads nothing.
         required: false
         default: 'false'
         type: choice
@@ -43,13 +51,45 @@ env:
   PYTHON_VERSION: '3.9'
 
 jobs:
-  deploy-production:
+  # -------------------------------------------------------------------
+  # Gate: decide, once and centrally, whether this run may touch
+  # production. Every component receives the answer as an explicit input.
+  # -------------------------------------------------------------------
+  authorize:
     runs-on: ubuntu-latest
-
+    outputs:
+      production: ${{ steps.decide.outputs.production }}
+      sha: ${{ github.sha }}
     steps:
-      # §2: check out the exact commit that triggered this run. For a
-      # push, that is the merged commit; for a manual dispatch, it is
-      # the ref the operator selected. Never hardcode `ref: main`.
+      - name: Decide production authorization
+        id: decide
+        env:
+          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # A push to `main` is a reviewed, merged change: that is the
+          # one event that confers automatic authority, and it does so
+          # here and nowhere else. Manual dispatch requires an explicit
+          # opt-in and defaults to dry-run.
+          if [ "$EVENT_NAME" = "push" ]; then
+            PROD="true"
+          else
+            case "${INPUT_PRODUCTION:-false}" in
+              true|True|TRUE) PROD="true" ;;
+              *)              PROD="false" ;;
+            esac
+          fi
+          echo "production=$PROD" >> "$GITHUB_OUTPUT"
+          echo "Event: $EVENT_NAME -> production=$PROD (commit ${{ github.sha }})"
+
+  # -------------------------------------------------------------------
+  # Full public data surface.
+  # -------------------------------------------------------------------
+  deploy-site:
+    needs: authorize
+    runs-on: ubuntu-latest
+    steps:
+      # §2: the exact merged commit that triggered this run.
       - name: Checkout triggering commit
         uses: actions/checkout@v6
         with:
@@ -66,46 +106,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Resolve production flag
-        id: mode
-        env:
-          INPUT_PRODUCTION: ${{ github.event.inputs.production }}
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          # push -> real deploy (post-merge). workflow_dispatch -> dry-run
-          # by default, real deploy only when production=true.
-          if [ "$EVENT_NAME" = "push" ]; then
-            PROD="true"
-          else
-            PROD="${INPUT_PRODUCTION:-false}"
-          fi
-          case "$PROD" in
-            true) PROD="true" ;;
-            *)    PROD="false" ;;
-          esac
-          echo "production=$PROD" >> "$GITHUB_OUTPUT"
-          echo "Production deployment: $PROD"
-
-      - name: Build deployment staging via central builder
+      - name: Build deployment staging via the canonical builder
         run: |
           python -m scripts.prepare_deployment --output-dir deploy --verify
 
-      - name: Refuse to deploy if Core artifacts staged
+      - name: Confirm committed staging matches a fresh build
+        run: |
+          # Refuse to deploy a tree that differs from what review saw.
+          FRESH="$RUNNER_TEMP/dmi-deploy-fresh"
+          rm -rf "$FRESH"
+          python -m scripts.prepare_deployment --output-dir "$FRESH" --verify
+          diff -r deploy "$FRESH"
+
+      - name: Refuse to deploy if retired artifacts staged
         run: |
           set +e
-          MATCHES=$(find deploy -type f \( -iname '*_core.*' -o -iname '*-core.*' \) 2>/dev/null)
+          MATCHES=$(find deploy -type f \( -iname '*_core.*' -o -iname '*-core.*' \
+            -o -iname '*_u6.*' -o -iname '*_with_ci.*' \) 2>/dev/null)
           set -e
           if [ -n "$MATCHES" ]; then
-            echo "Core artifacts detected in deploy/ tree; refusing to deploy:"
+            echo "Retired artifacts detected in deploy/ tree; refusing to deploy:"
             echo "$MATCHES"
             exit 1
           fi
 
       - name: Refuse to deploy if required endpoints missing
         run: |
-          # Defense in depth: prepare_deployment --verify already asserts
-          # closure, but a second explicit check here ensures the deploy
-          # workflow itself will fail closed on any regression.
+          # Defence in depth: --verify already asserts closure, but the
+          # deploy workflow must fail closed on any regression of its own.
           python -m scripts.prepare_deployment --output-dir deploy --verify
 
       - name: Show staged surface
@@ -115,63 +143,55 @@ jobs:
           find deploy -type f | sed -n '1,120p'
 
       - name: Skip remote deployment (dry-run)
-        if: steps.mode.outputs.production != 'true'
+        if: needs.authorize.outputs.production != 'true'
         run: |
           echo "Dry-run: skipping SSH setup and rsync. Staging is at ./deploy/."
 
-      - name: Setup SSH key (strict host verification)
-        if: steps.mode.outputs.production == 'true'
+      - name: Install pinned host key (no trust-on-first-use)
+        if: needs.authorize.outputs.production == 'true'
         env:
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
           IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
+          IFASTNET_KNOWN_HOSTS: ${{ secrets.IFASTNET_KNOWN_HOSTS }}
         run: |
+          # §3: the expected host key comes from a secret, out of band.
+          # This step fails if it is absent, empty, malformed, or issued
+          # for a different host/port. There is NO ssh-keyscan fallback.
+          python -m scripts.install_known_hosts \
+            --host "$IFASTNET_SSH_HOST" --port 1394 \
+            --known-hosts "$HOME/.ssh/dmi_known_hosts"
           mkdir -p ~/.ssh
-          echo "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s' "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # §3: strict host verification. ssh-keyscan MUST succeed and
-          # its failure is fatal — never swallowed with `|| true`.
-          #
-          # Exit status alone is not sufficient evidence: ssh-keyscan
-          # exits 0 when it cannot reach the host, writing nothing and
-          # leaving an empty known_hosts. So we capture to a temp file,
-          # require a non-zero exit to fail, AND require at least one
-          # host key to have been written before installing it.
-          if ! ssh-keyscan -p 1394 "$IFASTNET_SSH_HOST" > /tmp/dmi_known_hosts; then
-            echo "ERROR: ssh-keyscan failed for $IFASTNET_SSH_HOST:1394"
-            exit 1
-          fi
-          if [ ! -s /tmp/dmi_known_hosts ]; then
-            echo "ERROR: ssh-keyscan produced no host key for" \
-                 "$IFASTNET_SSH_HOST:1394; refusing to deploy with an" \
-                 "empty known_hosts."
-            exit 1
-          fi
-          cat /tmp/dmi_known_hosts >> ~/.ssh/known_hosts
-          rm -f /tmp/dmi_known_hosts
-          chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy to iFastNet via rsync (strict host verification)
-        if: steps.mode.outputs.production == 'true'
+      - name: Deploy to iFastNet via rsync (pinned host key)
+        if: needs.authorize.outputs.production == 'true'
         env:
           IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
           rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts" \
             ./deploy/ \
             "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/"
 
       - name: Deployment summary
         run: |
           PERIOD=$(python -c "import json; print(json.load(open('data/outputs/latest.json'))['releases'][0]['release_id'])")
-          if [ "${{ steps.mode.outputs.production }}" = "true" ]; then
-            echo "Deployment complete for period $PERIOD."
+          if [ "${{ needs.authorize.outputs.production }}" = "true" ]; then
+            echo "Site deployment complete for period $PERIOD."
           else
             echo "Dry-run complete (nothing deployed) for period $PERIOD."
           fi
-          echo "  Dashboard:         https://dmianalysis.org/dashboard.html"
-          echo "  Health:            https://dmianalysis.org/health.json"
-          echo "  Baseline:          https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}.json"
-          echo "  Slack-Plus:        https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_slack_plus.json"
-          echo "  Specifications:    https://dmianalysis.org/data/outputs/specifications.json"
-          echo "  Releases manifest: https://dmianalysis.org/data/outputs/releases.json"
+
+  # -------------------------------------------------------------------
+  # Components. They run only after the site surface is deployed, so the
+  # data a plugin or dashboard reads is already in place.
+  # -------------------------------------------------------------------
+  deploy-wp-plugins:
+    needs: [ authorize, deploy-site ]
+    uses: ./.github/workflows/deploy_wp_plugins.yml
+    with:
+      production: ${{ needs.authorize.outputs.production == 'true' }}
+      ref: ${{ needs.authorize.outputs.sha }}
+    secrets: inherit

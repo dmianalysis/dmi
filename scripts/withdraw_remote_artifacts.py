@@ -55,7 +55,16 @@ Environment (both phases):
   DMI_REMOTE_PORT   SSH port (defaults to 1394)
   DMI_REMOTE_KEY    Path to private SSH key
   DMI_REMOTE_BASE   Remote base path (defaults to /home/agiraces/dmianalysis)
-  DMI_KNOWN_HOSTS   Path to known_hosts file (defaults to ~/.ssh/known_hosts)
+  DMI_KNOWN_HOSTS   Path to the pinned known_hosts file
+                    (defaults to ~/.ssh/known_hosts)
+  DMI_KNOWN_HOSTS_DATA  Literal pinned known_hosts content (preferred).
+                    REQUIRED unless DMI_KNOWN_HOSTS already holds a
+                    pinned entry for the configured host and port.
+                    There is no ssh-keyscan fallback: this tool
+                    deletes remote files and must not be where trust
+                    is first established.
+  DMI_HOST_FINGERPRINT  Pinned SHA-256 host-key fingerprint (weaker
+                    alternative; also needs DMI_ALLOW_FINGERPRINT_SCAN=1)
 
 Usage:
   python -m scripts.withdraw_remote_artifacts inventory \\
@@ -170,41 +179,57 @@ def _env(name: str, default: str | None = None, required: bool = False) -> str:
 
 
 def _ensure_known_hosts(host: str, port: str, known_hosts: Path) -> None:
-    """Ensure ``host`` is pinned in ``known_hosts``; keyscan if not.
+    """Install PINNED host material; never acquire trust dynamically (§3).
 
-    An ``ssh-keyscan`` failure is fatal (no ``|| true``). This matches
-    the §3 policy: strict host verification is mandatory.
+    An earlier version ran ``ssh-keyscan`` when the host was not already
+    in ``known_hosts`` and treated a non-empty result as trustworthy.
+    That is trust-on-first-use: ``ssh-keyscan`` asks whoever answers the
+    connection to introduce itself and believes the reply, so an
+    intercepting party simply answers and their key becomes the pinned
+    one. ``StrictHostKeyChecking=yes`` then verifies the session against
+    the attacker's key, faithfully.
+
+    This is a DESTRUCTIVE tool — it deletes files on the remote — so it
+    must not be the place where trust is established. The expected key is
+    supplied out of band through ``DMI_KNOWN_HOSTS_DATA`` (preferred) or
+    a pinned fingerprint, and validated against the configured host and
+    port before use.
     """
-    known_hosts.parent.mkdir(parents=True, exist_ok=True)
-    if not known_hosts.exists():
-        known_hosts.touch(mode=0o600)
-    else:
-        known_hosts.chmod(0o600)
+    from scripts.install_known_hosts import HostPinError, install
 
-    def _pinned(target: str) -> bool:
-        return subprocess.run(
-            ["ssh-keygen", "-F", target, "-f", str(known_hosts)],
-            capture_output=True,
-        ).returncode == 0
-
-    if _pinned(f"[{host}]:{port}") or _pinned(host):
+    if known_hosts.is_file() and known_hosts.stat().st_size > 0:
+        # An operator-managed pinned file already exists; verify it names
+        # the host we are about to contact rather than assuming it does.
+        from scripts.install_known_hosts import (
+            parse_known_hosts,
+            validate_hosts_match,
+        )
+        try:
+            entries = parse_known_hosts(known_hosts.read_text())
+            validate_hosts_match(entries, host, port)
+        except HostPinError as exc:
+            raise SystemExit(
+                f"ERROR: existing {known_hosts} is not usable for "
+                f"{host}:{port}: {exc}"
+            )
         return
 
-    print(
-        f"Host {host}:{port} not in {known_hosts}; pinning via ssh-keyscan ...",
-        file=sys.stderr,
-    )
-    keyscan = subprocess.run(
-        ["ssh-keyscan", "-p", port, host],
-        capture_output=True, text=True,
-    )
-    if keyscan.returncode != 0 or not keyscan.stdout.strip():
-        raise SystemExit(
-            f"ERROR: ssh-keyscan failed for {host}:{port} "
-            f"(rc={keyscan.returncode}): {keyscan.stderr.strip()}"
+    try:
+        install(
+            host=host,
+            port=port,
+            known_hosts=known_hosts,
+            known_hosts_data=os.environ.get("DMI_KNOWN_HOSTS_DATA"),
+            fingerprint=os.environ.get("DMI_HOST_FINGERPRINT"),
+            allow_fingerprint_scan=(
+                os.environ.get("DMI_ALLOW_FINGERPRINT_SCAN") == "1"
+            ),
         )
-    with known_hosts.open("a") as f:
-        f.write(keyscan.stdout)
+    except HostPinError as exc:
+        raise SystemExit(
+            f"ERROR: cannot establish pinned host authentication for "
+            f"{host}:{port}: {exc}"
+        )
 
 
 def _ssh_command(

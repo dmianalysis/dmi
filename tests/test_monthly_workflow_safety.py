@@ -244,7 +244,7 @@ class TestDeployProductionWorkflow(unittest.TestCase):
     def setUpClass(cls):
         cls.raw = DEPLOY_PATH.read_text()
         cls.doc = yaml.safe_load(cls.raw)
-        cls.job = cls.doc["jobs"]["deploy-production"]
+        cls.job = cls.doc["jobs"]["deploy-site"]
         cls.steps = cls.job["steps"]
 
     def test_manual_dispatch_defaults_to_dry_run(self):
@@ -297,54 +297,38 @@ class TestDeployProductionWorkflow(unittest.TestCase):
     def test_refuses_to_deploy_core_artifacts(self):
         step = next(
             (s for s in self.steps
-             if s.get("name") == "Refuse to deploy if Core artifacts staged"),
+             if s.get("name") == "Refuse to deploy if retired artifacts staged"),
             None,
         )
         self.assertIsNotNone(
             step,
-            "§7: 'Refuse to deploy if Core artifacts staged' gate "
-            "must exist.",
+            "§7: the retired-artifact refusal gate must exist.",
         )
         script = step["run"]
-        # The gate matches both *_core.* and *-core.* filenames.
-        self.assertIn("_core.", script)
-        self.assertIn("-core.", script)
+        # Covers Core plus the quarantined U-6 / with-CI classes (§8).
+        for marker in ("_core.", "-core.", "_u6.", "_with_ci."):
+            self.assertIn(marker, script, f"gate must match {marker}")
         self.assertIn("exit 1", script)
 
-    def test_ssh_keyscan_failure_is_fatal(self):
-        # §3: strict host verification. ssh-keyscan MUST run without
-        # `|| true` swallowing failure, and StrictHostKeyChecking must
-        # stay enabled.
-        keyscan_step = next(
-            (s for s in self.steps
-             if "ssh-keyscan" in (s.get("run", "") or "")),
+    def _rsync_exec_step(self):
+        """The step that performs the real rsync upload."""
+        return next(
+            (st for st in self.steps
+             if "rsync -avz" in str(st.get("run", ""))),
             None,
         )
-        self.assertIsNotNone(
-            keyscan_step,
-            "§3: deploy workflow must use ssh-keyscan to populate "
-            "known_hosts.",
-        )
-        script = keyscan_step["run"]
-        self.assertNotRegex(
-            script,
-            r"ssh-keyscan[^\n]*\|\|\s*true",
-            "§3: ssh-keyscan failure must be fatal; `|| true` is "
-            "forbidden (that was the pre-repair bug).",
-        )
 
-    def _rsync_exec_step(self) -> dict:
-        # Pick the step that actually invokes rsync (as an executable
-        # token), skipping the dry-run "skipping ... rsync" echo step.
-        for step in self.steps:
-            run = step.get("run", "") or ""
-            for line in run.splitlines():
-                stripped = line.strip()
-                if stripped.startswith("rsync ") or stripped.startswith("rsync\t"):
-                    return step
-        raise AssertionError(
-            "§3: deploy workflow must contain a step that invokes rsync."
+    def test_pinned_host_material_is_installed_before_rsync(self):
+        """§3: the pinned key must be in place before any remote action."""
+        names = [str(st.get("name", "")) for st in self.steps]
+        install_idx = next(
+            i for i, n in enumerate(names) if "pinned host key" in n.lower()
         )
+        rsync_idx = next(
+            i for i, st in enumerate(self.steps)
+            if "rsync -avz" in str(st.get("run", ""))
+        )
+        self.assertLess(install_idx, rsync_idx)
 
     def test_rsync_uses_strict_host_key_checking(self):
         rsync_step = self._rsync_exec_step()
@@ -366,16 +350,32 @@ class TestDeployProductionWorkflow(unittest.TestCase):
             "§3: rsync SSH command must pin UserKnownHostsFile.",
         )
 
-    def test_deploy_step_gated_on_production_flag(self):
-        # The rsync step must be conditional on
-        # steps.mode.outputs.production == 'true'. Otherwise a
-        # workflow_dispatch dry-run could still touch the live site.
+    def test_deploy_step_gated_on_central_authorization(self):
+        """§2: the rsync step is gated on the single authorization job.
+
+        Authorization is decided once, in the `authorize` job, and every
+        deploying step reads that decision. Gating on a step-local flag
+        would put the decision back inside each job.
+        """
         rsync_step = self._rsync_exec_step()
         cond = str(rsync_step.get("if", ""))
         self.assertIn(
-            "steps.mode.outputs.production == 'true'", cond,
-            "§2: rsync deployment step must be gated on production=true.",
+            "needs.authorize.outputs.production == 'true'", cond,
+            "§2: rsync must be gated on the central authorization job.",
         )
+
+    def test_authorization_job_is_the_only_place_production_is_decided(self):
+        """No job may derive production authority from the event itself."""
+        for job_name, job in self.doc["jobs"].items():
+            if job_name == "authorize":
+                continue
+            for step in job.get("steps", []) or []:
+                with self.subTest(job=job_name, step=step.get("name")):
+                    self.assertNotIn(
+                        "github.event_name", str(step.get("run", "")),
+                        f"§2: job {job_name!r} inspects the event type; "
+                        f"authorization belongs to the `authorize` job.",
+                    )
 
 
 if __name__ == "__main__":
@@ -582,22 +582,53 @@ class TestRepositoryWideStrictHostKeyChecking(unittest.TestCase):
                             f"failure with `|| true`.",
                         )
 
-    def test_empty_known_hosts_is_treated_as_failure(self):
-        """ssh-keyscan exits 0 when it cannot reach the host.
+    def test_no_workflow_uses_ssh_keyscan_as_a_source_of_trust(self):
+        """§3 (Round-4): trust is PINNED, never acquired at deploy time.
 
-        Checking only the exit status therefore proves nothing: the run
-        would proceed with an empty known_hosts. Each deploy workflow
-        must also assert the file is non-empty.
+        Requiring `ssh-keyscan` to return a non-empty key closed one hole
+        but authenticated nothing: it asks whoever answers the connection
+        to introduce itself and believes the reply. Every deployment
+        workflow must obtain host material from a secret instead.
         """
+        for path in ALL_WORKFLOWS:
+            script = _run_scripts(path)
+            with self.subTest(workflow=path.name):
+                for line in script.splitlines():
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        continue
+                    self.assertNotIn(
+                        "ssh-keyscan", stripped,
+                        f"§3: {path.name} invokes ssh-keyscan in an "
+                        f"executable line; host keys must be pinned via "
+                        f"scripts.install_known_hosts.",
+                    )
+
+    def test_every_ssh_workflow_installs_pinned_host_material(self):
         for path in DEPLOY_WORKFLOWS:
             script = _run_scripts(path)
-            if "ssh-keyscan" not in script:
+            if "rsync" not in script:
                 continue
             with self.subTest(workflow=path.name):
                 self.assertIn(
-                    "-s /tmp/dmi_known_hosts", script,
-                    f"§3: {path.name} must fail when ssh-keyscan "
-                    f"produced no host key (exit 0 is not enough).",
+                    "scripts.install_known_hosts", script,
+                    f"§3: {path.name} must install pinned host material.",
+                )
+                self.assertIn(
+                    "IFASTNET_KNOWN_HOSTS", path.read_text(),
+                    f"§3: {path.name} must consume the pinned host-key "
+                    f"secret.",
+                )
+
+    def test_pinned_known_hosts_file_is_used_explicitly(self):
+        for path in DEPLOY_WORKFLOWS:
+            script = _run_scripts(path)
+            if "rsync" not in script:
+                continue
+            with self.subTest(workflow=path.name):
+                self.assertIn(
+                    "UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts", script,
+                    f"§3: {path.name} must point ssh at the pinned file.",
                 )
 
 
@@ -710,15 +741,24 @@ class TestAllDeploymentWorkflowsDefaultToDryRun(unittest.TestCase):
                     f"dry-run.",
                 )
 
-    def test_production_resolver_falls_through_to_false(self):
-        """An unset input must resolve to false, not empty-and-truthy."""
+    def test_production_resolution_defaults_to_false_everywhere(self):
+        """§2: an absent or unrecognised authorization resolves to false.
+
+        Each workflow resolves the flag with a `case` whose default arm
+        is `false`, so anything that is not literally true — including an
+        empty string from an unset input — is a dry-run.
+        """
         for path in DEPLOY_WORKFLOWS:
             with self.subTest(workflow=path.name):
                 script = _run_scripts(path)
                 self.assertIn(
-                    'PROD="${INPUT_PRODUCTION:-false}"', script,
-                    f"§2: {path.name} must default PROD to false when "
-                    f"the input is unset.",
+                    'PROD="false"', script,
+                    f"§2: {path.name} must have a false default arm.",
+                )
+                self.assertIn(
+                    "*)", script,
+                    f"§2: {path.name} must have a catch-all arm that "
+                    f"resolves to dry-run.",
                 )
 
     def test_every_production_step_is_gated_on_the_flag(self):
@@ -738,16 +778,11 @@ class TestAllDeploymentWorkflowsDefaultToDryRun(unittest.TestCase):
                         f"on the production flag.",
                     )
 
-    def test_deploy_workflows_only_auto_trigger_from_main(self):
-        """§2: deployment happens post-merge, never from a branch push."""
-        for path in DEPLOY_WORKFLOWS:
-            with self.subTest(workflow=path.name):
-                push = (_on_block(yaml.safe_load(path.read_text()))
-                        or {}).get("push") or {}
-                self.assertEqual(
-                    push.get("branches"), ["main"],
-                    f"§2: {path.name} must auto-trigger only from main.",
-                )
+    def test_the_sole_push_trigger_is_scoped_to_main(self):
+        """§2: the one workflow with push authority triggers only on main."""
+        push = (_on_block(yaml.safe_load(DEPLOY_PATH.read_text()))
+                or {}).get("push") or {}
+        self.assertEqual(push.get("branches"), ["main"])
 
     def test_no_deploy_workflow_triggers_on_pull_request(self):
         """A PR trigger would deploy unreviewed code."""
@@ -926,3 +961,253 @@ class TestMonthlyWorkflowHasValidationGates(unittest.TestCase):
                 f"§1: PR body must not claim {claim!r} before merge.",
             )
         self.assertIn("does not deploy", body)
+
+
+# ---------------------------------------------------------------------------
+# Round-4 §2: exactly one production-deployment authority.
+# ---------------------------------------------------------------------------
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestExactlyOneProductionAuthority(unittest.TestCase):
+    """§2: one workflow, and only one, may auto-deploy after a merge.
+
+    Three workflows previously carried their own `push: branches: [main]`
+    trigger. One merge started three runs that could each independently
+    rsync to the live site: overlapping uploads of the same commit, in no
+    defined order, with three separate places to revoke access. Strict
+    SSH options did not address that — the defect was the number of
+    authorities, not the transport.
+    """
+
+    ORCHESTRATOR = "deploy_production.yml"
+
+    def _auto_deployers(self):
+        """Workflows that both trigger automatically and can upload."""
+        found = []
+        for path in ALL_WORKFLOWS:
+            doc = yaml.safe_load(path.read_text())
+            on = _on_block(doc) or {}
+            if "push" not in on and "schedule" not in on:
+                continue
+            script = _run_scripts(path)
+            if "rsync" in script and "ssh" in script:
+                found.append(path.name)
+        return sorted(found)
+
+    def test_exactly_one_workflow_auto_deploys(self):
+        deployers = self._auto_deployers()
+        self.assertEqual(
+            deployers, [self.ORCHESTRATOR],
+            f"§2: exactly one workflow may hold automatic production "
+            f"authority. Found: {deployers}",
+        )
+
+    def test_no_component_workflow_has_a_push_trigger(self):
+        for path in (DASHBOARD_PATH, WP_PLUGINS_PATH):
+            with self.subTest(workflow=path.name):
+                on = _on_block(yaml.safe_load(path.read_text())) or {}
+                self.assertNotIn(
+                    "push", on,
+                    f"§2: {path.name} must not deploy on its own trigger; "
+                    f"authority belongs to {self.ORCHESTRATOR}.",
+                )
+
+    def test_components_never_infer_authorization_from_the_event(self):
+        """§2: a push must not imply production inside a component."""
+        for path in (DASHBOARD_PATH, WP_PLUGINS_PATH):
+            script = _run_scripts(path)
+            with self.subTest(workflow=path.name):
+                self.assertNotIn(
+                    'EVENT_NAME" = "push"', script,
+                    f"§2: {path.name} derives production authority from "
+                    f"the event type.",
+                )
+                self.assertNotIn(
+                    'if [ "$EVENT_NAME" = "push" ]', script,
+                    f"§2: {path.name} derives production authority from "
+                    f"the event type.",
+                )
+
+    def test_reusable_component_requires_explicit_production_input(self):
+        """A `workflow_call` component must be told, not guess."""
+        doc = yaml.safe_load(WP_PLUGINS_PATH.read_text())
+        call = (_on_block(doc) or {}).get("workflow_call") or {}
+        inputs = call.get("inputs") or {}
+        self.assertIn("production", inputs)
+        self.assertTrue(
+            inputs["production"].get("required"),
+            "§2: `production` must be a required input, so a caller "
+            "cannot omit it and fall through to a default.",
+        )
+        self.assertIn("ref", inputs)
+        self.assertTrue(inputs["ref"].get("required"))
+
+    def test_manual_dispatch_of_every_component_defaults_to_dry_run(self):
+        for path in (DASHBOARD_PATH, WP_PLUGINS_PATH, DEPLOY_PATH):
+            with self.subTest(workflow=path.name):
+                on = _on_block(yaml.safe_load(path.read_text())) or {}
+                inputs = (on.get("workflow_dispatch") or {}).get("inputs") or {}
+                self.assertIn("production", inputs)
+                self.assertEqual(
+                    str(inputs["production"].get("default")).lower(), "false",
+                )
+
+    def test_orchestrator_invokes_components_with_the_triggering_commit(self):
+        doc = yaml.safe_load(DEPLOY_PATH.read_text())
+        called = {
+            name: job for name, job in doc["jobs"].items() if "uses" in job
+        }
+        self.assertTrue(
+            called, "§2: the orchestrator must invoke its components.",
+        )
+        for name, job in called.items():
+            with self.subTest(job=name):
+                self.assertIn(
+                    "authorize", job.get("needs", []),
+                    "§2: a component must run only after authorization.",
+                )
+                self.assertIn(
+                    "sha", str(job["with"]["ref"]),
+                    "§2: components must deploy the triggering commit.",
+                )
+
+    def test_no_two_jobs_upload_the_same_paths(self):
+        """§2: no overlapping independent upload for the same commit.
+
+        `deploy-site` rsyncs the whole ./deploy/ tree, which already
+        contains the dashboard shell. The dashboard component is
+        therefore deliberately NOT invoked from the orchestrator; doing
+        so would upload the same files twice in one run.
+        """
+        doc = yaml.safe_load(DEPLOY_PATH.read_text())
+        invoked = [
+            str(job["uses"]) for job in doc["jobs"].values() if "uses" in job
+        ]
+        self.assertNotIn(
+            "./.github/workflows/deploy_web_dashboard.yml", invoked,
+            "§2: invoking the dashboard component alongside deploy-site "
+            "would re-upload the same files in the same run.",
+        )
+
+    def test_wp_plugin_component_is_invoked_because_it_is_not_covered(self):
+        """The plugin tree is not part of ./deploy/, so it needs its own job."""
+        doc = yaml.safe_load(DEPLOY_PATH.read_text())
+        invoked = [
+            str(job["uses"]) for job in doc["jobs"].values() if "uses" in job
+        ]
+        self.assertIn("./.github/workflows/deploy_wp_plugins.yml", invoked)
+        self.assertFalse(
+            (ROOT / "deploy" / "wp-content").exists(),
+            "if wp-content were inside deploy/, the component call would "
+            "become an overlapping upload",
+        )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestStagingComesFromTheCanonicalBuilder(unittest.TestCase):
+    """§2: all staging comes from the builder or a component of it."""
+
+    def test_no_workflow_hand_builds_a_deployment_tree(self):
+        forbidden = ("mkdir -p deploy/wp-content", "rsync -a \\", "cp -r data/outputs")
+        for path in ALL_WORKFLOWS:
+            script = _run_scripts(path)
+            for fragment in forbidden:
+                with self.subTest(workflow=path.name, fragment=fragment):
+                    self.assertNotIn(
+                        fragment, script,
+                        f"§2: {path.name} hand-builds a deployment tree; "
+                        f"use scripts.prepare_deployment.",
+                    )
+
+    def test_wp_plugin_staging_uses_the_builder_component(self):
+        script = _run_scripts(WP_PLUGINS_PATH)
+        self.assertIn("scripts.prepare_deployment", script)
+        self.assertIn("--component wp-plugins", script)
+
+    def test_every_deploying_workflow_stages_via_the_builder(self):
+        for path in DEPLOY_WORKFLOWS:
+            script = _run_scripts(path)
+            if "rsync" not in script:
+                continue
+            with self.subTest(workflow=path.name):
+                self.assertIn(
+                    "scripts.prepare_deployment", script,
+                    f"§2: {path.name} must stage via the canonical builder.",
+                )
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestMonthlyWorkflowFinalizationOrder(unittest.TestCase):
+    """§1: the workflow must gate before it publishes."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.steps = _steps_of(MONTHLY_PATH)
+        cls.names = [str(s.get("name", "")) for s in cls.steps]
+        cls.script = _run_scripts(MONTHLY_PATH)
+
+    def test_workflow_uses_the_finalizer(self):
+        self.assertIn(
+            "scripts.finalize_release", self.script,
+            "§1: publication must go through the transactional finalizer.",
+        )
+
+    def test_workflow_does_not_publish_before_gates(self):
+        """The pre-QA publication steps must be gone."""
+        for removed in (
+            "scripts.build_specifications_manifest",
+            "scripts.update_timeseries",
+            "--release-note-only",
+        ):
+            with self.subTest(step=removed):
+                self.assertNotIn(
+                    removed, self.script,
+                    f"§1: {removed} published a mutable public artifact "
+                    f"before QA was evaluated; it belongs to finalization.",
+                )
+
+    def test_finalization_runs_after_computation(self):
+        compute_idx = max(
+            i for i, n in enumerate(self.names) if n.startswith("Compute DMI")
+        )
+        finalize_idx = next(
+            i for i, n in enumerate(self.names) if n.startswith("Finalize release")
+        )
+        self.assertGreater(finalize_idx, compute_idx)
+
+    def test_finalization_runs_before_pr_creation(self):
+        finalize_idx = next(
+            i for i, n in enumerate(self.names) if n.startswith("Finalize release")
+        )
+        pr_idx = next(
+            i for i, s in enumerate(self.steps)
+            if "create-pull-request" in str(s.get("uses", ""))
+        )
+        self.assertLess(finalize_idx, pr_idx)
+
+    def test_fixture_mode_runs_the_same_gates_without_publishing(self):
+        step = next(
+            s for s in self.steps
+            if "fixture only" in str(s.get("name", ""))
+        )
+        self.assertIn("--dry-run", str(step["run"]))
+        self.assertIn("fixture", str(step.get("if", "")))
+
+    def test_validate_mode_never_overwrites_committed_staging(self):
+        step = next(
+            s for s in self.steps
+            if "deployment candidate" in str(s.get("name", "")).lower()
+        )
+        run = str(step["run"])
+        self.assertIn(
+            "RUNNER_TEMP", run,
+            "§1: a validate run must build its candidate in scratch space, "
+            "not over the committed deploy/ tree.",
+        )
+
+    def test_committed_staging_is_compared_against_a_fresh_build(self):
+        self.assertIn(
+            "dmi-deploy-fresh", self.script,
+            "§8: the workflow must confirm committed deploy/ equals a "
+            "fresh build.",
+        )

@@ -612,6 +612,139 @@ def prepare_deployment(
     )
 
 
+# ---------------------------------------------------------------------------
+# Component: WordPress plugin staging (Round-4 §2)
+# ---------------------------------------------------------------------------
+
+#: Plugins deployed to the live WordPress install.
+WP_PLUGINS = ("dmi-latest-info", "dmi-release-data")
+
+#: Paths never shipped inside a plugin package.
+WP_EXCLUDED_PARTS = frozenset({
+    ".git", ".github", "node_modules", "__pycache__", "tests", "test",
+})
+WP_EXCLUDED_NAMES = frozenset({".DS_Store"})
+
+
+def _wp_plugin_files(repo_root: Path) -> list[tuple[Path, str]]:
+    """(source, destination-relative) pairs for every staged plugin file.
+
+    Deterministically ordered so two runs stage byte-identical trees.
+    """
+    pairs: list[tuple[Path, str]] = []
+    base = repo_root / "web" / "wp-plugins"
+    for plugin in WP_PLUGINS:
+        src_root = base / plugin
+        if not src_root.is_dir():
+            continue
+        for path in sorted(src_root.rglob("*")):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(src_root)
+            if set(rel.parts) & WP_EXCLUDED_PARTS:
+                continue
+            if path.name in WP_EXCLUDED_NAMES:
+                continue
+            pairs.append((path, f"wp-content/plugins/{plugin}/{rel}"))
+    return pairs
+
+
+def _guard_core_reference(path: Path) -> None:
+    """Refuse to stage plugin source that references the withdrawn Core spec."""
+    try:
+        text = path.read_text(errors="ignore")
+    except OSError:
+        return
+    for marker in ('"core"', "'core'", "_core.json", "-core.csv",
+                   "-core.parquet"):
+        if marker in text:
+            raise StageError(
+                f"refusing to stage plugin file referencing the withdrawn "
+                f"Core spec ({marker}): {path}"
+            )
+
+
+def prepare_wp_plugins(
+    deploy_dir: Path,
+    repo_root: Path = REPO_ROOT,
+    dry_run: bool = False,
+) -> list[Path]:
+    """Stage the WordPress plugin tree (§2).
+
+    Previously this lived as an inline ``rsync`` recipe inside
+    ``deploy_wp_plugins.yml`` — an unrelated hand-built deployment tree
+    with its own exclusion list, its own guards, and no way to test it
+    outside CI. It is now a component of the single deployment builder
+    and inherits the same fail-closed target validation, the same
+    temp-sibling-then-swap, and the same Core refusal.
+    """
+    deploy_dir = deploy_dir.absolute()
+
+    pairs = _wp_plugin_files(repo_root)
+    if not pairs:
+        raise StageError(
+            f"no plugin files found under {repo_root / 'web' / 'wp-plugins'}; "
+            f"refusing to stage an empty plugin package"
+        )
+    for source, _dest in pairs:
+        _guard_core_reference(source)
+
+    if dry_run:
+        return sorted(deploy_dir / dest for _src, dest in pairs)
+
+    reason = _forbidden_target_reason(deploy_dir, repo_root.resolve())
+    if reason is not None:
+        raise StageError(reason)
+
+    parent = deploy_dir.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    temp_dir = parent / f".{deploy_dir.name}.staging-{uuid.uuid4().hex[:8]}"
+    try:
+        _write_sentinel(temp_dir)
+        for source, dest_rel in pairs:
+            dest = temp_dir / dest_rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, dest)
+        if deploy_dir.exists():
+            shutil.rmtree(deploy_dir)
+        temp_dir.replace(deploy_dir)
+    except Exception:
+        if temp_dir.exists():
+            try:
+                shutil.rmtree(temp_dir)
+            except OSError:
+                pass
+        raise
+
+    return sorted(
+        p for p in deploy_dir.rglob("*")
+        if p.is_file() and p.name != STAGING_SENTINEL
+    )
+
+
+def verify_wp_plugins(deploy_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
+    """Verify the staged plugin tree matches its sources exactly."""
+    problems: list[str] = []
+    expected = {
+        dest: source for source, dest in _wp_plugin_files(repo_root)
+    }
+    if not expected:
+        problems.append("no plugin sources found")
+    for dest_rel, source in expected.items():
+        dest = deploy_dir / dest_rel
+        if not dest.is_file():
+            problems.append(f"missing in plugin package: {dest_rel}")
+        elif not filecmp.cmp(source, dest, shallow=False):
+            problems.append(f"plugin package diverges from source: {dest_rel}")
+    for path in deploy_dir.rglob("*"):
+        if not path.is_file() or path.name == STAGING_SENTINEL:
+            continue
+        rel = str(path.relative_to(deploy_dir))
+        if rel not in expected:
+            problems.append(f"unexpected file in plugin package: {rel}")
+    return problems
+
+
 def verify_deployment(
     deploy_dir: Path,
     repo_root: Path = REPO_ROOT,
@@ -696,12 +829,30 @@ def main(argv: Optional[list[str]] = None) -> int:
         action="store_true",
         help="After building, verify closure + byte-identity + schemas.",
     )
+    parser.add_argument(
+        "--component",
+        choices=("site", "wp-plugins"),
+        default="site",
+        help=(
+            "Which deployment component to stage. 'site' is the public "
+            "data surface (default); 'wp-plugins' is the WordPress plugin "
+            "package. Both are components of this single builder (§2)."
+        ),
+    )
     args = parser.parse_args(argv)
 
     deploy_dir = Path(args.output_dir).absolute()
+    builder = (
+        prepare_wp_plugins if args.component == "wp-plugins"
+        else prepare_deployment
+    )
+    verifier = (
+        verify_wp_plugins if args.component == "wp-plugins"
+        else verify_deployment
+    )
 
     try:
-        written = prepare_deployment(deploy_dir, dry_run=args.dry_run)
+        written = builder(deploy_dir, dry_run=args.dry_run)
     except StageError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -715,7 +866,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"  {verb} {rel}")
 
     if args.verify and not args.dry_run:
-        problems = verify_deployment(deploy_dir)
+        problems = verifier(deploy_dir)
         if problems:
             print("verification failed:", file=sys.stderr)
             for problem in problems:
