@@ -1,0 +1,330 @@
+{
+  "artifact": "shelter_estimation_spec",
+  "counterpart_validation": {
+    "predictions_stated_before_the_estimates_exist": {
+      "P1_monthly_lines": "The published titles of 910050, 910101 and 910102 say 'Estimated monthly rental value'. The estimator sums twelve monthly records and divides by the annual population, so its output is annual. The ratio estimate / published is therefore predicted to be approximately 12 for these three, at All Consumer Units and at every quintile.",
+      "P2_annual_line": "910103's published title says 'Estimated annual rental value'. If BLS publishes an annual figure while the microdata carries the annual amount on each monthly record, the ratio would be approximately 12 as well; if the microdata carries a monthly amount, the ratio would be approximately 1. Which of these holds is not known at the time of writing and is the specific question the timeshare case turns on.",
+      "P3_interpretation_if_P1_holds": "A ratio near 12 on the monthly lines means the estimator is behaving correctly and the published ADDENDA series is simply on a different periodicity. It is a units difference in the published target, not an error in the estimate, and it is corrected in neither direction.",
+      "P4_interpretation_if_P1_fails": "A ratio that is neither near 12 nor near 1, or that varies materially across populations, would be evidence that the ordinary estimator does not transfer to ADDENDA rental-equivalence lines. Under that outcome the affected shelter UCCs are flagged and withdrawn from rule adjudication, per Phase C3. They are not repaired.",
+      "note": "These are predictions, not thresholds. A wrong prediction is recorded as a wrong prediction and is not revised after the fact. Nothing in the estimator depends on any of them."
+    },
+    "published_targets_2024": {
+      "source": "LABSTAT cx.data.1.AllData, LB01, period A01, year 2024, process code M",
+      "units": "dollars per consumer unit, at the periodicity BLS publishes for each line",
+      "values": {
+        "910050": {
+          "01": 1556,
+          "02": 755,
+          "03": 1082,
+          "04": 1323,
+          "05": 1757,
+          "06": 2856
+        },
+        "910101": {
+          "01": 63,
+          "02": 23,
+          "03": 36,
+          "04": 33,
+          "05": 70,
+          "06": 154
+        },
+        "910102": {
+          "01": 18,
+          "02": 4,
+          "03": 10,
+          "04": 12,
+          "05": 36,
+          "06": 30
+        },
+        "910103": {
+          "01": 1220,
+          "02": 274,
+          "03": 309,
+          "04": 648,
+          "05": 1555,
+          "06": 3301
+        }
+      }
+    },
+    "ratio_consistency_rule": "The ratio is called consistent across populations for a UCC when every population's ratio is within 10 percent of that UCC's All-Consumer-Units ratio. This threshold is declared here, before the ratios exist, and is used only to describe the counterpart evidence. It gates nothing and adjusts nothing.",
+    "ratio_consistency_tolerance_pct": 10.0,
+    "what_it_is_not": "It is not a second confirmation gate and its outcome does not change confirmation_status. It is not a route by which a counterpart value may become a shelter value. It produces no correction factor under any outcome.",
+    "why_it_is_needed": "Every UCC in the development roster and in the 111-UCC confirmation set came from the EXPEND section of the hierarchical grouping file. The estimator has therefore never been run against an ADDENDA line. 910104-910107 are not ADDENDA lines either - they are in no stub file at all - but their four conceptual counterparts are, and LB01 publishes means for all four across all six populations. That makes the counterparts the only available test of the estimator on this section and this concept family."
+  },
+  "empty_and_missing_cells": {
+    "downstream_obligation": "A null must propagate as unresolved. Any Phase-D accounting that meets one must carry it as unresolved rather than treating it as zero to make a total balance.",
+    "rule": "A UCC/population cell with no calendar-year-eligible record is reported with cell_status = NO_RECORDS and a null mean. It is never reported as zero.",
+    "why": "Zero is an estimate: it asserts that consumer units in that population spend nothing on the concept. Absence of a record in a sample asserts nothing of the kind. Collapsing the two would put a fabricated zero into any aggregate built on top."
+  },
+  "estimands": {
+    "annual_aggregate": {
+      "also_reported_in": "millions of dollars per year, for comparability with published LB01 aggregate series",
+      "definition": "sum(FINLWT21 * COST * factor) over the calendar-year-eligible records, which is identically annual_mean_per_consumer_unit * weighted_population.",
+      "units": "dollars per year"
+    },
+    "annual_mean_per_consumer_unit": {
+      "definition": "numerator / weighted_population.",
+      "note": "A mean over ALL consumer units in the population, not over those reporting the item. A consumer unit with no record contributes to the denominator and not the numerator.",
+      "units": "dollars per consumer unit per year"
+    },
+    "relative_standard_error": {
+      "definition": "100 * SE / |mean|.",
+      "units": "percent"
+    },
+    "reporting_consumer_units": {
+      "definition": "Distinct NEWIDs contributing at least one such record.",
+      "units": "consumer units (unweighted)"
+    },
+    "standard_error": {
+      "definition": "BRR over 44 replicates.",
+      "units": "dollars per consumer unit per year"
+    },
+    "uncertainty_interval": {
+      "coverage": 0.95,
+      "declared_limitation": "A normal approximation. For a cell resting on fifteen consumer units it is not credible as a coverage statement and is reported as a width, not as a promise. No better interval is manufactured, because manufacturing one would require a distributional assumption this task has no basis for.",
+      "definition": "mean +/- 1.959964 * SE",
+      "units": "dollars per consumer unit per year"
+    },
+    "unweighted_record_count": {
+      "definition": "MTBI rows with REF_YR == 2024 for this UCC contributing to this population.",
+      "units": "records"
+    },
+    "weighted_population": {
+      "definition": "sum(FINLWT21 * MO_SCOPE / 12) over the population. The estimate's denominator.",
+      "units": "consumer units"
+    }
+  },
+  "estimator": {
+    "confirmation": {
+      "cells": 666,
+      "commit": "edd14d458cf6ac160f2237c73b43e750f28821e5",
+      "note": "The confirmation is what makes this estimator usable outside the fifteen UCCs it was built on. It is not a warrant for the shelter UCCs specifically; see known_limitations.",
+      "spec": "registry/research/pumd_lb01_confirmation_spec_v0_1.json",
+      "status": "PASS",
+      "uccs": 111
+    },
+    "frozen_commit": "95111fd675f2d0287e5cc89398411e3322ad65a3",
+    "frozen_tag": "dmi-detailed-inflation-v0.1-pumd-benchmark-2024",
+    "identity": "Exactly the estimator that passed the Phase-B benchmark and the out-of-sample confirmation. This task adds no estimator code. The arithmetic is pumd.weighted_ucc_means and pumd.population_estimates, called unmodified.",
+    "pinned_module_digests": {
+      "dmi_research/detailed_inflation/pumd.py": "7e6cb93d5b3b18e08de8fa5129b7d21f62fab3874b3b0d50466a900999b5c92a",
+      "dmi_research/detailed_inflation/pumd_benchmark.py": "ac00fae2383e2218c2de2434e1341261ffb9c22e67a6570f332c7953e8d3a205",
+      "dmi_research/detailed_inflation/shelter_source.py": "0d2cfba88b5c33b5f1a646247d34f620e797305aab17dd5ae5f8589a7412597d"
+    },
+    "prohibited_here": [
+      "any shelter-specific scaling factor",
+      "any calibration of a shelter estimate to any published value",
+      "any annualization method other than the one below",
+      "any change to quintile assignment or quintile boundaries",
+      "any change to the population denominator",
+      "any post-hoc adjustment of an estimate after it is seen",
+      "substituting a published counterpart's value for a shelter estimate"
+    ]
+  },
+  "frozen_before_any_amount_was_computed": {
+    "discipline": "The runner refuses to start unless this file is already in git history, and refuses to continue if any pinned module digest has changed. A plan revised after an inconvenient estimate therefore shows up as a commit made after the run rather than as an unrecorded adjustment.",
+    "what_had_already_been_seen_when_this_was_written": "Honesty about the starting point matters more than a claim of blindness. Before this specification was written, the session had read from the pinned archive: the record counts and PUBFLAG values re-derived under C1; the NEWID overlap between each shelter UCC and its published counterpart; the fact that COST is identical on none of the shared (NEWID, REF_YR, REF_MO) keys for any of the four pairs; and, for the timeshare pair alone, that the unweighted COST distributions differ by roughly a factor of forty. It had also read the published LB01 2024 means for the four counterparts, which are the comparison target and are pinned below. No weighted estimate for any of 910104-910107 had been computed, and none of the thresholds, estimands or diagnostics below was chosen with such an estimate in view."
+  },
+  "known_limitations": {
+    "imputed_concept": "All four are equivalence concepts, not recorded outlays. The CE collects them as respondent estimates of rental value. What the CPI does with them between the concordance and the published weight is not established, and cpi_adjustment_status stays INFERRED.",
+    "no_published_value_exists_for_the_shelter_uccs": "LB01 publishes no series for 910104-910107, so their estimates cannot be validated directly against anything. This is the irreducible limit of the exercise: the confirmation establishes that the estimator reproduces published values on 111 UCCs it never saw, and the counterpart comparison establishes how it behaves on the neighbouring published ADDENDA lines, but neither is a check on these four amounts themselves.",
+    "no_stub_row_means_no_published_annualization_factor": "The factor of 1 applied to 910104-910107 is the estimator's default for an absent UCC, corroborated by the four counterparts carrying factor 1, not a factor BLS publishes for these codes. If BLS applies a different factor internally, these estimates would be wrong by that factor and nothing here would detect it.",
+    "the_estimator_was_confirmed_on_expend_lines_only": "Stated here rather than left to be discovered. The 111-UCC confirmation set is entirely EXPEND-section. The counterpart validation exists precisely because of this gap and only partly closes it."
+  },
+  "method": {
+    "annualization": {
+      "counterpart_stub_evidence": "910050, 910101, 910102 and 910103 are all present in both 2024 stub files at level 3, survey I, section ADDENDA, factor 1. The four codes conceptually paired with the shelter UCCs therefore carry the same factor the default supplies, which is corroboration for the default and not a substitute for a published value.",
+      "factor_applied_to_910104_910107": 1,
+      "factor_published_for_the_four_counterparts": 1,
+      "no_periodicity_correction_is_applied": "The estimator sums every calendar-year-eligible monthly record and divides by the annual population, which yields an annual figure for a monthly-reported item. No further multiplication or division by 12 is performed anywhere, for any UCC, under any circumstance.",
+      "rule": "The per-UCC factor is column 6 of the hierarchical grouping file, value 1 or 4, defaulting to 1 for a UCC the file does not carry. This is the benchmark's rule, applied unchanged.",
+      "why_the_default_applies": "910104-910107 appear in neither CE-HG-Inter-2024.txt nor CE-HG-Integ-2024.txt, so no factor is published for them and the default of 1 is used. This is a real gap and is recorded as such under known_limitations rather than presented as a published value."
+    },
+    "brr": {
+      "formula": "SE = sqrt((1/44) * sum over r of (mean_r - mean)^2)",
+      "replicates": 44,
+      "source": "PUMD Getting Started Guide 6.3.2 and the BLS sample program"
+    },
+    "calendar_year": 2024,
+    "calendar_year_eligibility": "MTBI rows with REF_YR == 2024, matching the BLS sample program's filter on reference year alone. Reference month does not restrict.",
+    "expenditure_numerator": "sum(FINLWT21 * COST * factor) over the calendar-year-eligible records, using the UNADJUSTED final weight. The asymmetry between numerator and denominator is the BLS sample program's and is preserved, not corrected.",
+    "files": {
+      "denominator": "the full FMLI file, not the joined subset",
+      "fmli": [
+        "fmli241x.csv",
+        "fmli242.csv",
+        "fmli243.csv",
+        "fmli244.csv",
+        "fmli251.csv"
+      ],
+      "join": "inner join of MTBI onto FMLI on NEWID for the numerator",
+      "mtbi": [
+        "mtbi241x.csv",
+        "mtbi242.csv",
+        "mtbi243.csv",
+        "mtbi244.csv",
+        "mtbi251.csv"
+      ]
+    },
+    "final_weight": "FINLWT21",
+    "population_denominator": "sum(FINLWT21 * MO_SCOPE / 12) over all consumer units in the population. MO_SCOPE is QINTRVMO - 1 in the first quarter file, 4 - QINTRVMO in the fifth, and 3 otherwise.",
+    "quintile_assignment": {
+      "income_variable": "FINCBTXM",
+      "lower_limits": [
+        29932.0,
+        57452.0,
+        94511.0,
+        155925.0
+      ],
+      "note": "Consumer units are assigned to quintiles using the limits BLS publishes, not a reconstruction of the BLS algorithm. Unchanged from the benchmark.",
+      "source": "Table 1101, row 'Lower limit', as published by BLS",
+      "units": "dollars of income before taxes"
+    },
+    "replicate_weights": "WTREP01-WTREP44"
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, shelter task, Phase C2",
+  "outputs": {
+    "directory": "data/research/detailed_inflation/shelter_2024",
+    "files": [
+      "shelter_estimates_2024.csv",
+      "counterpart_validation_2024.csv",
+      "shelter_estimation_summary.json"
+    ]
+  },
+  "purpose": "Fix, before any amount is computed, exactly how the four rental-equivalence UCCs 910104-910107 will be estimated from the 2024 CE Interview PUMD, what will be reported, in what units, and what will be done about cells that are thin or empty. This specification authorizes a calculation. It does not authorize a DMI weight, and producing a number under it does not upgrade any scope rule.",
+  "required_quality_diagnostics": [
+    "unweighted record count, by UCC and population",
+    "distinct reporting consumer units, by UCC and population",
+    "weighted population denominator",
+    "BRR standard error and relative standard error",
+    "the number of replicates whose estimate for the cell is zero",
+    "minimum and maximum replicate mean",
+    "the spread of replicate means relative to the point estimate",
+    "whether the relative standard error exceeds the informational threshold"
+  ],
+  "source_archive": {
+    "bytes": 53613162,
+    "members_relied_on": {
+      "intrvw24/fmli241x.csv": "24277c0a8b4b9fa829c7610c125be10f3a8d69c3083bf1cdb911bc0e41f7a223",
+      "intrvw24/fmli242.csv": "3b3b432f2b82e89999266b74b66545848d1feb5be231e62c3e7a5e4386133116",
+      "intrvw24/fmli243.csv": "d3226b68530e71dcdb61a0e57bb5a1745885f24b2ffd29fd798e49f02516c3b3",
+      "intrvw24/fmli244.csv": "5fe2c2db2d8bf184fce90c4d54a19c9198c7664d41dfc6cf3808e013bd7f5229",
+      "intrvw24/fmli251.csv": "28410a98aadbc92c1fa31fbdd80b4d3f38fbdba670ed56152d85796e2ac934cf",
+      "intrvw24/mtbi241x.csv": "4c16f43f908c1d45cb0d26f5708719f43d2acef8dc9c607a7a6d7be379564f06",
+      "intrvw24/mtbi242.csv": "a4d5f82b0f77fe22ea1b76f22905df32663b3331d44da8e41fff484f498f85d0",
+      "intrvw24/mtbi243.csv": "b89c9f6afab262d5173da04d1e15981f2e15fa57da6be043e3a25c386b3bb539",
+      "intrvw24/mtbi244.csv": "90f8102af12cd60a211ce8055f96040a0a8701388723ddc1b751c2d92e16c136",
+      "intrvw24/mtbi251.csv": "40bf770c31a286ac9b07c41ab79dc74a3a57d7a85d6ebb14a828ee10e6010a33"
+    },
+    "registry": "registry/research/pumd_2024_interview_source_v0_1.json",
+    "reproduction": {
+      "artifact": "data/research/detailed_inflation/shelter_2024/shelter_source_observation.json",
+      "commit": "5076a6df1a2dcf99f675f4bbf60165227fafe63a",
+      "phase": "C1",
+      "status": "REPRODUCED"
+    },
+    "sha256": "421ec90c2b8469c10f91eac27988f65f5d09fcfa9944e5069bb00b5460677f26",
+    "url": "https://www.bls.gov/cex/pumd/data/csv/intrvw24.zip"
+  },
+  "spec_version": "v0.1",
+  "status": "RESEARCH_ONLY",
+  "thin_cells": {
+    "high_rse_is_informational": {
+      "carried_forward_from": "the project's existing Milestone-1 RSE diagnostic",
+      "explicitly_not": "a usability rule, an exclusion criterion, or a licence to substitute zero. Promoting it to any of those would need methodological authority this task does not have.",
+      "status": "WARNING_ONLY",
+      "threshold_pct": 25.0
+    },
+    "known_thin_cell": {
+      "disclosure": "Reported at every population, including quintiles where the count will be lower still and may reach zero. It is not hidden, not aggregated away and not rounded out.",
+      "records_all_reference_years": 45,
+      "records_in_benchmark_year": 40,
+      "reporting_consumer_units_in_benchmark_year": 15,
+      "ucc": "910106"
+    },
+    "no_minimum_record_cutoff_is_invented": "No BLS publication rule authorising a minimum-record cutoff for PUMD estimates was located, so none is imposed. A cell is not dropped, suppressed or zeroed for being small.",
+    "validity_and_precision_are_separate": "estimator_validity is a property of the method and is settled by the benchmark and the confirmation. estimate_precision is a property of one cell and is settled by its standard error. A valid estimator can yield a noisy estimate, and a noisy estimate is not evidence against the estimator."
+  },
+  "uccs": {
+    "correspondence": {
+      "claim_type": "DMI_INFERENCE",
+      "evidence_strength": "MODERATE",
+      "observed_structure_before_the_freeze": {
+        "cost_identity": "COST is identical on none of the shared (NEWID, REF_YR, REF_MO) keys for any of the four pairs. The paired codes are therefore not duplicates of one another, which is consistent with one being a reported value and the other an imputed equivalence but does not establish that.",
+        "newid_overlap": "Near-total for three pairs. 910102 and 910106 are the exception: 291 records over 85 consumer units against 45 records over 15.",
+        "note": "Measured from the pinned archive before this file was written, and recorded because it bears directly on how strong the pairing inference is. These are unweighted source-structure facts about raw records. None is an estimate and none may be read as one.",
+        "timeshare_scale_gap": "The unweighted COST distributions of 910103 and 910107 differ by roughly a factor of forty. This is the quantitative face of the published-title periodicity anomaly and is a reason to treat the timeshare pairing with more caution than the other three, not a reason to convert one into the other."
+      },
+      "pairs": {
+        "910050": "910104",
+        "910101": "910105",
+        "910102": "910106",
+        "910103": "910107"
+      },
+      "this_is_not_a_bls_crosswalk": "BLS publishes no crosswalk between the published ADDENDA codes and the concordance-only codes, and none is asserted here. Each pair is a DMI inference from matching concept names and matching order, carried forward from ucc_provenance_classes_v0_1.json at the same claim_type and the same evidence strength. This specification does not upgrade it.",
+      "what_the_pairing_may_be_used_for": "Testing whether the ordinary estimator behaves sensibly on an ADDENDA rental-equivalence line, by estimating the published counterpart and comparing that estimate against the published LB01 value.",
+      "what_the_pairing_may_not_be_used_for": [
+        "substituting a published counterpart value for a shelter estimate",
+        "inferring 910107 from 910103 or 910103 from 910107",
+        "inferring any shelter estimate from any published value",
+        "deriving a scaling factor from a counterpart comparison"
+      ]
+    },
+    "estimated": [
+      "910104",
+      "910105",
+      "910106",
+      "910107",
+      "910050",
+      "910101",
+      "910102",
+      "910103"
+    ],
+    "interpretation": {
+      "910104": {
+        "concordance_title": "Rental Equivalence Of Owned Home",
+        "eli": "HC011",
+        "eli_title": "Owners' Equivalent Rent Of Primary Residence",
+        "role": "Track-A rental-equivalence input for owner-occupied primary residence.",
+        "sampled_eli": true,
+        "shelter_concept": "OWNER_OCCUPIED_PRIMARY_RESIDENCE"
+      },
+      "910105": {
+        "concordance_title": "Rent Equiv Vac Home Not Avail Rnt",
+        "eli": "HC090",
+        "eli_title": "Unsampled residual, owned vacation homes",
+        "role": "Track-A rental-equivalence input for a secondary residence held out of the rental market.",
+        "sampled_eli": false,
+        "shelter_concept": "SECONDARY_RESIDENCE_NOT_AVAILABLE_FOR_RENT"
+      },
+      "910106": {
+        "concordance_title": "Rent Equiv Vac Home Avail For Rnt",
+        "eli": "HC090",
+        "eli_title": "Unsampled residual, owned vacation homes",
+        "role": "Track-A rental-equivalence input for a secondary residence offered for rent. The thinnest cell in the set; see thin_cells.",
+        "sampled_eli": false,
+        "shelter_concept": "SECONDARY_RESIDENCE_AVAILABLE_FOR_RENT"
+      },
+      "910107": {
+        "concordance_title": "Rental Equivalence For Timeshares",
+        "eli": "HC090",
+        "eli_title": "Unsampled residual, owned vacation homes",
+        "role": "Track-A rental-equivalence input for timeshare interests.",
+        "sampled_eli": false,
+        "shelter_concept": "TIMESHARE"
+      }
+    },
+    "track_a_inputs": [
+      "910104",
+      "910105",
+      "910106",
+      "910107"
+    ],
+    "validation_counterparts": [
+      "910050",
+      "910101",
+      "910102",
+      "910103"
+    ]
+  }
+}
