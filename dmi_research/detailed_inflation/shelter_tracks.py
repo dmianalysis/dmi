@@ -1374,16 +1374,22 @@ def build_double_counting_audit(
             track_b_disposition=RETAINED,
             governing_rule=None,
             double_counting_finding=(
-                "RETAINED IN FULL, AND THAT IS PROBABLY TOO MUCH. Casey 2010 "
-                "Appendix B note 3 states that homeowners insurance is reduced "
-                "'to reflect only the renter's part of the owner's "
-                "expenditure. The factor applied is 43%'. Track A retains 100 "
-                "percent of it because no rule claims it and this task's remit "
-                "does not extend to writing one. The overstatement is bounded "
-                "by 57 percent of the retained amount. It is recorded here as "
-                "an open item; no factor has been applied, because applying an "
-                "unadjudicated factor to obtain a tidier number is the thing "
-                "this workstream exists to avoid."
+                "RETAINED IN FULL, AND WHETHER THAT IS TOO MUCH IS NOT "
+                "ESTABLISHED. Casey 2010 Appendix B note 3 states that CPI "
+                "reduces the homeowners insurance weight 'to reflect only the "
+                "renter's part of the owner's expenditure. The factor applied "
+                "is 43%'. Two separate things follow and they must not be "
+                "merged. Historical BLS authority for a renter's-part "
+                "allocation is ESTABLISHED: the document is primary, dated, "
+                "and states a factor. Whether that factor or any successor "
+                "governs the 2024 CE-to-CPI weighting vintage is "
+                "NOT_ESTABLISHED, because no current-vintage source has been "
+                "located in this task. Track A therefore retains 100 percent "
+                "-- not because 100 percent has been shown correct, but "
+                "because no adjudicated 2024 factor exists to apply. The size "
+                "of any overstatement is unknown. Quoting 57 percent would "
+                "silently promote a 2010 factor to a 2024 factor, which is the "
+                "failure this workstream exists to avoid."
             ),
             is_open_item=True,
         )

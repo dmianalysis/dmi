@@ -299,13 +299,23 @@ and its own test.
 
 ### Three open items, flagged rather than fixed
 
-**Homeowners insurance is retained in full, and that is probably too much.**
-Casey 2010 Appendix B note 3 records that the CPI reduces homeowners insurance
-"to reflect only the renter's part of the owner's expenditure. The factor
-applied is 43%." Track A retains 100% of $100,026M because no rule claims it
-and this task's remit does not extend to writing one. The overstatement is
-bounded by 57% of the retained amount. **No factor has been applied**, because
-applying an unadjudicated factor to obtain a tidier number is precisely the
+**Homeowners insurance is retained in full, and whether that is too much is not
+established.** Casey 2010 Appendix B note 3 records that the CPI reduces
+homeowners insurance "to reflect only the renter's part of the owner's
+expenditure. The factor applied is 43%." Two claims follow, and collapsing them
+is the error to avoid:
+
+| Claim | State |
+| --- | --- |
+| Historical BLS authority for a renter's-part allocation exists | `ESTABLISHED` |
+| That factor, or a successor, governs the 2024 weighting vintage | `NOT_ESTABLISHED` |
+
+The first is settled by a primary, dated BLS document. The second was not
+investigated in this task, so nothing is known about it either way. Track A
+retains 100% of $100,026M — not because 100% has been shown correct, but
+because no adjudicated 2024 factor exists to apply. **No factor has been
+applied**, and the magnitude of any overstatement is unknown: quoting "57%"
+would silently promote a 2010 factor to a 2024 factor, which is precisely the
 failure this workstream exists to avoid.
 
 **$25,547M of owned-vacation outlays leave Track A with no replacement in
@@ -349,7 +359,8 @@ claims any of them. Solving those was explicitly not this task's business.
 - **No balancing.** `Delta_shelter` and `Delta_scope` are reported as they fall out.
 - **The 11 open UCCs from Milestone 1 are not resolved.**
 - **910106 is not replaced by zero**, not inferred from 910102, and not dropped.
-- **The Casey 43% insurance factor is recorded and not applied.**
+- **The Casey 43% insurance factor is recorded, not applied, and not assumed to
+  hold for 2024.**
 - **The Operational Baseline, Baseline and Slack-Plus are untouched.**
 
 ---
@@ -361,7 +372,12 @@ claims any of them. Solving those was explicitly not this task's business.
    blocks `RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1`.
 2. **The BLS secondary-home consumption factor is unpublished.** Even a usable
    910106 would not clear this.
-3. **Homeowners insurance is overstated in Track A** by up to 57% of $100,026M.
+3. **Homeowners insurance may be overstated in Track A, by an unknown amount.**
+   Historical BLS authority for a renter's-part reduction is `ESTABLISHED`
+   (Casey 2010, 43%); current-vintage applicability is `NOT_ESTABLISHED`. The
+   full $100,026M is retained pending that second question. The 57% figure an
+   earlier draft quoted assumed the 2010 factor still governs 2024, which is
+   not known.
 4. **910107 is LOW quality** at a 31.79% All-CU RSE. Admissible, and thin.
 5. **Whether BLS adjusts 910104 before use is not established.** No BLS statement
    was located either way. The introduced amount is the CE addendum as
