@@ -300,3 +300,100 @@ class TestNoDynamicTrustAnywhere(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRunbookExamplesAllUseThePinnedFile(unittest.TestCase):
+    """Every executable SSH/rsync example in the runbook must be pinned.
+
+    The runbook installs validated host material into `$KNOWN_HOSTS`, and
+    the main commands referenced it correctly — but the recovery command
+    at the end reverted to `$HOME/.ssh/known_hosts`.
+
+    That was the worst possible placement for the inconsistency. Recovery
+    runs when something has already gone wrong, under time pressure, and
+    it is exactly when an operator reaches for a familiar command without
+    re-reading it. Authenticating a restore against whatever the default
+    file happens to hold reintroduces, at the critical moment, the
+    trust-on-first-use problem the pinning exists to remove.
+    """
+
+    RUNBOOK = REPO_ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md"
+    PINNED = "UserKnownHostsFile=$KNOWN_HOSTS"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = cls.RUNBOOK.read_text()
+        cls.lines = cls.text.splitlines()
+
+    def _fenced_code_lines(self):
+        """Lines inside ``` fences — the parts an operator would run."""
+        inside = False
+        for line in self.lines:
+            if line.strip().startswith("```"):
+                inside = not inside
+                continue
+            if inside:
+                yield line
+
+    def test_runbook_has_executable_ssh_examples(self):
+        """Non-vacuity: the assertions below need something to inspect."""
+        found = [
+            ln for ln in self._fenced_code_lines()
+            if "UserKnownHostsFile" in ln
+        ]
+        self.assertGreaterEqual(
+            len(found), 2,
+            "expected multiple pinned SSH examples in the runbook; if none "
+            "are found the checks below pass for the wrong reason.",
+        )
+
+    def test_every_executable_example_uses_the_pinned_file(self):
+        offenders = [
+            ln.strip() for ln in self._fenced_code_lines()
+            if "UserKnownHostsFile" in ln and self.PINNED not in ln
+        ]
+        self.assertEqual(
+            offenders, [],
+            f"§2 (cleanup): every SSH/rsync example must use "
+            f"{self.PINNED}. Offenders: {offenders}",
+        )
+
+    def test_no_example_falls_back_to_the_default_known_hosts(self):
+        offenders = [
+            ln.strip() for ln in self._fenced_code_lines()
+            if "known_hosts" in ln
+            and "$HOME/.ssh/known_hosts" in ln
+        ]
+        self.assertEqual(
+            offenders, [],
+            f"§2 (cleanup): no runbook command may fall back to the "
+            f"default known_hosts. Offenders: {offenders}",
+        )
+
+    def test_recovery_path_specifically_is_pinned(self):
+        """The regression that motivated this class."""
+        idx = self.text.find("restore from the Step 1 backup")
+        self.assertGreater(idx, 0, "recovery section not found")
+        recovery = self.text[idx:idx + 1400]
+        self.assertIn(
+            self.PINNED, recovery,
+            "§2 (cleanup): the recovery rsync must use the pinned file.",
+        )
+        self.assertNotIn("$HOME/.ssh/known_hosts", recovery)
+
+    def test_recovery_section_explains_why_the_pinned_file_matters(self):
+        idx = self.text.find("restore from the Step 1 backup")
+        recovery = self.text[idx:idx + 1400].lower()
+        self.assertIn(
+            "not** the default", recovery,
+            "the recovery section should say plainly that the default "
+            "file is not to be substituted.",
+        )
+
+    def test_every_ssh_example_also_requires_strict_checking(self):
+        offenders = [
+            ln.strip() for ln in self._fenced_code_lines()
+            if "UserKnownHostsFile" in ln
+            and "StrictHostKeyChecking=yes" not in ln
+        ]
+        self.assertEqual(offenders, [], f"offenders: {offenders}")

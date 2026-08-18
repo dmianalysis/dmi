@@ -396,14 +396,26 @@ curl -sS https://dmianalysis.org/health.json |
 # latest_core / latest_u6 / timeseries keys.
 ```
 
-If any expectation fails, restore from the Step 1 backup:
+If any expectation fails, restore from the Step 1 backup.
+
+Note the `UserKnownHostsFile` below: it is `$KNOWN_HOSTS`, the pinned
+file validated in Step 1 — **not** the default `~/.ssh/known_hosts`.
+Recovery is exactly when a host-identity check matters most, and it is
+exactly when an operator is under time pressure and reaching for a
+familiar command. Falling back to the default file here would
+authenticate the restore against whatever that file happens to contain,
+which is the trust-on-first-use problem the pinning exists to remove.
 
 ```bash
 rsync -avz \
-  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+  -e "ssh -i $DMI_REMOTE_KEY -p $DMI_REMOTE_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN_HOSTS" \
   "$BACKUP_DIR/" \
   "$DMI_REMOTE_USER@$DMI_REMOTE_HOST:$DMI_REMOTE_BASE/data/outputs/"
 ```
+
+If `$KNOWN_HOSTS` is not set in the recovery shell, re-run the Step 1
+`scripts.install_known_hosts` command before restoring. Do not substitute
+the default file.
 
 ---
 
