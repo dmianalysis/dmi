@@ -173,21 +173,31 @@ class TestBaselineOnlyFixtureBehavior(unittest.TestCase):
             self.assertEqual(rc, 0)
             note = (tree.outputs / "releases"
                     / f"{BASELINE_ONLY_PERIOD}.html").read_text()
+            # The generator's literal is "Slack+"; asserting on
+            # "Slack-Plus" would pass vacuously.
             self.assertNotIn(
-                "Slack-Plus", note,
+                "Slack+", note,
                 "§4: a Baseline-only period must not render a Slack-Plus "
                 "row; that would describe a series nobody computed.",
             )
             self.assertNotIn("Core", note)
 
     def test_missing_baseline_is_a_clear_failure(self):
-        """§4: fail if a required artifact is missing."""
+        """§4: fail if a required artifact is missing.
+
+        The safe command reports this as a non-zero return rather than an
+        exception, so the wrapper must propagate the status rather than
+        swallowing it.
+        """
         with _BaselineOnlyTree() as tree:
             (tree.outputs / f"dmi_release_{BASELINE_ONLY_PERIOD}.json").unlink()
             from scripts.backfill_release_notes import main
-            with self.assertRaises((SystemExit, FileNotFoundError, KeyError)):
-                main(["--periods", BASELINE_ONLY_PERIOD,
-                      "--output-dir", str(tree.outputs)])
+            rc = main(["--periods", BASELINE_ONLY_PERIOD,
+                       "--output-dir", str(tree.outputs)])
+            self.assertEqual(
+                rc, 1,
+                "§4: a missing required artifact must fail the command.",
+            )
 
     def test_unknown_period_is_rejected(self):
         with _BaselineOnlyTree() as tree:
