@@ -258,7 +258,7 @@ class TestMethodologyNoteBodyDoesNotPresentCoreAsCurrent(unittest.TestCase):
 
     def test_future_core_matches_the_concept_note_definition(self):
         """§12: future Core must state food AND energy, and finer mapping."""
-        idx = self.text.find("**2. Official Core CPI**")
+        idx = self.text.find("**2. Distribution-aware Core**")
         self.assertGreater(idx, 0, "Future Work Core item not found")
         block = self.text[idx:idx + 1400].lower()
         self.assertIn(
@@ -318,12 +318,14 @@ class TestCoreWithdrawalRationaleIsComplete(unittest.TestCase):
         )
 
     def test_states_core_remains_intended_not_operational(self):
-        self.assertIn("intended, not", self.lower)
+        self.assertIn("intended work, not", self.lower)
+        self.assertIn("non-operational", self.lower)
         self.assertIn("unvalidated", self.lower)
+        self.assertIn("unimplemented", self.lower)
 
     def test_states_work_required_before_core_returns(self):
         self.assertIn("work required before core can return", self.lower)
-        self.assertIn("finer expenditure mapping", self.lower)
+        self.assertIn("finer-grained cpi components", self.lower)
 
     def test_states_outputs_must_not_be_reinterpreted_or_renamed(self):
         self.assertIn("not renamed", self.lower)
@@ -606,10 +608,29 @@ class TestQuarantineIsDocumentedAndNotDeployable(unittest.TestCase):
         for legacy in self.LEGACY_FILES:
             self.assertNotIn(legacy, health)
 
-    def test_no_workflow_references_the_quarantine(self):
+    def test_no_workflow_stages_or_publishes_the_quarantine(self):
+        """§8: no workflow may discover or publish the quarantine.
+
+        Scoped to staging and upload verbs rather than to the word
+        itself: a CI guard that ASSERTS the quarantine is absent from
+        deployment necessarily mentions it, and forbidding the mention
+        would mean the repository gets "safer" by deleting the check
+        that proves it is safe.
+        """
+        staging_verbs = ("rsync", "cp ", "--output-dir", "copytree")
         for path in (ROOT / ".github" / "workflows").glob("*.yml"):
-            with self.subTest(workflow=path.name):
-                self.assertNotIn("quarantine", path.read_text())
+            text = path.read_text()
+            for line in text.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("#") or "quarantine" not in stripped:
+                    continue
+                with self.subTest(workflow=path.name, line=stripped[:60]):
+                    for verb in staging_verbs:
+                        self.assertNotIn(
+                            verb, stripped,
+                            f"§8: {path.name} appears to stage the "
+                            f"quarantine: {stripped}",
+                        )
 
     def test_committed_deploy_tree_does_not_contain_the_quarantine(self):
         deploy = ROOT / "deploy"
@@ -637,3 +658,406 @@ class TestQuarantineIsDocumentedAndNotDeployable(unittest.TestCase):
                     f"§8: the frozen v0.1.10 package must still contain "
                     f"its own {legacy}; it must not be modified.",
                 )
+
+
+class TestCoreForwardPathIsNotSelfContradictory(unittest.TestCase):
+    """§6: the forward path must not require finer components and then
+    prescribe an aggregate series as the input.
+
+    The previous text got the requirement right — a distribution-aware
+    Core needs finer quintile-level CPI components — and then, two bullets
+    later, said to use the aggregate BLS Core CPI series as the Core
+    inflation input. Those cannot both hold: `CUSR0000SA0L1E` is a single
+    national index, so using it would produce identical Core inflation for
+    every quintile and collapse the distributional index into a national
+    one.
+    """
+
+    DOCS = {
+        "methodology": ROOT / "docs" / "DMI_Methodology_Note.md",
+        "withdrawal": ROOT / "docs" / "repair" / "CORE_WITHDRAWAL.md",
+    }
+
+    def _text(self, key):
+        return self.DOCS[key].read_text()
+
+    def test_no_document_prescribes_the_aggregate_series_as_the_input(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                for phrase in (
+                    "then: use the bls core cpi",
+                    "use the bls core cpi series (`cusr0000sa0l1e`) rather than",
+                    "source a food-and-energy-excluded cpi-u\n   series",
+                ):
+                    self.assertNotIn(
+                        phrase, lowered,
+                        f"§6: {key} prescribes an aggregate series as the "
+                        f"quintile-specific Core input.",
+                    )
+
+    def test_both_documents_state_the_aggregate_cannot_be_the_input(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                self.assertIn(
+                    "cusr0000sa0l1e", lowered,
+                    f"§6: {key} must name the aggregate series in order to "
+                    f"rule it out explicitly.",
+                )
+                self.assertTrue(
+                    "cannot be the price input" in lowered
+                    or "cannot itself produce" in lowered
+                    or "cannot be the quintile" in lowered
+                    or "never as the quintile-specific" in lowered,
+                    f"§6: {key} must state that the aggregate series "
+                    f"cannot produce quintile-specific Core inflation.",
+                )
+
+    def test_both_documents_permit_it_only_as_a_validation_benchmark(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                self.assertIn(
+                    "validation benchmark", self._text(key).lower(),
+                    f"§6: {key} must record the legitimate use of the "
+                    f"official aggregate series.",
+                )
+
+    def test_both_documents_require_finer_components(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                self.assertIn("finer", lowered)
+                for term in ("energy", "motor fuel"):
+                    self.assertIn(term, lowered, f"§6: {key} missing {term}")
+
+    def test_both_documents_require_matching_quintile_weights(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                self.assertIn(
+                    "quintile", lowered,
+                    f"§6: {key} must require quintile-level weights for "
+                    f"the finer components.",
+                )
+                self.assertIn(
+                    "renormaliz", lowered,
+                    f"§6: {key} must state the renormalization rule.",
+                )
+
+    def test_renormalization_is_scoped_within_each_quintile(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                self.assertIn(
+                    "within each quintile", lowered,
+                    f"§6: {key} must say retained weights are renormalized "
+                    f"WITHIN each quintile; renormalizing across the "
+                    f"population would erase the distributional signal.",
+                )
+
+    def test_withdrawal_doc_requires_a_versioned_specification(self):
+        lowered = self._text("withdrawal").lower()
+        self.assertIn(
+            "versioned specification", lowered,
+            "§6: the excluded series and renormalization rule must be "
+            "enumerated in a future versioned specification.",
+        )
+
+    def test_core_is_marked_unscheduled_and_non_operational(self):
+        for key in self.DOCS:
+            with self.subTest(doc=key):
+                lowered = self._text(key).lower()
+                self.assertTrue(
+                    "not scheduled" in lowered or "unscheduled" in lowered,
+                    f"§6: {key} must mark Core unscheduled.",
+                )
+                self.assertIn("unvalidated", lowered)
+                self.assertIn("unimplemented", lowered)
+
+    def test_no_core_implementation_was_added(self):
+        """§6: 'Do not implement Core as part of this repair.'"""
+        from scripts.release_evidence import OPERATIONAL_SPECS
+        self.assertNotIn("core", OPERATIONAL_SPECS)
+        self.assertFalse(
+            (ROOT / "scripts" / "compute_dmi_core.py").exists(),
+            "§6: Core must remain unimplemented.",
+        )
+        spec = _json.loads(
+            (ROOT / "data" / "outputs" / "specifications.json").read_text()
+        )
+        ids = [e["spec_id"] for e in spec["specifications"]]
+        self.assertEqual(sorted(ids), ["baseline", "slack_plus"])
+
+
+class TestArchivalHistoricalRecordsStayArchival(unittest.TestCase):
+    """§8: the 167 income_pressure_gap records are archival, not published.
+
+    They may remain. What must hold is that they are excluded from the
+    routine deployment, are not advertised by any canonical manifest, and
+    that the read-only compatibility handling which still reads the
+    legacy key is documented as such.
+    """
+
+    LEGACY_KEY = "income_pressure_gap"
+    ARCHIVE = ROOT / "data" / "outputs" / "published" / "historical"
+
+    def test_the_archive_exists_and_is_non_trivial(self):
+        """Non-vacuity: without records, the exclusions below prove nothing."""
+        records = sorted(self.ARCHIVE.glob("dmi_release_*.json"))
+        self.assertGreater(
+            len(records), 100,
+            "expected the historical archive to hold the legacy records",
+        )
+
+    def test_archive_is_excluded_from_the_deployment_tree(self):
+        self.assertFalse(
+            (ROOT / "deploy" / "data" / "outputs" / "published"
+             / "historical").exists(),
+            "§8: the historical archive must not be staged for deployment.",
+        )
+
+    def test_no_deployed_file_carries_the_legacy_key(self):
+        offenders = [
+            str(p.relative_to(ROOT / "deploy"))
+            for p in (ROOT / "deploy").rglob("*.json")
+            if self.LEGACY_KEY in p.read_text(errors="ignore")
+        ]
+        self.assertEqual(
+            offenders, [],
+            f"§8: the legacy key must not reach the deployed surface: "
+            f"{offenders}",
+        )
+
+    def test_no_canonical_current_output_carries_the_legacy_key(self):
+        offenders = [
+            p.name for p in (ROOT / "data" / "outputs").glob("*.json")
+            if self.LEGACY_KEY in p.read_text(errors="ignore")
+        ]
+        self.assertEqual(offenders, [], f"§8: {offenders}")
+
+    def test_no_manifest_advertises_an_archival_record(self):
+        for name in ("releases.json", "latest.json"):
+            manifest = _json.loads(
+                (ROOT / "data" / "outputs" / name).read_text()
+            )
+            for release in manifest["releases"]:
+                urls = [release.get("release_note", "")]
+                for block in (release.get("spec_urls") or {}).values():
+                    urls.extend((block or {}).values())
+                for url in urls:
+                    with self.subTest(manifest=name, url=url):
+                        self.assertNotIn(
+                            "published/historical", str(url),
+                            f"§8: {name} advertises an archival record.",
+                        )
+
+    def test_health_json_does_not_advertise_the_archive(self):
+        health = (ROOT / "web" / "health.json").read_text()
+        self.assertNotIn("published/historical", health)
+
+    def test_compatibility_handling_is_documented_where_it_lives(self):
+        """§8: read-only legacy handling may remain if clearly documented."""
+        consumers = [
+            ROOT / "web" / "wp-plugins" / "dmi-release-data" / "dmi_release_data.php",
+            ROOT / "web" / "wp-plugins" / "dmi-latest-info" / "dmi_latest_info.php",
+        ]
+        for path in consumers:
+            if not path.is_file():
+                continue
+            text = path.read_text()
+            if self.LEGACY_KEY not in text:
+                continue
+            with self.subTest(consumer=path.name):
+                self.assertIn(
+                    "Legacy", text,
+                    f"§8: {path.name} reads the legacy key without saying "
+                    f"it is legacy compatibility handling.",
+                )
+
+    def test_compatibility_handling_is_read_only(self):
+        """The consumers must read the legacy key, never write it."""
+        for path in sorted((ROOT / "web" / "wp-plugins").rglob("*.php")):
+            text = path.read_text()
+            if self.LEGACY_KEY not in text:
+                continue
+            with self.subTest(consumer=path.name):
+                self.assertNotIn(
+                    f"'{self.LEGACY_KEY}' =>", text,
+                    f"§8: {path.name} writes the legacy key.",
+                )
+
+    def test_no_active_writer_emits_the_legacy_key(self):
+        """§8: nothing in the active pipeline may produce it."""
+        import ast
+        offenders = []
+        for path in sorted((ROOT / "scripts").glob("*.py")):
+            tree = ast.parse(path.read_text())
+            docstrings = set()
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Module, ast.ClassDef,
+                                     ast.FunctionDef, ast.AsyncFunctionDef)):
+                    doc = ast.get_docstring(node, clean=False)
+                    if doc:
+                        docstrings.add(doc)
+            for node in ast.walk(tree):
+                if not (isinstance(node, ast.Constant)
+                        and isinstance(node.value, str)):
+                    continue
+                if node.value in docstrings:
+                    continue
+                # `dmi_income_pressure_gap` is the legacy raw-file key the
+                # rebuild tool READS in order to verify derived metrics.
+                if node.value == self.LEGACY_KEY:
+                    offenders.append(path.name)
+        self.assertEqual(
+            offenders, [],
+            f"§8: active writers must not emit the legacy key: {offenders}",
+        )
+
+
+class TestPrDraftDescribesTheFinalBranch(unittest.TestCase):
+    """§8: the PR draft must describe the final state, not a chronology."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = PR_DRAFT.read_text()
+        cls.lower = cls.text.lower()
+
+    def test_no_stale_local_only_or_unpushed_claim(self):
+        for phrase in ("local only", "no push", "not been pushed",
+                       "not yet been pushed", "has not been pushed"):
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(
+                    phrase, self.lower,
+                    f"§8: the branch is pushed; {phrase!r} is stale.",
+                )
+
+    def test_no_fixed_test_count_presented_as_current(self):
+        """§8: counts go stale; point at the snapshot instead."""
+        offenders = _re.findall(r"\*\*\d+ passed", self.text)
+        self.assertEqual(
+            offenders, [],
+            f"§8: the draft must not quote a fixed test count as current: "
+            f"{offenders}",
+        )
+
+    def test_no_obsolete_doi_or_date_released_placeholder_claim(self):
+        for phrase in ("date-released marked placeholder",
+                       "`date-released` marked placeholder",
+                       "placeholder pending"):
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, self.lower)
+
+    def test_citation_claims_match_the_actual_file(self):
+        import yaml as _yaml
+        cff = _yaml.safe_load((ROOT / "CITATION.cff").read_text())
+        self.assertNotIn("doi", cff)
+        self.assertNotIn("date-released", cff)
+        self.assertIn("no** `doi`", self.text)
+
+    def test_it_states_merge_invokes_the_single_deployment_workflow(self):
+        self.assertIn("deploy_production.yml", self.text)
+        self.assertIn(
+            "merging this pr **will deploy to the live site**", self.lower,
+            "§8: the draft must state plainly that merge deploys.",
+        )
+
+    def test_it_distinguishes_the_four_stages(self):
+        for stage in ("pr preparation", "merge to `main`",
+                      "production deployment", "remote artifact withdrawal"):
+            with self.subTest(stage=stage):
+                self.assertIn(stage, self.lower)
+
+    def test_it_states_withdrawal_is_separately_authorized_and_unexecuted(self):
+        self.assertIn("not authorized, not executed", self.lower)
+        self.assertIn(
+            "merging this pr does not run it", self.lower,
+            "§8: the draft must separate merge from withdrawal.",
+        )
+
+    def test_links_resolve_from_the_documents_own_location(self):
+        """Links must work when the file is read in the repository."""
+        broken = []
+        for label, target in _re.findall(r"\[([^\]]*)\]\(([^)]+)\)", self.text):
+            t = target.split("#")[0].strip()
+            if not t or t.startswith(("http://", "https://", "mailto:")):
+                continue
+            if not (PR_DRAFT.parent / t).exists():
+                broken.append(f"[{label}]({target})")
+        self.assertEqual(broken, [], f"§8: broken links: {broken}")
+
+    def test_it_is_not_a_chronological_accumulation(self):
+        """No per-round sections describing superseded states."""
+        round_headings = _re.findall(
+            r"^#{1,3}\s+Round[ -]\d", self.text, flags=_re.MULTILINE
+        )
+        self.assertEqual(
+            round_headings, [],
+            f"§8: the draft must describe the final branch, not accumulate "
+            f"a round-by-round history: {round_headings}",
+        )
+
+    def test_it_states_the_deliberate_version_split(self):
+        self.assertIn("3.0.0", self.text)
+        self.assertIn("0.3.0", self.text)
+        self.assertIn("separately versioned contract", self.lower)
+
+    def test_it_states_core_is_not_implemented(self):
+        self.assertIn("core is **not**\nimplemented", self.lower)
+        self.assertIn("unscheduled, unimplemented, unvalidated", self.lower)
+
+
+class TestWithdrawalDocsDistinguishTheThreeStates(unittest.TestCase):
+    """§8: local cleanup, deployment, and remote withdrawal are distinct."""
+
+    RUNBOOK = ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md"
+    EVIDENCE = ROOT / "docs" / "known-issues" / "CORE_OUTPUT_WITHDRAWAL.md"
+
+    def test_runbook_states_it_is_unauthorized_and_unexecuted(self):
+        lowered = self.RUNBOOK.read_text().lower()
+        self.assertIn("not authorized, not executed", lowered)
+
+    def test_runbook_separates_the_three_states(self):
+        lowered = self.RUNBOOK.read_text().lower()
+        for phrase in ("local repository cleanup", "production deployment",
+                       "remote artifact withdrawal"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, lowered)
+        self.assertIn("complete", lowered)
+        self.assertIn("has not occurred", lowered)
+
+    def test_runbook_says_merging_does_not_trigger_withdrawal(self):
+        lowered = self.RUNBOOK.read_text().lower()
+        self.assertIn("merging the pr does not run it", lowered)
+
+    def test_evidence_record_no_longer_uses_stale_future_tense(self):
+        lowered = self.EVIDENCE.read_text().lower()
+        for phrase in ("will be regenerated in phase 4",
+                       "will be prepared as a repository artifact",
+                       "will be examined by regression tests added in phase 2"):
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(
+                    phrase, lowered,
+                    f"§8: {phrase!r} describes work that has since been "
+                    f"done; it must reflect the actual state.",
+                )
+
+    def test_evidence_record_points_at_the_current_tooling(self):
+        text = self.EVIDENCE.read_text()
+        self.assertIn("withdraw_remote_artifacts.py", text)
+        self.assertNotIn(
+            "scripts/withdraw_core_remote.sh` (or equivalent) in Phase 7",
+            text,
+            "§8: the record must name the tool that exists.",
+        )
+
+    def test_manifest_claim_matches_reality(self):
+        """The record says manifests no longer carry Core; verify it."""
+        for name in ("releases.json", "latest.json"):
+            manifest = _json.loads(
+                (ROOT / "data" / "outputs" / name).read_text()
+            )
+            for release in manifest["releases"]:
+                with self.subTest(manifest=name, release=release["release_id"]):
+                    self.assertNotIn("core", release.get("spec_urls", {}))

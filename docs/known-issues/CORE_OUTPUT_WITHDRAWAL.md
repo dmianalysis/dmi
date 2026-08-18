@@ -36,7 +36,7 @@ The withdrawal covers:
 
 No claim of intent is made or implied. The record documents observed metadata versus
 observed values; the mechanism by which the current files were produced is documented in
-the audit and will be examined by regression tests added in Phase 2.
+the audit and are covered by regression tests in `tests/`.
 
 ---
 
@@ -144,8 +144,10 @@ no historical Core file can be considered validated under the v0.1.12 methodolog
 
 ### 3.2 References to be removed from manifests
 
-The following manifests currently advertise the Core spec and its file URLs, and will be
-regenerated in Phase 4 without the Core spec:
+The following manifests advertised the Core spec and its file URLs at
+the time of the audit. **They have since been regenerated without it**;
+no manifest in the current tree carries a `spec_urls.core` block or a
+`core` `spec_id`:
 
 - `data/outputs/releases.json` (per-period `spec_urls.core` blocks)
 - `data/outputs/latest.json` (pointer to Core release JSON, if present)
@@ -182,9 +184,16 @@ withdrawal procedure prepared in Phase 7 can act on them:
   redeployment must land before or with the JSON withdrawal so that visitors do not see
   broken lookups.
 
-No remote action is performed by this record. The withdrawal script + verification
-procedure will be prepared as a repository artifact under `scripts/withdraw_core_remote.sh`
-(or equivalent) in Phase 7 and will not be executed automatically.
+No remote action is performed by this record, and none has been
+performed since. The withdrawal tooling now exists as
+[`scripts/withdraw_remote_artifacts.py`](../../scripts/withdraw_remote_artifacts.py)
+— a two-phase inventory/execute tool whose scope is Core artifacts only —
+with the operator procedure in
+[`docs/repair/REMOTE_WITHDRAWAL.md`](../repair/REMOTE_WITHDRAWAL.md).
+
+**Neither phase has been authorized or executed.** Nothing runs it
+automatically. Local repository cleanup is complete; remote withdrawal is
+a separate decision that has not been taken.
 
 ---
 

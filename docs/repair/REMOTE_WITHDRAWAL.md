@@ -1,10 +1,24 @@
 # Remote Withdrawal Procedure — v0.1.12 Core Artifacts
 
-**Status**: **NOT EXECUTED.** This document specifies the commands and
-verification steps that would remove withdrawn Core artifacts from the
-live iFastNet site. Do not run any of the commands below without
-explicit, contemporaneous authorization from the repository owner. The
-repair PR must be merged first.
+**Status**: **NOT AUTHORIZED, NOT EXECUTED.** Neither phase of this
+procedure has been run against the live site.
+
+Three things are easy to conflate; they are separate and only the first
+is finished:
+
+| | State |
+|---|---|
+| **Local repository cleanup** | **Complete.** Core artifacts are absent from every active tree, manifest, health file and deployment package. The U-6 / with-CI legacy files are quarantined under `data/quarantine/pre_v0.1.12/`. |
+| **Production deployment** | **Has not occurred.** It happens automatically from the merge commit once the repair PR is merged, via `.github/workflows/deploy_production.yml`. |
+| **Remote artifact withdrawal** | **Not authorized and not executed.** This document. It is a separate, deliberate act performed by an operator; nothing triggers it automatically, and merging the PR does not run it. |
+
+Because local cleanup is complete, the withdrawn Core files are no longer
+*advertised* by anything the site serves. They may still be *present* on
+the server as unreferenced files until this procedure is run. That is the
+gap this document closes.
+
+Do not run any of the commands below without explicit, contemporaneous
+authorization from the repository owner.
 
 ---
 

@@ -138,28 +138,45 @@ operator runbook.
 Ordered by dependency; the first item is the blocker and is not a coding
 task:
 
-1. **A finer expenditure mapping.** Extend the CE-to-CPI crosswalk so
+1. **Finer-grained CPI components.** Extend the CE-to-CPI crosswalk so
    household energy (utilities) and motor fuel are separable from
-   `CPI_HOUSING` and `CPI_TRANSPORTATION`, with quintile-level weights
-   for the split components. Until this exists, no amount of reweighting
-   can produce a food-and-energy-excluded index (§2.1).
-2. **A Core weight matrix.** Implement and actually invoke
-   `build_core_weights(...)` on the release path, excluding both food and
-   the newly separable energy components, renormalizing the remainder
-   per quintile.
-3. **A Core inflation input.** Source a food-and-energy-excluded CPI-U
-   series (e.g. `CUSR0000SA0L1E`) rather than deriving one by dropping
-   categories from headline.
-4. **Validation.** Demonstrate the Core series is numerically distinct
+   `CPI_HOUSING` and `CPI_TRANSPORTATION` as components in their own
+   right. Until this exists, no amount of reweighting can produce a
+   food-and-energy-excluded index (§2.1).
+2. **Matching quintile expenditure weights for those components.** A
+   finer price series is useless without finer weights: the DMI applies
+   prices *per quintile*, so every newly separated component needs its
+   own quintile-level expenditure share.
+3. **A Core weight matrix with per-quintile renormalization.** Implement
+   and actually invoke `build_core_weights(...)` on the release path,
+   excluding food and the newly separable energy components and
+   renormalizing the retained weights **within each quintile** after the
+   declared exclusions — not across the population, which would erase the
+   distributional signal the index exists to measure.
+4. **A versioned specification.** Enumerate the exact CPI series
+   excluded and the precise renormalization rule in a published, version
+   ed specification before any artifact carries the Core name. "Core"
+   without a written definition is what produced the withdrawn files.
+5. **Validation.** Demonstrate the Core series is numerically distinct
    from Baseline for every published period — the byte-identity in §2 is
    precisely the check that should have failed — and add QA coverage
    pinning that distinctness.
-5. **Concept-note alignment.** Confirm the implemented definition matches
-   the concept note's Core definition before any artifact carries the
-   name.
 
-Nothing in this list is scheduled. Core remains intended, not
-operational.
+**What the official aggregate Core CPI can and cannot do.** It is
+tempting to shortcut items 1-3 by feeding the BLS aggregate core series
+(`CUSR0000SA0L1E`) in as the Core price input. That does not work and
+must not be done. `CUSR0000SA0L1E` is a single national index carrying no
+distributional information: substituting it would yield the *same* Core
+inflation for every quintile, collapsing the distributional index into a
+national one and abandoning the property that makes the DMI worth
+computing. The official series has a legitimate role here — as an
+**external validation benchmark**, something a computed Core aggregate
+can be compared against for sanity — but never as the quintile-specific
+price input.
+
+Nothing in this list is scheduled. Core remains **unscheduled,
+unimplemented, unvalidated and non-operational**: intended work, not a
+feature awaiting a bug fix.
 
 ### 4.2 Publication mechanics, once the above is done
 

@@ -364,7 +364,7 @@
           <div class="grid" id="specifications-grid"></div>
           <p style="margin-top: 1rem; color: #666;" id="specifications-note"></p>
         </div>
-        
+
         <!-- Top Contributors Panel -->
         <div class="contributors-section" style="display:none;" id="contributors-section">
             <h2>What's Driving Inflation? (Top 5 Contributors)</h2>
@@ -441,11 +441,11 @@
                 With α = 0.5, the weighted average would compress DMI into a 3-8 range,
                 making it harder to compare against the familiar scale.
             </p>
-            
+
             <p>
-               At the baseline α = 0.5, multiplying by λ = 2.0 is mathematically equivalent to the simple sum (π + S), 
-                preserving comparability with the traditional Misery Index. 
-                When α is varied in sensitivity analyses, DMI will intentionally diverge from this baseline, 
+               At the baseline α = 0.5, multiplying by λ = 2.0 is mathematically equivalent to the simple sum (π + S),
+                preserving comparability with the traditional Misery Index.
+                When α is varied in sensitivity analyses, DMI will intentionally diverge from this baseline,
                 reflecting a deliberate reweighting of the two components.
             </p>
             <p>
@@ -629,7 +629,7 @@
             const container = document.getElementById('specifications-container');
             const grid = document.getElementById('specifications-grid');
             const note = document.getElementById('specifications-note');
-        
+
             const cards = specsData.specifications.map(spec => `
                 <div class="card">
                     <div class="card-title">${spec.label}</div>
@@ -640,12 +640,12 @@
                     </div>
                 </div>
             `).join('');
-        
+
             grid.innerHTML = cards;
             note.textContent = specsData.robustness_assessment.notes.join(' ');
             container.style.display = 'block';
         }
-        
+
         // Load DMI data (latest + time series)
         async function loadData() {
             try {

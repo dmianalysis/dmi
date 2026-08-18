@@ -688,23 +688,35 @@ see the status banner at the top of this note.
 - Improves historical accuracy
 - Requires consistent CE data processing pipeline
 
-**2. Official Core CPI** — *the forward path for a Core specification;
-unimplemented and unvalidated.*
+**2. Distribution-aware Core** — *the forward path for a Core
+specification; unimplemented, unvalidated, unscheduled.*
 - Core means excluding food **and energy**, per the concept-note
   definition. The withdrawn v0.1.9 construction excluded only
   `CPI_FOOD_BEVERAGES`, which leaves essentially all energy in the index
   because energy is embedded inside `CPI_HOUSING` (utilities) and
   `CPI_TRANSPORTATION` (motor fuel).
-- **Requires a finer expenditure mapping first.** The current CE-to-CPI
+- **Requires finer-grained CPI components.** The current CE-to-CPI
   crosswalk resolves to eight categories in which energy has no separable
   weight, so no reweighting of that mapping can produce a
-  food-and-energy-excluded index. Utilities and motor fuel must first be
-  split out of housing and transportation, with quintile-level weights
-  for the split components.
-- Then: use the BLS core CPI series (`CUSR0000SA0L1E`) rather than
-  deriving one by dropping categories from headline, and demonstrate the
-  result is numerically distinct from Baseline for every published
-  period.
+  food-and-energy-excluded index. Household energy and motor fuel must
+  first be separated from the retained categories as CPI components in
+  their own right.
+- **Requires matching quintile expenditure weights** for those finer
+  components. A finer price series without finer weights cannot be
+  applied per quintile, and the retained weights must be **renormalized
+  within each quintile** after the declared exclusions — not across the
+  population.
+- **The aggregate BLS Core CPI series cannot be the price input.**
+  `CUSR0000SA0L1E` is a single national index. It carries no
+  distributional information, so substituting it would produce the same
+  Core inflation figure for every quintile and abandon the one property
+  that makes this a *distributional* index. The official aggregate series
+  is useful here only as an **external validation benchmark** — something
+  to compare a computed Core aggregate against — never as the
+  quintile-specific input.
+- The exact CPI series to exclude and the precise renormalization rule
+  must be enumerated in a future **versioned specification** before any
+  artifact carries the Core name.
 - Not scheduled. See
   [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md) §2.1 and
   §4.1.

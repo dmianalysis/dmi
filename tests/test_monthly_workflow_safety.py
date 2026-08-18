@@ -397,6 +397,7 @@ if __name__ == "__main__":
 
 DASHBOARD_PATH = WORKFLOWS / "deploy_web_dashboard.yml"
 WP_PLUGINS_PATH = WORKFLOWS / "deploy_wp_plugins.yml"
+PR_CI_PATH = WORKFLOWS / "pr_ci.yml"
 
 #: Every workflow that must obey the deployment-safety policy.
 ALL_WORKFLOWS = (
@@ -404,6 +405,7 @@ ALL_WORKFLOWS = (
     DEPLOY_PATH,
     DASHBOARD_PATH,
     WP_PLUGINS_PATH,
+    PR_CI_PATH,
 )
 
 #: Workflows that are allowed to touch production at all.
@@ -1211,3 +1213,120 @@ class TestMonthlyWorkflowFinalizationOrder(unittest.TestCase):
             "§8: the workflow must confirm committed deploy/ equals a "
             "fresh build.",
         )
+
+
+# ---------------------------------------------------------------------------
+# Round-4 §7: read-only pull-request CI.
+# ---------------------------------------------------------------------------
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestPullRequestCiIsReadOnly(unittest.TestCase):
+    """§7: CI must be able to check a PR without being able to change it."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.doc = yaml.safe_load(PR_CI_PATH.read_text())
+        cls.raw = PR_CI_PATH.read_text()
+        cls.steps = _steps_of(PR_CI_PATH)
+        cls.script = _run_scripts(PR_CI_PATH)
+
+    def test_workflow_exists_and_runs_on_pull_request(self):
+        on = _on_block(self.doc) or {}
+        self.assertIn("pull_request", on)
+
+    def test_permissions_are_contents_read_only(self):
+        self.assertEqual(
+            self.doc.get("permissions"), {"contents": "read"},
+            "§7: CI must hold contents:read and nothing else.",
+        )
+
+    def test_no_job_grants_extra_permissions(self):
+        for name, job in self.doc["jobs"].items():
+            with self.subTest(job=name):
+                self.assertNotIn(
+                    "permissions", job,
+                    f"§7: job {name!r} must not widen the read-only "
+                    f"workflow permissions.",
+                )
+
+    def test_no_production_secrets_are_referenced(self):
+        for secret in (
+            "IFASTNET_SSH_KEY", "IFASTNET_SSH_HOST", "IFASTNET_SSH_USER",
+            "IFASTNET_KNOWN_HOSTS", "BLS_API_KEY",
+        ):
+            with self.subTest(secret=secret):
+                self.assertNotIn(
+                    f"secrets.{secret}", self.raw,
+                    f"§7: CI must not have access to {secret}.",
+                )
+
+    def test_no_deployment_authority(self):
+        """§7: CI must not INVOKE a transfer tool.
+
+        Checked per executable line rather than as a substring of the
+        whole script: CI's deployment-authority guard legitimately
+        searches other workflows for "rsync", and forbidding the word
+        would mean CI gets "safer" by deleting the check that proves
+        deployment authority is centralised.
+        """
+        for step in self.steps:
+            for line in str(step.get("run", "")).splitlines():
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                with self.subTest(step=step.get("name"), line=stripped[:50]):
+                    for tool in ("rsync ", "scp ", "sftp ", "ssh -i"):
+                        self.assertFalse(
+                            stripped.startswith(tool),
+                            f"§7: CI invokes {tool.strip()!r}: {stripped}",
+                        )
+
+    def test_no_push_or_schedule_trigger(self):
+        on = _on_block(self.doc) or {}
+        self.assertNotIn("push", on)
+        self.assertNotIn("schedule", on)
+
+    def test_no_remote_network_dependency_in_gates(self):
+        """CI must not fetch live data to decide pass/fail."""
+        for fragment in ("scripts.test_bls_api", "curl ", "wget "):
+            with self.subTest(fragment=fragment):
+                self.assertNotIn(fragment, self.script)
+
+    def test_runs_the_required_checks(self):
+        required = {
+            "full test suite": "pytest",
+            "python compilation": "compileall",
+            "python 3.9 syntax": "feature_version=(3, 9)",
+            "json parsing": "ls-files",
+            "workflow yaml + cff": "CITATION.cff",
+            "schema validation": "Draft202012Validator",
+            "deterministic build": "scripts.prepare_deployment",
+            "second-build identity": "build-b",
+            "committed vs fresh": "build-fresh",
+            "diff --check": "git diff --check",
+            "link validation": "repo-relative link",
+        }
+        for label, needle in required.items():
+            with self.subTest(check=label):
+                self.assertIn(
+                    needle, self.script,
+                    f"§7: CI must run the {label} check.",
+                )
+
+    def test_skips_are_reported_not_hidden(self):
+        """§7: a skipped test must never be presented as a pass."""
+        self.assertIn(
+            "-rs", self.script,
+            "§7: the suite must run with -rs so every skip and its "
+            "reason appears in the log.",
+        )
+
+    def test_carries_the_four_required_policy_guards(self):
+        names = " | ".join(str(s.get("name", "")).lower() for s in self.steps)
+        for guard in ("deployment-authority", "pinned-ssh-trust",
+                      "core-withdrawal", "frozen v0.1.10"):
+            with self.subTest(guard=guard):
+                self.assertIn(guard, names, f"§7: missing {guard} guard.")
+
+    def test_ci_is_not_counted_as_a_deployment_workflow(self):
+        self.assertNotIn(PR_CI_PATH, DEPLOY_WORKFLOWS)
