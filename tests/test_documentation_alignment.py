@@ -976,16 +976,219 @@ class TestPrDraftDescribesTheFinalBranch(unittest.TestCase):
             "§8: the draft must separate merge from withdrawal.",
         )
 
-    def test_links_resolve_from_the_documents_own_location(self):
-        """Links must work when the file is read in the repository."""
-        broken = []
-        for label, target in _re.findall(r"\[([^\]]*)\]\(([^)]+)\)", self.text):
-            t = target.split("#")[0].strip()
-            if not t or t.startswith(("http://", "https://", "mailto:")):
+    PASTE_MARKER = "<!-- ==================== PASTE FROM HERE ==================== -->"
+
+    def _pasteable(self) -> str:
+        self.assertIn(
+            self.PASTE_MARKER, self.text,
+            "the document must mark where the pasteable body begins.",
+        )
+        return self.text.split(self.PASTE_MARKER, 1)[1]
+
+    def _relative_links(self, text: str):
+        return [
+            (label, target)
+            for label, target in _re.findall(r"\[([^\]]*)\]\(([^)]+)\)", text)
+            if not target.startswith(("http://", "https://", "#", "mailto:"))
+        ]
+
+    def test_pasteable_body_has_no_repository_relative_link(self):
+        """§3 (cleanup): a relative link breaks when pasted into a PR.
+
+        GitHub resolves a relative Markdown link in a PR body against the
+        repository root, not against the file the text was copied from,
+        so `(CORE_WITHDRAWAL.md)` — correct while reading
+        docs/repair/ — points at a nonexistent top-level file once
+        pasted. Plain backticked repository paths are used instead: they
+        survive the paste and stay valid after the branch is merged and
+        deleted, which an absolute branch URL would not.
+        """
+        offenders = self._relative_links(self._pasteable())
+        self.assertEqual(
+            offenders, [],
+            f"§3: the pasteable PR body must contain no repository-"
+            f"relative Markdown link: {offenders}",
+        )
+
+    def test_no_relative_link_anywhere_in_the_document(self):
+        offenders = self._relative_links(self.text)
+        self.assertEqual(offenders, [], f"§3: {offenders}")
+
+    def test_referenced_paths_still_exist_in_the_repository(self):
+        """Plain paths are not linked, so verify them explicitly."""
+        for path in (
+            "docs/repair/V0.1.12_ALIGNMENT_AUDIT.md",
+            "docs/repair/CORE_WITHDRAWAL.md",
+            "docs/repair/REMOTE_WITHDRAWAL.md",
+            ".github/workflows/deploy_production.yml",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(f"`{path}`", self.text)
+                self.assertTrue(
+                    (ROOT / path).exists(),
+                    f"§3: the draft cites {path}, which does not exist.",
+                )
+
+    def test_link_scan_is_not_vacuous(self):
+        """The regex must actually find the links the document does have."""
+        all_links = _re.findall(r"\[([^\]]*)\]\(([^)]+)\)", self.text)
+        self.assertGreater(
+            len(all_links), 0,
+            "no Markdown links found at all; the relative-link checks "
+            "above would pass for the wrong reason.",
+        )
+
+
+class TestPrDraftDisclosesTheStagingUpdate(unittest.TestCase):
+    """§3 (cleanup): the U-6 staging fetch must be disclosed."""
+
+    ADDED = {"2026-04": "8.2", "2026-05": "8.1",
+             "2026-06": "7.9", "2026-07": "7.9"}
+
+    @staticmethod
+    def _flat(text: str) -> str:
+        """Prose with line wrapping collapsed.
+
+        These documents are hard-wrapped, so a sentence like "no
+        previously staged period was modified" is split across lines.
+        Asserting on the raw text would make the check depend on where
+        the wrap happens to fall rather than on what the document says.
+        """
+        return " ".join(text.lower().split())
+
+    @classmethod
+    def setUpClass(cls):
+        cls.draft = PR_DRAFT.read_text()
+        cls.audit = AUDIT.read_text()
+
+    def test_both_documents_identify_the_series(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            with self.subTest(doc=name):
+                self.assertIn("LNS13327709", text)
+
+    def test_both_documents_record_every_period_and_value(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            for period, value in self.ADDED.items():
+                with self.subTest(doc=name, period=period):
+                    row = _re.search(
+                        rf"\|\s*{_re.escape(period)}\s*\|\s*{_re.escape(value)}\s*\|",
+                        text,
+                    )
+                    self.assertIsNotNone(
+                        row,
+                        f"§3: {name} must record {period} = {value}.",
+                    )
+
+    def test_both_documents_state_published_releases_were_unchanged(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            flat = self._flat(text)
+            with self.subTest(doc=name):
+                self.assertIn("exactly match", flat)
+                self.assertTrue(
+                    "published raw releases were left unchanged" in flat
+                    or "no published raw release was altered" in flat,
+                    f"§3: {name} must state the published raw releases "
+                    f"were unchanged.",
+                )
+
+    def test_both_documents_state_no_prior_period_was_modified(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            with self.subTest(doc=name):
+                self.assertIn(
+                    "no previously staged period was modified",
+                    self._flat(text),
+                )
+
+    def test_both_documents_state_no_production_host_was_contacted(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            with self.subTest(doc=name):
+                self.assertIn(
+                    "no production host was contacted", self._flat(text),
+                    f"§3: {name} must state that the fetch reached the BLS "
+                    f"public API only.",
+                )
+
+    def test_both_documents_state_it_closes_the_offline_gap(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            with self.subTest(doc=name):
+                self.assertIn("offline-staging gap", self._flat(text))
+
+    def test_both_documents_state_the_fetch_was_unintended(self):
+        for name, text in (("draft", self.draft), ("audit", self.audit)):
+            with self.subTest(doc=name):
+                self.assertIn("unintended", self._flat(text))
+
+    def test_the_disclosure_matches_the_actual_staged_file(self):
+        """The claim must equal what is on disk."""
+        staged = {
+            r["period"]: r["value"]
+            for r in _json.loads(
+                (ROOT / "data" / "staging"
+                 / "slack_u6_2025_2026.json").read_text()
+            )
+        }
+        for period, value in self.ADDED.items():
+            with self.subTest(period=period):
+                self.assertEqual(
+                    staged.get(period), float(value),
+                    f"§3: the disclosure claims {period}={value} but the "
+                    f"staged file holds {staged.get(period)}.",
+                )
+
+    def test_the_values_match_the_published_releases(self):
+        """The central claim: nothing published was contradicted."""
+        for period, value in self.ADDED.items():
+            raw = (ROOT / "data" / "outputs"
+                   / f"dmi_release_{period}_slack_plus.json")
+            if not raw.is_file():
                 continue
-            if not (PR_DRAFT.parent / t).exists():
-                broken.append(f"[{label}]({target})")
-        self.assertEqual(broken, [], f"§8: broken links: {broken}")
+            with self.subTest(period=period):
+                published = _json.loads(raw.read_text())["dmi_by_group"][0]["slack"]
+                self.assertEqual(
+                    float(value), float(published),
+                    f"§3: staged {period}={value} contradicts the "
+                    f"published release value {published}.",
+                )
+
+
+class TestPrDraftStatesThePreMergeSecretRequirement(unittest.TestCase):
+    """§3 (cleanup): the external pre-merge requirement must be explicit."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = PR_DRAFT.read_text()
+        cls.lower = cls.text.lower()
+
+    def test_it_names_the_secret(self):
+        self.assertIn("IFASTNET_KNOWN_HOSTS", self.text)
+
+    def test_it_requires_independently_verified_material(self):
+        self.assertIn("independently verified", self.lower)
+
+    def test_it_names_the_port(self):
+        self.assertIn("1394", self.text)
+
+    def test_it_states_merging_triggers_deployment(self):
+        self.assertIn("automatically triggers production deployment",
+                      self.lower)
+
+    def test_it_states_deployment_fails_closed_without_the_secret(self):
+        self.assertIn("fails closed", self.lower)
+        self.assertIn("nothing is uploaded", self.lower)
+
+    def test_it_appears_as_a_checklist_item(self):
+        checklist = self.text[self.text.index("## Reviewer checklist"):]
+        self.assertIn("IFASTNET_KNOWN_HOSTS", checklist)
+
+    def test_the_failure_claim_matches_the_implementation(self):
+        """The draft says it fails closed; prove the code does."""
+        from scripts.install_known_hosts import HostPinError, install
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "known_hosts"
+            with self.assertRaises(HostPinError):
+                install("ssh.example.org", "1394", target)
+            self.assertFalse(target.exists())
 
     def test_it_is_not_a_chronological_accumulation(self):
         """No per-round sections describing superseded states."""

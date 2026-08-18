@@ -7,10 +7,12 @@ This document describes the **final state of the branch**. Earlier
 revisions accumulated one section per repair round, which meant a reader
 had to reconstruct the current state from a chronology and mentally
 discard superseded claims. The per-round history lives in
-[`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](V0.1.12_ALIGNMENT_AUDIT.md),
+`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`,
 which is the right place for it.
 
 ---
+
+<!-- ==================== PASTE FROM HERE ==================== -->
 
 ## Title
 
@@ -28,7 +30,7 @@ The v0.1.12 published contract is **two operational specifications**:
 **Core is withdrawn** — it was documented but never implemented as a
 bona fide core-inflation calculation, and the files that shipped under
 its name were Baseline outputs relabelled. See
-[`docs/repair/CORE_WITHDRAWAL.md`](CORE_WITHDRAWAL.md).
+`docs/repair/CORE_WITHDRAWAL.md`.
 
 ### Release publication is now transactional
 
@@ -50,7 +52,7 @@ any failure the whole public surface is restored byte-for-byte.
 Three workflows previously carried their own `push: branches: [main]`
 trigger, so one merge started three runs that could each independently
 upload to the live site.
-[`.github/workflows/deploy_production.yml`](../../.github/workflows/deploy_production.yml)
+`.github/workflows/deploy_production.yml`
 is now the sole orchestrator and the only workflow with an automatic push
 trigger. It decides authorization once and passes it explicitly to its
 components.
@@ -86,7 +88,7 @@ surface before merging.
 **Remote withdrawal is not part of the merge.** Deleting the withdrawn
 Core artifacts that already sit on the live server is a separate,
 explicitly authorized, two-phase operation documented in
-[`docs/repair/REMOTE_WITHDRAWAL.md`](REMOTE_WITHDRAWAL.md). Neither phase
+`docs/repair/REMOTE_WITHDRAWAL.md`. Neither phase
 has been run. Merging this PR does not run it.
 
 ---
@@ -149,6 +151,51 @@ is cut, not before.
 
 ---
 
+## Disclosure: staged U-6 data was extended during development
+
+While regenerating the QA reports so they carry a `subject` binding, the
+generator found the staged U-6 file covered only through 2026-03 although
+releases existed through 2026-07, and fetched the gap.
+
+- Source series: BLS U-6, `LNS13327709`
+- Retrieved: August 18, 2026
+- Observations added to `data/staging/slack_u6_2025_2026.json`:
+
+  | Period | U-6 |
+  |---|---|
+  | 2026-04 | 8.2 |
+  | 2026-05 | 8.1 |
+  | 2026-06 | 7.9 |
+  | 2026-07 | 7.9 |
+
+- Each value **exactly matches** the Slack-Plus value already present in
+  the corresponding published raw release, so no published figure
+  changed and the corresponding published raw releases were left
+  unchanged.
+- No previously staged period was modified; the change is purely
+  additive.
+- It closes the prior offline-staging gap: fixture validation no longer
+  needs to fetch these observations.
+- The network fetch was an unintended development-time side effect. It
+  contacted the BLS public API only. **No production host was
+  contacted.**
+
+## Pre-merge requirement: `IFASTNET_KNOWN_HOSTS`
+
+**This must be configured before merging.**
+
+- `IFASTNET_KNOWN_HOSTS` must exist as a GitHub Actions secret,
+  containing **independently verified** host material for the configured
+  deployment host on **port 1394** — obtained from the hosting control
+  panel or a known-good prior session, never by scanning the host being
+  authenticated.
+- **Merging this PR automatically triggers production deployment** from
+  the merged commit.
+- If the secret is absent, empty, malformed, or issued for a different
+  host or port, deployment **fails closed**: `scripts/install_known_hosts.py`
+  refuses to proceed and there is no fallback that acquires trust
+  dynamically. Nothing is uploaded.
+
 ## Reviewer checklist
 
 - [ ] Baseline vs Slack-Plus values are reasonable for the period.
@@ -158,9 +205,11 @@ is cut, not before.
 - [ ] No Core, `_u6` or `_with_ci` artifact appears in `deploy/`.
 - [ ] CI is green. The expected pass/skip counts are recorded in the
       Round-4 verification snapshot in
-      [`V0.1.12_ALIGNMENT_AUDIT.md`](V0.1.12_ALIGNMENT_AUDIT.md); check
+      `docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`; check
       against that rather than against any number quoted in an older
       document.
+- [ ] `IFASTNET_KNOWN_HOSTS` is configured with independently verified
+      host material for the deployment host on port 1394.
 - [ ] You accept that merging deploys to production.
 
 ---
