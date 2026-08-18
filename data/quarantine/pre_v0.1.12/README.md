@@ -30,6 +30,26 @@ withdrawal tool `scripts/withdraw_remote_artifacts.py` (inventory
 then execute --confirm). The pre-v0.1.12 quarantine covers only
 the U-6 / with_ci legacy naming.
 
+### Their remote disposition is outside the Core-withdrawal authorization
+
+Whatever copies of these two filenames exist on the live site are **not**
+in scope for the Core-withdrawal procedure, and nothing in this repair
+authorizes deleting them. Deciding their remote fate is a separate
+decision requiring its own authorization.
+
+This is enforced, not merely stated. `NON_CORE_REGEXES` in
+`scripts/withdraw_remote_artifacts.py` causes both the inventory phase
+and the execute phase to **abort** if any `_u6` or `_with_ci` path
+appears in an inventory — even if a future edit re-added those patterns
+to the match list. `docs/repair/REMOTE_WITHDRAWAL.md` lists both files
+under "files to leave in place", and its post-withdrawal verification
+asserts their HTTP status is *unchanged* rather than 404.
+
+An earlier revision of the withdrawal tooling classified these files as
+Core, inherited from the historical shell tool. That was a
+misclassification: it would have destroyed historical evidence under a
+false label.
+
 ## Do not delete
 
 Leaving these files here (rather than deleting them) preserves the

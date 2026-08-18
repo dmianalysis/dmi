@@ -533,3 +533,107 @@ class TestStatusRecordsCarryNoSupersededClaims(unittest.TestCase):
             f"§13: the retired shell tool must not be described as the "
             f"current tool: {offenders}",
         )
+
+
+class TestQuarantineIsDocumentedAndNotDeployable(unittest.TestCase):
+    """§8: the quarantine must be labelled, and unreachable by any writer."""
+
+    QUARANTINE = ROOT / "data" / "quarantine" / "pre_v0.1.12"
+    LEGACY_FILES = (
+        "dmi_release_2024-11_u6.json",
+        "dmi_release_2024-11_with_ci.json",
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.readme = (cls.QUARANTINE / "README.md").read_text()
+        cls.lower = cls.readme.lower()
+
+    def test_the_two_files_are_quarantined_under_their_real_names(self):
+        """§13: the residual files must be named exactly, not approximately."""
+        for name in self.LEGACY_FILES:
+            with self.subTest(name=name):
+                self.assertTrue(
+                    (self.QUARANTINE / name).is_file(),
+                    f"§8: {name} must be quarantined under its original "
+                    f"filename (provenance preserved).",
+                )
+
+    def test_they_are_gone_from_the_active_output_directory(self):
+        for name in self.LEGACY_FILES:
+            with self.subTest(name=name):
+                self.assertFalse(
+                    (ROOT / "data" / "outputs" / name).exists(),
+                    f"§8: {name} must not remain in data/outputs/.",
+                )
+
+    def test_quarantine_is_outside_the_builder_walked_tree(self):
+        """§8: no deployment package may discover it."""
+        self.assertNotIn(
+            "outputs", self.QUARANTINE.relative_to(ROOT).parts,
+            "§8: the quarantine must live outside data/outputs/.",
+        )
+
+    def test_readme_states_they_are_historical_evidence(self):
+        self.assertIn("historical", self.lower)
+
+    def test_readme_states_they_are_not_v0112_operational_outputs(self):
+        self.assertIn("not", self.lower)
+        self.assertIn("current release surface", self.lower)
+
+    def test_readme_states_they_are_not_core(self):
+        self.assertIn("are not part of the withdrawn", self.lower)
+
+    def test_readme_states_remote_disposition_is_outside_authorization(self):
+        """§8: the required statement about remote disposition."""
+        self.assertIn(
+            "outside the core-withdrawal authorization", self.lower,
+            "§8: the README must state that their remote disposition is "
+            "outside the Core-withdrawal authorization.",
+        )
+
+    def test_no_manifest_references_the_quarantine(self):
+        for name in ("releases.json", "latest.json", "specifications.json"):
+            manifest = (ROOT / "data" / "outputs" / name).read_text()
+            with self.subTest(manifest=name):
+                self.assertNotIn("quarantine", manifest)
+                for legacy in self.LEGACY_FILES:
+                    self.assertNotIn(legacy, manifest)
+
+    def test_health_json_does_not_reference_the_quarantine(self):
+        health = (ROOT / "web" / "health.json").read_text()
+        self.assertNotIn("quarantine", health)
+        for legacy in self.LEGACY_FILES:
+            self.assertNotIn(legacy, health)
+
+    def test_no_workflow_references_the_quarantine(self):
+        for path in (ROOT / ".github" / "workflows").glob("*.yml"):
+            with self.subTest(workflow=path.name):
+                self.assertNotIn("quarantine", path.read_text())
+
+    def test_committed_deploy_tree_does_not_contain_the_quarantine(self):
+        deploy = ROOT / "deploy"
+        self.assertFalse((deploy / "data" / "quarantine").exists())
+        for legacy in self.LEGACY_FILES:
+            matches = list(deploy.rglob(legacy))
+            self.assertEqual(
+                matches, [],
+                f"§8: {legacy} must never be staged.",
+            )
+
+    def test_frozen_v0110_package_still_holds_its_own_copies(self):
+        """The frozen archive is untouched: it keeps its originals.
+
+        This is the counterpart to the quarantine move — the repair must
+        not have reached into the frozen package to relocate anything.
+        """
+        frozen = ROOT / "dmi-v0.1.10-deployment" / "data" / "outputs"
+        if not frozen.is_dir():
+            self.skipTest("frozen v0.1.10 package not present")
+        for legacy in self.LEGACY_FILES:
+            with self.subTest(name=legacy):
+                self.assertTrue(
+                    (frozen / legacy).is_file(),
+                    f"§8: the frozen v0.1.10 package must still contain "
+                    f"its own {legacy}; it must not be modified.",
+                )
