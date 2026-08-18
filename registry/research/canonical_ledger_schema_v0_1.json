@@ -1,0 +1,285 @@
+{
+  "amount_column_by_disposition": {
+    "EXCLUDED": "excluded_amount",
+    "NOT_APPLICABLE": null,
+    "OPEN": "open_amount",
+    "PENDING": "pending_amount",
+    "REMOVED_FOR_REPLACEMENT": "removed_for_replacement_amount",
+    "REPLACEMENT": "replacement_amount",
+    "RETAINED": "retained_amount",
+    "TRANSFORMED": "transformed_amount",
+    "WITHHELD": "withheld_amount"
+  },
+  "amount_columns": [
+    "retained_amount",
+    "excluded_amount",
+    "removed_for_replacement_amount",
+    "replacement_amount",
+    "transformed_amount",
+    "pending_amount",
+    "open_amount",
+    "withheld_amount"
+  ],
+  "artifact_id": "CANONICAL_LEDGER_SCHEMA_V0_1",
+  "columns": [
+    {
+      "name": "ucc",
+      "type": "str"
+    },
+    {
+      "name": "population",
+      "type": "str"
+    },
+    {
+      "name": "ucc_label",
+      "type": "str"
+    },
+    {
+      "name": "ce_stub_parent",
+      "type": "str"
+    },
+    {
+      "name": "domain_label",
+      "type": "str"
+    },
+    {
+      "name": "provenance_class",
+      "type": "str"
+    },
+    {
+      "name": "source_class",
+      "type": "SourceClass"
+    },
+    {
+      "name": "amount_source",
+      "type": "AmountSource"
+    },
+    {
+      "name": "pumd_membership",
+      "type": "str"
+    },
+    {
+      "name": "pumd_quantitative_usability",
+      "type": "str"
+    },
+    {
+      "name": "cpi_adjustment_status",
+      "type": "str"
+    },
+    {
+      "name": "concordance_elis",
+      "type": "str"
+    },
+    {
+      "name": "dmi_node",
+      "type": "str"
+    },
+    {
+      "name": "m1_mapping_status",
+      "type": "str"
+    },
+    {
+      "name": "source_amount_millions",
+      "type": "float | None"
+    },
+    {
+      "name": "source_amount_status",
+      "type": "AmountStatus"
+    },
+    {
+      "name": "source_amount_rse_pct",
+      "type": "float | None"
+    },
+    {
+      "name": "source_amount_high_rse_flag",
+      "type": "str"
+    },
+    {
+      "name": "governing_rule_id",
+      "type": "str | None"
+    },
+    {
+      "name": "governing_registry_artifact_id",
+      "type": "str | None"
+    },
+    {
+      "name": "rule_type",
+      "type": "str | None"
+    },
+    {
+      "name": "review_status",
+      "type": "str | None"
+    },
+    {
+      "name": "canonical_rule_state",
+      "type": "CanonicalRuleState"
+    },
+    {
+      "name": "ucc_rule_role",
+      "type": "UccRuleRole"
+    },
+    {
+      "name": "proposed_track_a_status",
+      "type": "str | None"
+    },
+    {
+      "name": "effective_track_a_status",
+      "type": "str | None"
+    },
+    {
+      "name": "rule_blocker_kind",
+      "type": "str | None"
+    },
+    {
+      "name": "predecessor_rule_id",
+      "type": "str | None"
+    },
+    {
+      "name": "pending_rule_effect_on_amount",
+      "type": "PendingEffect"
+    },
+    {
+      "name": "track_a_disposition",
+      "type": "Disposition"
+    },
+    {
+      "name": "retained_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "excluded_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "removed_for_replacement_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "replacement_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "transformed_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "pending_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "open_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "withheld_amount",
+      "type": "float | None"
+    },
+    {
+      "name": "replacement_group_id",
+      "type": "str | None"
+    },
+    {
+      "name": "replacement_role",
+      "type": "ReplacementRole"
+    },
+    {
+      "name": "normalization_state",
+      "type": "NormalizationState"
+    },
+    {
+      "name": "note",
+      "type": "str"
+    }
+  ],
+  "grain": "one row per (ucc, population)",
+  "invariants": [
+    "Every UCC has exactly six rows, one per population, whether or not an amount exists for it.",
+    "At most one amount column is non-blank on any row, and it is the column the row's disposition maps to.",
+    "An accounting amount always equals the row's source amount. C2 moves amounts between buckets and never rescales them.",
+    "A rule in state CURRENT_PENDING may never produce an EXCLUDED, REMOVED_FOR_REPLACEMENT, REPLACEMENT or TRANSFORMED disposition.",
+    "A UCC never resolves through a SUPERSEDED or HISTORICAL_ONLY rule.",
+    "A blank amount is not zero. Under statuses SUPPRESSED, NOT_AVAILABLE and NOT_APPLICABLE the amount column must be blank; under OBSERVED and WITHHELD it must not be.",
+    "Within one replacement group and one population, no removal-side UCC may be retained while any UCC introduces the replacement.",
+    "normalization_state follows from the disposition and the amount status and is a classification only."
+  ],
+  "milestone": "Detailed Inflation Substrate v0.1, task C2",
+  "null_semantics": {
+    "blank": "The amount is unavailable, suppressed, withheld from production or undefined for this UCC. Which of those it is is in source_amount_status. Blank is never a stand-in for zero.",
+    "regression_case": "UCC 910106 carries both encodings in the same column: Q1 is blank at status NOT_AVAILABLE because no consumer unit in the quintile reported the item, and the other five populations carry numeric amounts at status WITHHELD. Coerce the Q1 blank to zero and the ledger stops saying that a measurement is missing.",
+    "zero": "BLS or the estimator observed zero."
+  },
+  "output_path": "data/research/detailed_inflation/canonical_substrate_2024/ucc_population_accounting_ledger.csv",
+  "replacement_groups": [
+    {
+      "group_id": "RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE",
+      "linkage_basis": "NO_REMOVAL_SIDE_DECLARED",
+      "note": "The registry states that this rule removes nothing and that the outlays it displaces are removed by their own rules, on out-of-scope grounds, with no arithmetic depending on their amounts. A removal side is therefore not asserted here. Reading the primary owner outlays as this concept's removal side would create a linkage the registry explicitly declines to create.",
+      "removal_rule_id": null,
+      "replacement_rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1"
+    },
+    {
+      "group_id": "RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE",
+      "linkage_basis": "REGISTRY_DECLARED_IN_PROSE",
+      "note": "Both sides are currently PENDING, so neither populates an effective amount. The linkage is recorded anyway: it is a fact about the rules that survives their being blocked, and losing it would make the two blockers look independent when they are not.",
+      "removal_rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "replacement_rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1"
+    }
+  ],
+  "row_order": "UCC ascending as a string, then population in the fixed order ALL_CU, Q1, Q2, Q3, Q4, Q5. Nothing depends on dictionary or filesystem iteration order.",
+  "scope": "Research only. This ledger records where each source amount currently sits. It computes no weight, no share and no index, and it reconciles nothing.",
+  "status": "RESEARCH_ONLY",
+  "version": "0.1",
+  "vocabularies": {
+    "AmountSource": {
+      "DERIVED_TRANSFORMATION": "Produced by applying a rule's transformation to other UCCs' amounts.",
+      "LABSTAT_PUBLISHED": "Published by BLS in the LABSTAT CE aggregate series.",
+      "NOT_ADMISSIBLE_VALIDATION_ONLY": "An amount exists and the governing registry forbids taking a Track-A figure from it.",
+      "NO_AMOUNT_AVAILABLE": "No amount exists from any admitted source.",
+      "PUMD_BENCHMARKED": "Estimated from the CE Public Use Microdata by an estimator whose quantitative usability is BENCHMARKED for this UCC.",
+      "PUMD_NOT_BENCHMARKED": "Estimated by the same estimator on a UCC whose quantitative usability is still NOT_ESTABLISHED. Method validity is a property of the cell as well as of the procedure."
+    },
+    "AmountStatus": {
+      "NOT_APPLICABLE": "No source amount is defined for this UCC.",
+      "NOT_AVAILABLE": "No amount was produced at all.",
+      "OBSERVED": "A numeric amount exists and is admitted. Zero under this status is a genuine observed zero.",
+      "SUPPRESSED": "BLS publishes the series and did not publish this cell.",
+      "WITHHELD": "An amount was produced and is not admitted because it failed a declared quality gate. The amount is still shown."
+    },
+    "Disposition": {
+      "EXCLUDED": "Leaves because the CPI does not price it. Nothing replaces it.",
+      "NOT_APPLICABLE": "No Track-A disposition applies to this row.",
+      "OPEN": "No disposition is proposed at all.",
+      "PENDING": "The governing rule proposes a disposition that is not in force, and no rule-free baseline exists to fall back to.",
+      "REMOVED_FOR_REPLACEMENT": "Leaves because a different concept prices the same thing. The replacement is a separate row and is not assumed equal.",
+      "REPLACEMENT": "An amount entering under a concept that replaces removed source amounts.",
+      "RETAINED": "Stays in the CPI-comparable basis at its source value.",
+      "TRANSFORMED": "The amount stays, reassigned or combined, under an effective rule.",
+      "WITHHELD": "An amount that would belong here is not admitted because its estimate failed adjudication."
+    },
+    "NormalizationState": {
+      "BLOCKED_AMOUNT_NOT_ADMITTED": "The amount exists and is not admitted, because its estimate failed a declared quality gate. Distinct from BLOCKED_AMOUNT_UNAVAILABLE: one is unblocked by a measurement, the other by a better estimate.",
+      "BLOCKED_AMOUNT_UNAVAILABLE": "A disposition exists but the amount does not.",
+      "BLOCKED_PENDING_ADJUDICATION": "A disposition is proposed and not in force.",
+      "BLOCKED_UNRESOLVED_METHODOLOGY": "No disposition is proposed.",
+      "ELIGIBLE": "The amount is in the basis under a rule in force.",
+      "EXCLUDED_FROM_BASIS": "The amount is deliberately outside the basis.",
+      "NOT_APPLICABLE": "No normalisation question arises for this row."
+    },
+    "PendingEffect": {
+      "AMOUNT_HELD_IN_PENDING_BUCKET": "No rule-free baseline exists, so the amount is held: neither in the basis nor removed from it.",
+      "AMOUNT_REVERTS_TO_MAPPED_BASELINE": "The UCC is mapped to a CPI entry-level item, so absent the rule the amount is retained. The retained figure is an upper bound of what the rule would leave.",
+      "NOT_APPLICABLE": "The governing rule is in force, or there is none."
+    },
+    "ReplacementRole": {
+      "NOT_APPLICABLE": "The row is in no replacement group.",
+      "REMOVAL": "The row's amount is the one a replacement would displace.",
+      "REPLACEMENT": "The row's amount is the one that would displace it."
+    },
+    "SourceClass": {
+      "CONCORDANCE_ONLY_ESTIMATED": "Named by the CE->CPI concordance and absent from the published CE item file. No published aggregate exists, so any amount is estimated from microdata.",
+      "PUBLISHED_ADDENDUM_OUTSIDE_BASIS": "A published CE addendum the accounting basis excludes to avoid double counting the concept it duplicates.",
+      "PUBLISHED_CE_BASIS": "A member of the 2024 active numeric-UCC accounting basis, with a published LABSTAT aggregate.",
+      "TRANSFORMATION_DESTINATION": "A destination a rule combines other UCCs into. It has no source amount of its own."
+    }
+  }
+}

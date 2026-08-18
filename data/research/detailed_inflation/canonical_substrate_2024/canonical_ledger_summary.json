@@ -1,0 +1,108 @@
+{
+  "artifact_id": "CANONICAL_LEDGER_SUMMARY_2024",
+  "counts_are_rows_not_amounts": "Every number below counts rows. No amount is summed anywhere in C1 or C2. Population-level reconciliation of amounts is a later task, and a total published here would be read as its answer.",
+  "distinct_uccs": 346,
+  "populations": [
+    "ALL_CU",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "Q5"
+  ],
+  "row_count": 2076,
+  "rows_by_amount_source": {
+    "DERIVED_TRANSFORMATION": 6,
+    "LABSTAT_PUBLISHED": 2022,
+    "NOT_ADMISSIBLE_VALIDATION_ONLY": 24,
+    "PUMD_BENCHMARKED": 18,
+    "PUMD_NOT_BENCHMARKED": 6
+  },
+  "rows_by_canonical_rule_state": {
+    "CURRENT_EFFECTIVE": 180,
+    "CURRENT_OPEN": 66,
+    "CURRENT_PENDING": 138,
+    "NOT_APPLICABLE": 1692
+  },
+  "rows_by_disposition": {
+    "EXCLUDED": 132,
+    "NOT_APPLICABLE": 30,
+    "OPEN": 66,
+    "PENDING": 126,
+    "REPLACEMENT": 6,
+    "RETAINED": 1674,
+    "TRANSFORMED": 36,
+    "WITHHELD": 6
+  },
+  "rows_by_normalization_state": {
+    "BLOCKED_AMOUNT_NOT_ADMITTED": 5,
+    "BLOCKED_AMOUNT_UNAVAILABLE": 98,
+    "BLOCKED_PENDING_ADJUDICATION": 126,
+    "BLOCKED_UNRESOLVED_METHODOLOGY": 66,
+    "ELIGIBLE": 1619,
+    "EXCLUDED_FROM_BASIS": 132,
+    "NOT_APPLICABLE": 30
+  },
+  "rows_by_pending_effect": {
+    "AMOUNT_HELD_IN_PENDING_BUCKET": 126,
+    "AMOUNT_REVERTS_TO_MAPPED_BASELINE": 6,
+    "NOT_APPLICABLE": 1944
+  },
+  "rows_by_replacement_role": {
+    "NOT_APPLICABLE": 1962,
+    "REMOVAL": 90,
+    "REPLACEMENT": 24
+  },
+  "rows_by_source_amount_status": {
+    "NOT_APPLICABLE": 30,
+    "NOT_AVAILABLE": 1,
+    "OBSERVED": 1864,
+    "SUPPRESSED": 176,
+    "WITHHELD": 5
+  },
+  "rows_by_source_class": {
+    "CONCORDANCE_ONLY_ESTIMATED": 24,
+    "PUBLISHED_ADDENDUM_OUTSIDE_BASIS": 24,
+    "PUBLISHED_CE_BASIS": 2022,
+    "TRANSFORMATION_DESTINATION": 6
+  },
+  "source_amount_status_by_population": {
+    "ALL_CU": {
+      "NOT_APPLICABLE": 5,
+      "OBSERVED": 321,
+      "SUPPRESSED": 19,
+      "WITHHELD": 1
+    },
+    "Q1": {
+      "NOT_APPLICABLE": 5,
+      "NOT_AVAILABLE": 1,
+      "OBSERVED": 302,
+      "SUPPRESSED": 38
+    },
+    "Q2": {
+      "NOT_APPLICABLE": 5,
+      "OBSERVED": 309,
+      "SUPPRESSED": 31,
+      "WITHHELD": 1
+    },
+    "Q3": {
+      "NOT_APPLICABLE": 5,
+      "OBSERVED": 307,
+      "SUPPRESSED": 33,
+      "WITHHELD": 1
+    },
+    "Q4": {
+      "NOT_APPLICABLE": 5,
+      "OBSERVED": 310,
+      "SUPPRESSED": 30,
+      "WITHHELD": 1
+    },
+    "Q5": {
+      "NOT_APPLICABLE": 5,
+      "OBSERVED": 315,
+      "SUPPRESSED": 25,
+      "WITHHELD": 1
+    }
+  },
+  "status": "RESEARCH_ONLY"
+}

@@ -1,0 +1,512 @@
+{
+  "artifact_id": "CANONICAL_SUBSTRATE_MANIFEST_2024_V0_1",
+  "checkpoint_semantics": {
+    "CURRENT_GOVERNING_INPUT": "The commit the current research state is built from. Exactly one checkpoint holds this role.",
+    "HISTORICAL_CHECKPOINT": "A frozen milestone. Its artifacts are evidence of what was believed then and are never inputs to current work. They are preserved byte-for-byte and must not be edited."
+  },
+  "checkpoints": [
+    {
+      "commit": "e6402097eacd45c536a30a0ae9c9476fc2bfc76d",
+      "milestone": "Milestone 2, CE->CPI scope resolution, corrected",
+      "role": "HISTORICAL_CHECKPOINT",
+      "tag": "dmi-detailed-inflation-v0.1-m2-corrected"
+    },
+    {
+      "commit": "95111fd675f2d0287e5cc89398411e3322ad65a3",
+      "milestone": "PUMD LB01 benchmark; the frozen estimator commit",
+      "role": "HISTORICAL_CHECKPOINT",
+      "tag": "dmi-detailed-inflation-v0.1-pumd-benchmark-2024"
+    },
+    {
+      "commit": "5d1e513ec8fedeebd5d57e5f8770076fa03efe0b",
+      "milestone": "Shelter task, PARTIAL verdict",
+      "role": "HISTORICAL_CHECKPOINT",
+      "tag": "dmi-detailed-inflation-v0.1-shelter-partial-2024"
+    },
+    {
+      "commit": "3ee9141e7c186e5cd344de8f87b8a1c3f8cf5326",
+      "milestone": "Residual shelter allocation, PARTIAL verdict",
+      "role": "CURRENT_GOVERNING_INPUT",
+      "tag": "dmi-detailed-inflation-v0.1-shelter-residuals-2024"
+    }
+  ],
+  "determinism": {
+    "no_timestamp": "This manifest carries no generation time, host, user or absolute path. Rebuilding it from the same commit produces the same bytes, so a diff means an input moved.",
+    "population_order": [
+      "ALL_CU",
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q5"
+    ],
+    "sort_rule": "Every list is sorted explicitly. Nothing here depends on dictionary insertion order or on filesystem iteration order."
+  },
+  "governing_registry_families": {
+    "ce_cpi_scope_rules": [
+      {
+        "artifact_id": "ce_cpi_scope_rules_v0_1",
+        "path": "registry/research/ce_cpi_scope_rules_v0_1.json",
+        "predecessor_artifact_id": null,
+        "role": "HISTORICAL_CHECKPOINT",
+        "version": "0.1.0"
+      },
+      {
+        "artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+        "path": "registry/research/ce_cpi_scope_rules_v0_2.json",
+        "predecessor_artifact_id": "ce_cpi_scope_rules_v0_1",
+        "role": "HISTORICAL_CHECKPOINT",
+        "version": "0.2.0"
+      },
+      {
+        "artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+        "path": "registry/research/ce_cpi_scope_rules_v0_3.json",
+        "predecessor_artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+        "role": "CURRENT_GOVERNING_INPUT",
+        "version": "0.3"
+      }
+    ],
+    "ucc_provenance_classes": [
+      {
+        "artifact_id": "ucc_provenance_classes_v0_1",
+        "path": "registry/research/ucc_provenance_classes_v0_1.json",
+        "predecessor_artifact_id": null,
+        "role": "HISTORICAL_CHECKPOINT",
+        "version": "0.2.0"
+      },
+      {
+        "artifact_id": "UCC_PROVENANCE_CLASSES_V0_3",
+        "path": "registry/research/ucc_provenance_classes_v0_3.json",
+        "predecessor_artifact_id": "ucc_provenance_classes_v0_1",
+        "role": "HISTORICAL_CHECKPOINT",
+        "version": "0.3.0"
+      },
+      {
+        "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
+        "path": "registry/research/ucc_provenance_classes_v0_4.json",
+        "predecessor_artifact_id": "UCC_PROVENANCE_CLASSES_V0_3",
+        "role": "CURRENT_GOVERNING_INPUT",
+        "version": "0.4"
+      }
+    ]
+  },
+  "known_internal_inconsistencies": [
+    {
+      "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
+      "location": "classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+      "not_repaired_because": "Changing a governing registry's text is an adjudication. This task is authorised to describe the current state, not to revise it. The correction belongs to whoever next opens that registry.",
+      "prose_claim": "pumd_quantitative_usability is NOT_ESTABLISHED for all 17 concordance-only UCCs.",
+      "resolution_in_this_manifest": "The structured field governs. The prose is carried forward verbatim from v0.1 and was not updated when the transitions were added in v0.3. Both readings are recorded so that a consumer who read the prose can see why the number differs.",
+      "structured_claim": "usability_transitions_from_v0_1 in the same file records 910104, 910105 and 910107 moving from NOT_ESTABLISHED to BENCHMARKED."
+    },
+    {
+      "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
+      "location": "shelter_rental_equivalence_correspondence.normative_input_rationale",
+      "not_repaired_because": "Same reason. The two halves of the sentence went stale at different milestones, which is worth someone's attention and is not this task's to give.",
+      "prose_claim": "pumd_quantitative_usability is NOT_ESTABLISHED for all four rental-equivalence UCCs and the Track-A shelter rule remains PENDING.",
+      "resolution_in_this_manifest": "The structured fields govern, in both registries.",
+      "structured_claim": "Three of the four are BENCHMARKED per usability_transitions_from_v0_1. The second half of the sentence is still correct for the secondary rule and no longer correct for the primary one, which is ACCEPTED and EFFECTIVE in CE_CPI_SCOPE_RULES_V0_3."
+    }
+  ],
+  "milestone": "Detailed Inflation Substrate v0.1, task C1",
+  "pinned_bls_sources": [
+    {
+      "artifact_id": "cpi_eli_descriptions_v0_1",
+      "path": "registry/research/cpi_eli_descriptions_v0_1.provenance.json",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "source_file_name": "cpi-eli-descriptions-hom-appendix2.xlsx",
+      "source_sha256": "40d13c0b61b84749919bcc8a5f92c77b7a5368fe250ed4a1c5c0c90eba0e662f",
+      "version": "0.1.0"
+    },
+    {
+      "artifact_id": "ucc_eli_concordance_2024_v0_1",
+      "path": "registry/research/ucc_eli_concordance_2024_v0_1.provenance.json",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "source_file_name": "ce-cpi-concordance-August-2026.xlsx",
+      "source_sha256": "769d578cd7964cbbe24330cc4cac1e068a6fc68f426615d41ae533d8cd13f430",
+      "version": "0.1.0"
+    }
+  ],
+  "pumd_usability_transitions_from_v0_1": {
+    "910104": "BENCHMARKED",
+    "910105": "BENCHMARKED",
+    "910107": "BENCHMARKED"
+  },
+  "reference_year": 2024,
+  "rule_lineage": [
+    {
+      "claimed_uccs": [
+        "790690",
+        "990920",
+        "990930",
+        "990940"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "OS_CPI_CAPITAL_IMPROVEMENT_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "220311",
+        "220312",
+        "220313",
+        "220314",
+        "830111",
+        "830112",
+        "880110",
+        "880310"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "OS_CPI_MORTGAGE_INTEREST_AND_CHARGES_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "230113",
+        "230114",
+        "230115",
+        "230151"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rule_id": "OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "230901"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rule_id": "OS_CPI_OWNER_PROPERTY_MANAGEMENT_v0_2",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "240213"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rule_id": "OS_CPI_OWNER_ROOF_MATERIALS_ANOMALY_v0_2",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "210901",
+        "220901"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "rule_id": "OS_CPI_OWNER_SITE_PAYMENTS_v0_2",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "210901",
+        "220901",
+        "230113",
+        "230114",
+        "230115",
+        "230151",
+        "230901",
+        "240213"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+      "predecessor_rule_id": null,
+      "rule_id": "OS_CPI_OWNER_STRUCTURE_INVESTMENT_v0_1",
+      "state": "SUPERSEDED",
+      "successor_rule_ids": [
+        "OS_CPI_OWNER_MAINTENANCE_SERVICES_v0_2",
+        "OS_CPI_OWNER_PROPERTY_MANAGEMENT_v0_2",
+        "OS_CPI_OWNER_ROOF_MATERIALS_ANOMALY_v0_2",
+        "OS_CPI_OWNER_SITE_PAYMENTS_v0_2"
+      ]
+    },
+    {
+      "claimed_uccs": [
+        "220211",
+        "220212"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "OS_CPI_RESIDENTIAL_PROPERTY_TAX_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "510110",
+        "510901",
+        "510902",
+        "850300"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "OS_CPI_VEHICLE_FINANCE_CHARGES_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "210902",
+        "220122",
+        "220902",
+        "230152",
+        "230902",
+        "240113",
+        "240123",
+        "240214",
+        "240223",
+        "240313",
+        "240323",
+        "320613",
+        "320626",
+        "320633",
+        "340912"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "RP_SECONDARY_RESIDENCE_OWNER_COST_v0_1",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "910104"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "910105",
+        "910106",
+        "910107"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_2",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "220121"
+      ],
+      "first_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TR_CPI_HOMEOWNERS_INSURANCE_CONTENTS_PORTION_v0_1",
+      "state": "CURRENT_PENDING",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "470311"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TR_EV_CHARGING_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "190903",
+        "190904",
+        "200900"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TR_TRIP_FOOD_ALCOHOL_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "520110",
+        "950024"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "TR_VEHICLE_REGISTRATION_FEES_v0_1",
+      "state": "CURRENT_EFFECTIVE",
+      "successor_rule_ids": []
+    },
+    {
+      "claimed_uccs": [
+        "230143",
+        "230144",
+        "270104",
+        "270903",
+        "270904",
+        "270906",
+        "300900",
+        "340913",
+        "340915",
+        "450351",
+        "990900"
+      ],
+      "first_seen_artifact_id": "ce_cpi_scope_rules_v0_1",
+      "last_seen_artifact_id": "CE_CPI_SCOPE_RULES_V0_3",
+      "predecessor_rule_id": null,
+      "rule_id": "UNRESOLVED_v0_2",
+      "state": "CURRENT_OPEN",
+      "successor_rule_ids": []
+    }
+  ],
+  "rule_lineage_state_counts": {
+    "CURRENT_EFFECTIVE": 9,
+    "CURRENT_OPEN": 1,
+    "CURRENT_PENDING": 6,
+    "HISTORICAL_ONLY": 0,
+    "NOT_APPLICABLE": 0,
+    "SUPERSEDED": 1
+  },
+  "rule_state_semantics": {
+    "CURRENT_EFFECTIVE": "Present in the governing registry, ACCEPTED and applicable. Its disposition is in force and may populate an effective amount.",
+    "CURRENT_OPEN": "Present in the governing registry and proposing nothing. Undecided, which is not the same as blocked.",
+    "CURRENT_PENDING": "Present in the governing registry with a proposed disposition that is not in force. It may never populate an effective exclusion or transformation amount.",
+    "HISTORICAL_ONLY": "Absent from the governing registry with no successor naming it. It existed and was dropped. The count is currently zero, which is stated rather than left to be inferred from the absence of entries.",
+    "NOT_APPLICABLE": "No rule applies.",
+    "SUPERSEDED": "Absent from the governing registry, with one or more successors naming it as their predecessor. Its UCCs are claimed by those successors and must never be resolved through it."
+  },
+  "scope": "Research only. This manifest records which vintages, registry versions and rules govern the 2024 Detailed Inflation Substrate. It authorises no figure, computes no weight and adjudicates nothing.",
+  "single_version_registries": [
+    {
+      "artifact_id": "detailed_inflation_taxonomy_v0_1",
+      "path": "registry/research/detailed_inflation_taxonomy_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "eli_to_node_map_v0_1",
+      "path": "registry/research/eli_to_node_map_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "pumd_2024_interview_source_v0_1.json",
+      "path": "registry/research/pumd_2024_interview_source_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "pumd_lb01_benchmark_spec",
+      "path": "registry/research/pumd_lb01_benchmark_spec_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "pumd_lb01_confirmation_spec",
+      "path": "registry/research/pumd_lb01_confirmation_spec_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "shelter_estimation_spec",
+      "path": "registry/research/shelter_estimation_spec_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    },
+    {
+      "artifact_id": "SHELTER_RESIDUAL_EVIDENCE_V0_1",
+      "path": "registry/research/shelter_residual_evidence_v0_1.json",
+      "role": "CURRENT_GOVERNING_INPUT"
+    }
+  ],
+  "status": "RESEARCH_ONLY",
+  "ucc_claims": {
+    "claimed_as_output_only": [
+      "510115"
+    ],
+    "claimed_as_source": [
+      "190903",
+      "190904",
+      "200900",
+      "210901",
+      "210902",
+      "220121",
+      "220122",
+      "220211",
+      "220212",
+      "220311",
+      "220312",
+      "220313",
+      "220314",
+      "220901",
+      "220902",
+      "230113",
+      "230114",
+      "230115",
+      "230143",
+      "230144",
+      "230151",
+      "230152",
+      "230901",
+      "230902",
+      "240113",
+      "240123",
+      "240213",
+      "240214",
+      "240223",
+      "240313",
+      "240323",
+      "270104",
+      "270903",
+      "270904",
+      "270906",
+      "300900",
+      "320613",
+      "320626",
+      "320633",
+      "340912",
+      "340913",
+      "340915",
+      "450351",
+      "470311",
+      "510110",
+      "510901",
+      "510902",
+      "520110",
+      "790690",
+      "830111",
+      "830112",
+      "850300",
+      "880110",
+      "880310",
+      "910104",
+      "910105",
+      "910106",
+      "910107",
+      "950024",
+      "990900",
+      "990920",
+      "990930",
+      "990940"
+    ],
+    "note": "Every UCC below is claimed by exactly one current rule. A second claim is a build failure, not a warning: the amount would have two treatments and no way to choose."
+  },
+  "version": "0.1",
+  "why_lineage_is_derived": "Three versions of the scope-rule registry and three of the provenance registry are committed side by side, on purpose. Filename order does not identify the head: ucc_provenance_classes_v0_1.json carries version 0.2.0 and no v0_2 file exists. The head of each family is derived from the predecessor block each successor carries, and the derivation fails if the chain forks, breaks or has two roots."
+}
