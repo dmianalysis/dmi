@@ -17,15 +17,40 @@ contract (Baseline + Slack-Plus only).
 
 ### Files to withdraw
 
-| Live URL                                                                | Remote path (iFastNet)                                                     |
-|-------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| `/data/outputs/dmi_release_YYYY-MM_core.json` (every historical month)  | `/home/agiraces/dmianalysis/data/outputs/dmi_release_YYYY-MM_core.json`    |
-| `/data/outputs/dmi-YYYY-MM-core.csv`                                    | `/home/agiraces/dmianalysis/data/outputs/dmi-YYYY-MM-core.csv`             |
-| `/data/outputs/dmi-YYYY-MM-core.parquet`                                | `/home/agiraces/dmianalysis/data/outputs/dmi-YYYY-MM-core.parquet`         |
-| `/data/outputs/dmi_release_YYYY-MM_u6.json` (legacy naming, if present) | `/home/agiraces/dmianalysis/data/outputs/dmi_release_YYYY-MM_u6.json`      |
-| `/data/outputs/dmi_release_YYYY-MM_with_ci.json` (legacy, if present)   | `/home/agiraces/dmianalysis/data/outputs/dmi_release_YYYY-MM_with_ci.json` |
+This procedure withdraws **Core artifacts only**. The scope is exactly
+four filename classes:
+
+| Live URL                                                               | Remote path (iFastNet)                                                  |
+|------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `/data/outputs/dmi_release_YYYY-MM_core.json` (every historical month) | `/home/agiraces/dmianalysis/data/outputs/dmi_release_YYYY-MM_core.json` |
+| `/data/outputs/dmi-YYYY-MM-core.csv`                                   | `/home/agiraces/dmianalysis/data/outputs/dmi-YYYY-MM-core.csv`          |
+| `/data/outputs/dmi-YYYY-MM-core.parquet`                               | `/home/agiraces/dmianalysis/data/outputs/dmi-YYYY-MM-core.parquet`      |
+| `/data/outputs/qa_report_YYYY-MM_core.json`                            | `/home/agiraces/dmianalysis/data/outputs/qa_report_YYYY-MM_core.json`   |
+
+> **Scope correction (Round 4).** Earlier revisions of this runbook and of
+> the tool listed `dmi_release_YYYY-MM_u6.json` and
+> `dmi_release_YYYY-MM_with_ci.json` in this table, and omitted
+> `qa_report_*_core.json`. Both were errors.
+>
+> **`_u6` and `_with_ci` files are NOT Core** and must **not** be deleted
+> through this procedure. They are pre-v0.1.12 legacy artifacts —
+> historical evidence of superseded methodology runs. Their remote
+> disposition is explicitly **outside the authorization** this runbook
+> operates under, and requires a separate decision. Local copies are
+> quarantined (not deleted) under `data/quarantine/pre_v0.1.12/`; see that
+> directory's README.
+>
+> The tool now enforces this: `NON_CORE_REGEXES` in
+> `scripts/withdraw_remote_artifacts.py` actively **refuses** any
+> inventory entry matching `_u6` or `_with_ci`, and `CORE_NAME_REGEXES`
+> requires every entry to positively match one of the four classes above.
+> If you supply an inventory containing one, both phases abort.
 
 ### Files to leave in place
+
+- **`dmi_release_YYYY-MM_u6.json`** and
+  **`dmi_release_YYYY-MM_with_ci.json`** — not Core; outside this
+  authorization (see the scope correction above).
 
 - `dmi_release_YYYY-MM.json` (Baseline)
 - `dmi_release_YYYY-MM_slack_plus.json` (Slack-Plus)
@@ -117,7 +142,12 @@ Confirm the withdrawn files themselves still exist on the server
 ```bash
 ssh -i "$DMI_REMOTE_KEY" -p "$DMI_REMOTE_PORT" \
   "$DMI_REMOTE_USER@$DMI_REMOTE_HOST" \
-  "ls -la $DMI_REMOTE_BASE/data/outputs/ | grep -E '_core\\.json$|-core\\.(csv|parquet)$|_u6\\.json$|_with_ci\\.json$' || true"
+  "ls -la $DMI_REMOTE_BASE/data/outputs/ | grep -E '_core\\.json$|-core\\.(csv|parquet)$' || true"
+
+# Separately, for INFORMATION ONLY — these are NOT withdrawal targets.
+# Seeing them here does not authorize deleting them (see scope note above).
+ssh $SSH_OPTS "$DMI_REMOTE_USER@$DMI_REMOTE_HOST" \
+  "ls -la $DMI_REMOTE_BASE/data/outputs/ | grep -E '_u6\\.json$|_with_ci\\.json$' || true"
 ```
 
 Expected: a list of the files enumerated in the "Files to withdraw"
@@ -152,8 +182,7 @@ find "$BACKUP_DIR" -type f \( \
     -name '*_core.json' -o \
     -name '*-core.csv' -o \
     -name '*-core.parquet' -o \
-    -name '*_u6.json' -o \
-    -name '*_with_ci.json' \
+    -name 'qa_report_*_core.json' \
   \)
 ```
 
@@ -171,15 +200,29 @@ anything unless three independent conditions hold:
 1. The `execute` subcommand was invoked with `--confirm`.
 2. The inventory JSON's `remote_base` matches the current environment
    variable `DMI_REMOTE_BASE`.
-3. Each file's on-remote SHA-256 at execution time matches the hash
+3. The inventory's `integrity_sha256` still matches a recomputation over
+   its own contents — so an inventory edited after review cannot be
+   consumed silently (see Step 2a-bis for the legitimate pruning path).
+4. Every path passes the scope rules: not a protected
+   Baseline/Slack-Plus/manifest/release-note name, not a non-Core legacy
+   name (`_u6`, `_with_ci`), and a positive match against one of the four
+   Core filename classes.
+5. Each file's on-remote SHA-256 at execution time matches the hash
    recorded in the inventory (protects against races between the two
    phases).
 
+`execute` **never re-runs `find`**. It deletes exactly the paths in the
+reviewed inventory and nothing else, so a file that appeared on the
+remote after review cannot enter the delete set. Afterwards it verifies
+that every inventoried path is actually absent and fails if any
+survived.
+
 Files matching the protected patterns (Baseline `dmi_release_YYYY-MM.json`,
-Slack-Plus `dmi_release_YYYY-MM_slack_plus.json`, and the corresponding
+Slack-Plus `dmi_release_YYYY-MM_slack_plus.json`, the corresponding
 `dmi-YYYY-MM-{baseline,slack_plus}.{csv,parquet}` plus legacy
-`dmi-YYYY-MM.{csv,parquet}`) are refused up front — the tool exits
-non-zero rather than deleting a mislabeled operational artifact.
+`dmi-YYYY-MM.{csv,parquet}`, the manifests, and the release notes) are
+refused up front — the tool exits non-zero rather than deleting a
+mislabeled operational artifact.
 
 ### Step 2a — Inventory (read-only)
 
@@ -200,14 +243,40 @@ python -m scripts.withdraw_remote_artifacts inventory \
 #       {"path": "<remote_base>/data/outputs/dmi_release_2024-11_core.json",
 #        "size": <bytes>, "sha256": "<hex>"},
 #       ...
-#     ]
+#     ],
+#     "integrity_sha256": "<hex>"
 #   }
+#
+# `integrity_sha256` seals the reviewed decision: it covers remote_base,
+# remote_outputs, and every (path, size, sha256) triple. It deliberately
+# EXCLUDES generated_at_utc, so the hash identifies the decision rather
+# than the run that produced it — re-running inventory against an
+# unchanged remote yields the same hash.
 ```
 
-Review the inventory before proceeding. Every listed path should end in
-one of the withdrawn suffixes (`_core.json`, `_u6.json`, `_with_ci.json`,
-`-core.csv`, `-core.parquet`). If anything else appears, stop and open a
-bug; the tool should have refused at inventory time.
+Review the inventory before proceeding. Every listed path must be one of
+the four Core filename classes: `dmi_release_YYYY-MM_core.json`,
+`dmi-YYYY-MM-core.csv`, `dmi-YYYY-MM-core.parquet`, or
+`qa_report_YYYY-MM_core.json`. If anything else appears — in particular
+any `_u6` or `_with_ci` file — stop and open a bug; the tool should have
+refused at inventory time.
+
+### Step 2a-bis — Reseal, only if you pruned the inventory
+
+If review leads you to remove entries you do not want deleted, the
+integrity hash no longer matches and `execute` will refuse. Re-approve
+the pruned list explicitly:
+
+```bash
+python -m scripts.withdraw_remote_artifacts reseal \
+  --inventory "$INVENTORY"
+# Prints the previous and new hash. Local only: no SSH, no deletion.
+# Re-validates the scope rules, so resealing cannot smuggle an
+# out-of-scope path past them.
+```
+
+Resealing is an auditable act, not a bypass: it records that a human
+re-approved a changed list. Never edit `integrity_sha256` by hand.
 
 ### Step 2b — Execute (destructive; requires --confirm)
 
@@ -238,20 +307,31 @@ The tool writes a completion summary to stdout. Capture it into
 ## Step 3 — Post-withdrawal verification
 
 ```bash
-# 1. Removed files should now 404:
+# 1. Withdrawn CORE files should now 404:
 for URL in \
   https://dmianalysis.org/data/outputs/dmi_release_2024-11_core.json \
   https://dmianalysis.org/data/outputs/dmi-2026-03-core.csv \
   https://dmianalysis.org/data/outputs/dmi-2026-03-core.parquet \
-  https://dmianalysis.org/data/outputs/dmi_release_2024-11_u6.json \
-  https://dmianalysis.org/data/outputs/dmi_release_2024-11_with_ci.json
+  https://dmianalysis.org/data/outputs/qa_report_2026-03_core.json
 do
   code=$(curl -o /dev/null -sS -w '%{http_code}' "$URL")
   echo "$code  $URL"
 done
 # Expected: 404 for every URL that Step 0 listed as present.
 
-# 2. Baseline + Slack-Plus for the current period still 200:
+# 2. Legacy _u6 / _with_ci files are NOT withdrawal targets. Whatever
+#    status they returned before this procedure, they must return the
+#    SAME status afterwards. A 404 here means something deleted a file
+#    outside this authorization — investigate before proceeding.
+for URL in \
+  https://dmianalysis.org/data/outputs/dmi_release_2024-11_u6.json \
+  https://dmianalysis.org/data/outputs/dmi_release_2024-11_with_ci.json
+do
+  code=$(curl -o /dev/null -sS -w '%{http_code}' "$URL")
+  echo "$code  $URL   (must be unchanged from Step 0)"
+done
+
+# 3. Baseline + Slack-Plus for the current period still 200:
 PERIOD=$(curl -sS https://dmianalysis.org/data/outputs/latest.json |
   jq -r '.releases[0].release_id')
 

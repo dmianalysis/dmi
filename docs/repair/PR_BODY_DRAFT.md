@@ -61,11 +61,12 @@ actually implement.
 
 - `python -m compileall scripts/ tests/ dmi_calculator/ dmi_pipeline/`
   → clean.
-- `pytest tests/` → **46 passed / 5 skipped** (skipped are BLS-network
-  CE weight tests). Identity, schema-validation, coherence,
-  release-note, calculator, and summary-generator tests all green.
-  (**Round 2** extends this to 128 passed / 5 skipped — see the
-  Round-2 addendum at the bottom of this document.)
+- `pytest tests/` → **46 passed / 5 skipped** at the time this section
+  was written (Round 1). **Superseded — not the current expected
+  result.** Round 2 extended this to 128 passed / 5 skipped; the current
+  Round-3 figure is recorded in the Round-3 verification snapshot at the
+  bottom of this document, which is the only count a reviewer should
+  check against.
 - JSON parse OK: `data/outputs/releases.json`, `latest.json`,
   `specifications.json`, `web/health.json`, `deploy/health.json`,
   `deploy/metadata.json`.
@@ -92,8 +93,9 @@ actually implement.
 
 ## Test plan
 
-- [ ] CI: `pytest tests/` on merge target passes (expect 46 passed / 5
-      skipped).
+- [ ] CI: `pytest tests/` on merge target passes. The expected count is
+      the one recorded in the Round-3 verification snapshot at the bottom
+      of this document — not the superseded Round-1 figure above.
 - [ ] JSON schema regression tests remain green.
 - [ ] Identity + coherence regression tests remain green.
 - [ ] Local re-run of `python -m scripts.rebuild_release_manifests` (if
@@ -278,18 +280,117 @@ push, no merge, no tag, no release, no deploy, no remote withdrawal.**
   reference the pre-Round-3 monthly-workflow job structure. These are
   targeted by Round-3 §14 (next commit).
 - `python -m scripts.prepare_deployment --output-dir /tmp/gate --verify`
-  → clean; two consecutive runs byte-identical modulo the sentinel
-  timestamp.
+  → clean; two consecutive runs byte-identical apart from the staging
+  sentinel. (The "modulo the sentinel timestamp" carve-out recorded here
+  was itself a defect — see the Round-4 section below. The sentinel is
+  now deterministic and no carve-out remains.)
 - `python -m scripts.withdraw_remote_artifacts execute --inventory
   /tmp/x.json` (no `--confirm`) → fails fast with "ERROR: execute
   requires --confirm" and zero SSH I/O.
 
-### Round 3 still to land
+### Round 3 — landed
 
-- §14 — rewrite `test_monthly_workflow_safety.py` against the §1
-  refactored workflow structure.
-- §15 — full verification gauntlet (all tests, deployment rebuild,
-  schema validation, workflow parse) and push of the branch.
+§14 (`test_monthly_workflow_safety.py` rewritten against the §1
+refactored structure) and §15 (verification gauntlet + branch push) both
+landed. Round 3 closed at **150 passed / 5 skipped**.
+
+---
+
+## Round 4 — second-audit residuals
+
+Round 4 re-verified Round 3 independently rather than trusting its green
+suite. Six defects survived, each because the Round-3 tests were
+narrower than the requirement they were meant to enforce.
+
+**Withdrawal scope (§10) — the most serious.** The two-phase rewrite
+preserved the exact misclassification the audit flagged: `_u6.json` and
+`_with_ci.json` were still treated as Core, and `qa_report_*_core.json`
+was still omitted. The patterns carried a comment saying they were
+"kept identical to the historical shell tool's `FIND_EXPR` for consumer
+parity" — that parity *was* the defect. All 16 Round-3 tests passed
+because they asserted the tool's shape, never its scope. Corrected, and
+the scope now fails closed three independent ways.
+
+Also added: an inventory integrity hash sealed in phase 1 and validated
+in phase 2 (so a hand-edited inventory cannot be consumed), a `reseal`
+command for the audited pruning path, and post-deletion verification
+that every inventoried path is actually gone.
+
+**Deployment reproducibility (§6).** The committed `deploy/` tree did
+not equal a fresh build: the staging sentinel stamped a timestamp on
+every run. §6 allows an exception only for packaging files whose
+contents are *deterministic*, so this was a real failure, not a
+permitted carve-out. The sentinel is deterministic now and the committed
+tree diffs clean against a fresh build with **no exemption list**.
+
+**Staging safety (§5).** The canonical `deploy/` target was permitted
+only because a sentinel happened to be committed — dropping that dotfile
+would have failed every deployment workflow closed. Now permitted
+explicitly, with 14 destructive-safety tests that each assert a marker
+file survives.
+
+**Health writers (§7).** The writer-level tests asserted only that the
+string `sanitize_health_endpoints` appeared in each writer's source; the
+test class said so openly. Both writers are now executed against a
+health.json seeded with every retired key, including with a
+`_with_ci.json` artifact on disk — the presence-driven case that was the
+original defect.
+
+**Backfill writer (§9).** Nothing in the suite executed
+`backfill_releases.py` at all. New suite of 24 tests runs the real
+writer against legacy and modern fixtures; both original §9 defects are
+confirmed caught by mutation.
+
+**SSH and workflow coverage (§2/§3).** `ssh-keyscan` success was never
+actually required — it exits 0 when it cannot reach the host, so the
+exit status proved nothing and an empty `known_hosts` would have passed.
+All three deploy workflows now fail on both conditions.
+`deploy_web_dashboard.yml` and `deploy_wp_plugins.yml` had no tests
+whatsoever despite both being able to deploy to production; all four
+workflows are now covered, with a guard ensuring a newly added workflow
+cannot silently escape the policy tests.
+
+**Documentation (§11/§12).** Appendix A of the methodology note listed
+`CORE_CPI` as a current `specification` value, a recipe still told
+readers to run `compute_dmi_with_ci`, and the note asserted
+`latest_with_ci` "is emitted only when..." — which §7 had already made
+false. `CORE_WITHDRAWAL.md` was missing two §11-required statements: that
+the former construction excluded food but not all energy, and that the
+eight-category mapping cannot implement the intended definition. All
+corrected, and each is now pinned by a test rather than by a banner.
+
+### Round 4 verification snapshot
+
+- `pytest tests/` → **305 passed / 5 skipped / 0 failed** (5 skips are
+  BLS-network CE-weights tests).
+- `python -m scripts.prepare_deployment --output-dir deploy --verify` →
+  verification passed.
+- `diff -r deploy/ <fresh build>` → identical, sentinel included.
+- Second successive build → byte-identical.
+- Deployment candidate: 57 files (56 public + 1 sentinel).
+- All four workflows parse.
+
+### Manifest schema versions
+
+Two of the three manifests are at 3.0.0 and one is at 0.3.0, by design:
+
+| Manifest | `schema_version` |
+|---|---|
+| `data/outputs/releases.json` | `3.0.0` |
+| `data/outputs/latest.json` | `3.0.0` |
+| `data/outputs/specifications.json` | `0.3.0` |
+
+`specifications.json` is a separately versioned contract. It is not
+lagging and is not scheduled to be renumbered to match the other two.
+
+### What this PR does not do
+
+No deployment. No remote withdrawal (neither phase was executed against
+the live site). No merge, tag, or release. No history rewrite. The
+frozen `dmi-v0.1.10-deployment/` package is untouched.
+
+Production deployment happens only after this PR is reviewed and merged,
+via `deploy_production.yml`, from the merged commit.
 
 ---
 

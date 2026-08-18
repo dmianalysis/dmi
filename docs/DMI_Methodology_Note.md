@@ -455,10 +455,16 @@ User's should consider multiple specifications for robustness.
 
 **Interpretation**: In Nov 2024, food prices inflated *slower* than core items, so excluding food raises DMI slightly. In periods of food price spikes (e.g., 2021-2022), core DMI would be lower.
 
-**When to Use**:
+**When v0.1.9 suggested using it** *(historical; not a current
+recommendation — see the WITHDRAWN banner above)*:
 - Assessing underlying inflation trends
 - Periods of commodity price shocks
 - Comparing to Federal Reserve's core inflation focus
+
+Under v0.1.12 the operational alternatives are **Baseline** (U-3,
+headline CPI) and **Slack-Plus** (U-6, headline CPI). Core is not
+offered as a sensitivity analysis, because the construction below never
+implemented the intended definition.
 
 **Limitation**: We exclude only food, not energy (energy is embedded in transportation, housing). Official BLS core CPI (CUSR0000SA0L1E) would be more comprehensive but requires different methodology.
 
@@ -682,10 +688,26 @@ see the status banner at the top of this note.
 - Improves historical accuracy
 - Requires consistent CE data processing pipeline
 
-**2. Official Core CPI**
-- Use BLS core CPI series (CUSR0000SA0L1E) instead of manual exclusion
-- More comprehensive (excludes energy too)
-- Requires recalculating weights without food/energy categories
+**2. Official Core CPI** — *the forward path for a Core specification;
+unimplemented and unvalidated.*
+- Core means excluding food **and energy**, per the concept-note
+  definition. The withdrawn v0.1.9 construction excluded only
+  `CPI_FOOD_BEVERAGES`, which leaves essentially all energy in the index
+  because energy is embedded inside `CPI_HOUSING` (utilities) and
+  `CPI_TRANSPORTATION` (motor fuel).
+- **Requires a finer expenditure mapping first.** The current CE-to-CPI
+  crosswalk resolves to eight categories in which energy has no separable
+  weight, so no reweighting of that mapping can produce a
+  food-and-energy-excluded index. Utilities and motor fuel must first be
+  split out of housing and transportation, with quintile-level weights
+  for the split components.
+- Then: use the BLS core CPI series (`CUSR0000SA0L1E`) rather than
+  deriving one by dropping categories from headline, and demonstrate the
+  result is numerically distinct from Baseline for every published
+  period.
+- Not scheduled. See
+  [`docs/repair/CORE_WITHDRAWAL.md`](repair/CORE_WITHDRAWAL.md) §2.1 and
+  §4.1.
 
 **3. Confidence Intervals for Full Time Series**
 - Backfill 2011-2024 with CIs
@@ -751,7 +773,7 @@ Okun, A. M. (1970). *The Political Economy of Prosperity*. Brookings Institution
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
 | `reference_period` | string | Period in YYYY-MM format | `"2024-11"` |
-| `specification` | string | Variant identifier | `"BASELINE"`, `"U6"`, `"CORE_CPI"` |
+| `specification` | string \| null | Variant identifier. Under v0.1.12 the schema enum is exactly `baseline`, `slack_plus`, or `null` (the latter on pre-multi-spec historical releases). The v0.1.9-era `U6` and `CORE_CPI` labels are **not** current values: `U6` was renamed `slack_plus`, and `CORE_CPI` belonged to the withdrawn Core specification (§5.2). | `"baseline"`, `"slack_plus"` |
 | `description` | string | Human-readable description | `"DMI using U-3..."` |
 | `parameters.alpha` | number | Inflation weight in formula | `0.5` |
 | `parameters.scale_factor` | number | DMI scaling multiplier | `2.0` |
@@ -808,14 +830,20 @@ export BLS_API_KEY="your_key_here"
 ./venv/bin/python -m scripts.compute_dmi
 ```
 
-**5. Compute with Confidence Intervals** *(v0.1.12: not part of the shipped contract)*
-```bash
-# Bootstrap CI generation was part of the withdrawn v0.1.10 pipeline and is
-# NOT re-validated under v0.1.12. `latest_with_ci` is emitted only when a
-# `dmi_release_<period>_with_ci.json` happens to exist for the current
-# period; the v0.1.12 default pipeline does not produce that file.
-./venv/bin/python -m scripts.compute_dmi_with_ci --period 2024-11 --bootstrap 1000
-```
+**5. Confidence Intervals** — *not available under v0.1.12.*
+
+Bootstrap confidence intervals were part of the v0.1.9/v0.1.10 pipeline.
+They are **not** part of the v0.1.12 published contract, are not
+re-validated against the current schemas, and no recipe for regenerating
+them is given here: `dmi_release_*_with_ci.json` files are pre-v0.1.12
+legacy artifacts, quarantined under `data/quarantine/pre_v0.1.12/`.
+
+The `latest_with_ci` health endpoint has been **retired**. It is listed in
+`RETIRED_ENDPOINT_KEYS` (`scripts/health_endpoints.py`) and is stripped by
+every health writer, so it cannot reappear — including when a
+`_with_ci.json` file is present on disk. Conditioning a public endpoint on
+the incidental presence of a local file was itself the defect.
+
 
 **6. Run Alternative Specifications** *(v0.1.12: Baseline + Slack-Plus only)*
 ```bash

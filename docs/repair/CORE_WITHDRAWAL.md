@@ -59,6 +59,42 @@ Withdrawing the current Core artifacts is the honest description of that
 state: the files were mislabeled Baseline outputs, not a defective Core
 computation to be repaired in place.
 
+### 2.1 Even the intended construction was not Core
+
+Two limitations are worth separating, because the first is a bug and the
+second is a design impossibility.
+
+**It excluded food, but not all energy.** The documented v0.1.9
+construction excluded a single category, `CPI_FOOD_BEVERAGES`, and
+renormalized the remainder. "Core inflation", as the term is used by BLS
+and the Federal Reserve, excludes food **and energy**. This pipeline's
+energy consumption is not a category of its own: it is embedded inside
+`CPI_HOUSING` (household utilities) and `CPI_TRANSPORTATION` (motor
+fuel). Dropping `CPI_FOOD_BEVERAGES` therefore leaves essentially all
+energy in the index. Even had `build_core_weights(...)` been wired up
+correctly, the result would have been a food-excluded index — not Core.
+
+**The eight-category mapping cannot implement the intended definition.**
+The CE-to-CPI crosswalk resolves expenditure into exactly eight
+categories:
+
+`CPI_APPAREL`, `CPI_EDU_COMM`, `CPI_FOOD_BEVERAGES`, `CPI_HOUSING`,
+`CPI_MEDICAL_CARE`, `CPI_OTHER`, `CPI_RECREATION`, `CPI_TRANSPORTATION`.
+
+Energy has no separable weight at this granularity. There is no subset of
+these eight categories whose exclusion yields a food-and-energy-excluded
+index, because energy is a *component of* two categories that must
+otherwise be retained — shelter and transportation cannot be dropped
+wholesale without destroying the index. The concept-note Core definition
+is therefore not reachable by any reweighting of the current mapping,
+however it is applied. It requires a **finer mapping**: an expenditure
+crosswalk that splits utilities and motor fuel out of housing and
+transportation, with quintile-level weights for the split components.
+
+This is why Core is described as *intended, unimplemented and
+unvalidated* rather than *broken and pending a fix*. The missing piece is
+upstream data granularity, not a defect in the release path.
+
 ---
 
 ## 3. What is (and is not) affected
@@ -97,13 +133,43 @@ operator runbook.
 
 ## 4. Reversal / dispute path
 
+### 4.1 Work required before Core can return
+
+Ordered by dependency; the first item is the blocker and is not a coding
+task:
+
+1. **A finer expenditure mapping.** Extend the CE-to-CPI crosswalk so
+   household energy (utilities) and motor fuel are separable from
+   `CPI_HOUSING` and `CPI_TRANSPORTATION`, with quintile-level weights
+   for the split components. Until this exists, no amount of reweighting
+   can produce a food-and-energy-excluded index (§2.1).
+2. **A Core weight matrix.** Implement and actually invoke
+   `build_core_weights(...)` on the release path, excluding both food and
+   the newly separable energy components, renormalizing the remainder
+   per quintile.
+3. **A Core inflation input.** Source a food-and-energy-excluded CPI-U
+   series (e.g. `CUSR0000SA0L1E`) rather than deriving one by dropping
+   categories from headline.
+4. **Validation.** Demonstrate the Core series is numerically distinct
+   from Baseline for every published period — the byte-identity in §2 is
+   precisely the check that should have failed — and add QA coverage
+   pinning that distinctness.
+5. **Concept-note alignment.** Confirm the implemented definition matches
+   the concept note's Core definition before any artifact carries the
+   name.
+
+Nothing in this list is scheduled. Core remains intended, not
+operational.
+
+### 4.2 Publication mechanics, once the above is done
+
 If a validated Core computation is added in a future repair (v0.1.13 or
 later):
 
 1. The new computation is implemented behind a distinct `spec_id`
    (e.g., `core`, if reintroduced under the same identifier) with a
-   working `build_core_weights(...)` on the release path and a food-and-
-   beverages-excluded CPI-U input.
+   working `build_core_weights(...)` on the release path and a
+   food-and-energy-excluded CPI-U input.
 2. Its outputs are published under a **new** `specifications.json` entry
    at schema-version 3.0.0 or later and advertised under
    `spec_urls.<new_spec_id>` in `releases.json` / `latest.json`.
