@@ -409,7 +409,7 @@
       }
     ]
   },
-  "consumer_of_this_artifact": "registry/research/ce_cpi_scope_rules_v0_2.json, whose two rental-equivalence introduce rules read pumd_quantitative_usability and pumd_estimate_quality from here.",
+  "consumer_of_this_artifact": "registry/research/ce_cpi_scope_rules_v0_3.json, the current governing head of the scope-rules family, whose two rental-equivalence introduce rules depend on the grades recorded here: TA_OWNER_RENTAL_EQUIVALENCE_PRIMARY_v0_1 over 910104 and TA_OWNER_RENTAL_EQUIVALENCE_SECONDARY_v0_1 over 910105-910107. The dependency is not textual and the earlier wording overstated it: no scope-rules version names pumd_quantitative_usability or pumd_estimate_quality. The grades are read from this file by dmi_research.detailed_inflation.canonical_state.current_pumd_usability and the rules are adjudicated against them, which is why the secondary rule is still PROPOSED while 910106 is NOT_ESTABLISHED. The head is derived from the predecessor chain rather than from the filename, so this reference has to be re-checked against the lineage whenever the scope-rules family gains a version; a test now does that.",
   "counts": {
     "CONCORDANCE_ONLY_UCC": 17,
     "DIRECT_CONCORDANCE_UCC": 490,
@@ -479,9 +479,11 @@
   "prose_correction_in_v0_5": {
     "changed": [
       "classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+      "consumer_of_this_artifact",
       "pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE.what_this_does_not_establish",
       "shelter_rental_equivalence_correspondence.normative_input_rationale"
     ],
+    "cross_reference_correction": "consumer_of_this_artifact named ce_cpi_scope_rules_v0_2.json, which the lineage walk had already demoted to HISTORICAL_CHECKPOINT: the governing head is v0.3. The same sentence also claimed the two rental-equivalence rules read pumd_quantitative_usability and pumd_estimate_quality from here, which no scope-rules version does textually, so the sentence was corrected on both counts rather than having its filename swapped under a claim that would still have been wrong. Nothing else in this artifact moved, and this correction was made before v0.5 was pushed or frozen, which is why it is an amendment to v0.5 rather than a v0.6.",
     "defect": "Three prose passages asserted, in the present tense, that pumd_quantitative_usability was NOT_ESTABLISHED for every UCC they covered. The same file's structured fields already said otherwise: the roster grades 910104, 910105 and 910107 BENCHMARKED and usability_transitions_from_v0_1 records the three transitions. The prose was carried forward unrevised when the transitions were added, so a reader who read the sentence rather than the field got the wrong answer for three UCCs.",
     "nothing_else_changed": "No grade, count, roster entry, pairing, observation, evidence scale or transition was touched. The correction is confined to sentences that restate structured fields, and the structured fields they restate are byte-identical to v0.4. A diff of every non-prose value against v0.4 is empty by construction.",
     "second_clause_in_the_shelter_passage": "normative_input_rationale ended with a second stale clause, 'the Track-A shelter rule remains PENDING', which is a claim about a different registry and had gone stale at a different milestone: there are two shelter rules, and the primary one is ACCEPTED and in force in the ce_cpi_scope_rules head. Fixing only the usability half would have left a sentence that was still false, so the clause was corrected with it and rewritten to point at the registry that actually governs rule state rather than restating it here.",

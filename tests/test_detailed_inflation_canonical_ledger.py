@@ -216,6 +216,70 @@ def _usability_contradictions(payload: object) -> list[tuple[str, str, str]]:
     return found
 
 
+def _superseded_tokens(registry_dir: Path = None) -> dict[str, str]:
+    """Every filename and artifact id the lineage walk has demoted.
+
+    Derived, never listed. Which versions are superseded is a fact about the
+    ``predecessor`` chains, and writing the answer down here would let the
+    check go on passing after a head moved, which is the exact failure it
+    exists to catch.
+    """
+    directory = cs.REGISTRY_DIR if registry_dir is None else registry_dir
+    stale: dict[str, str] = {}
+    for family in cs.REGISTRY_FAMILIES:
+        for version in cs.resolve_family(family, registry_dir=directory):
+            if version.role is cs.ArtifactRole.HISTORICAL_CHECKPOINT:
+                stale[Path(version.relative_path).name] = family
+                stale[version.artifact_id] = family
+    return stale
+
+
+#: Keys under which a backwards-pointing reference is the intended content
+#: rather than a stale one. ``predecessor`` names the previous version by
+#: definition, and a ``prose_correction_in_*`` record has to be able to quote
+#: the text it repaired.
+_HISTORICAL_KEYS = ("predecessor", "prose_correction_in_")
+
+
+def _stale_cross_references(
+    payload: object, registry_dir: Path = None
+) -> list[tuple[str, str]]:
+    """References in a registry to a version the lineage has superseded.
+
+    One further exemption is taken from the data rather than the path: a
+    reference is historical if its nearest enclosing object declares an
+    ``evidence_kind``. Those are dated observation citations, and their whole
+    value is naming the artifact where the observation was actually recorded.
+    Forcing ``ce_cpi_scope_rules_v0_1.json :: structural_evidence.…`` forward
+    to the current head would not make it more accurate, it would make it
+    false. Historical authority is not current authority, and the converse
+    holds too.
+
+    Returns ``(location, token)`` per violation.
+    """
+    stale = _superseded_tokens(registry_dir)
+    found: list[tuple[str, str]] = []
+
+    def historical(key: str) -> bool:
+        return any(key.startswith(marker) for marker in _HISTORICAL_KEYS)
+
+    def walk(node: object, path: str = "", exempt: bool = False) -> None:
+        if isinstance(node, dict):
+            dated = exempt or "evidence_kind" in node
+            for key, value in node.items():
+                walk(value, f"{path}.{key}", dated or historical(key))
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                walk(value, f"{path}[{index}]", exempt)
+        elif isinstance(node, str) and not exempt:
+            for token in stale:
+                if token in node:
+                    found.append((path, token))
+
+    walk(payload)
+    return found
+
+
 # ---------------------------------------------------------------------------
 # Group 1: C1, registry lineage is derived rather than assumed
 # ---------------------------------------------------------------------------
@@ -463,6 +527,7 @@ class TestProseAgreesWithStructuredState(unittest.TestCase):
             [
                 ".artifact_id",
                 ".classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+                ".consumer_of_this_artifact",
                 ".predecessor.artifact_id",
                 ".predecessor.note",
                 ".predecessor.path",
@@ -501,6 +566,162 @@ class TestProseAgreesWithStructuredState(unittest.TestCase):
         self.assertEqual(len(recorded), 3)
         self.assertTrue(
             all(e["repaired_in"] == "UCC_PROVENANCE_CLASSES_V0_5" for e in recorded)
+        )
+
+
+# ---------------------------------------------------------------------------
+# Group 1c: C1, a governing registry's cross-references name governing heads
+# ---------------------------------------------------------------------------
+
+
+class TestCrossReferencesNameTheGoverningHead(unittest.TestCase):
+    """A current registry may not point at a superseded one as if it governed.
+
+    ``UCC_PROVENANCE_CLASSES_V0_5`` named ``ce_cpi_scope_rules_v0_2.json`` as
+    the artifact that consumes it, long after the lineage walk had demoted
+    v0.2 to a historical checkpoint in favour of v0.3. Nothing failed, because
+    no code resolves that string; it is documentation, and documentation is
+    exactly where a reference rots unobserved.
+
+    The check derives both halves from the lineage. It does not know that the
+    scope-rules head is v0.3 and would not be satisfied by being told: it asks
+    ``resolve_family`` which versions carry ``HISTORICAL_CHECKPOINT`` and
+    objects to any of them being named outside a context that declares itself
+    historical.
+    """
+
+    def _heads(self) -> list[tuple[str, dict]]:
+        paths = [
+            cs.REGISTRY_DIR / Path(cs.governing_version(family).relative_path).name
+            for family in cs.REGISTRY_FAMILIES
+        ]
+        return [
+            (p.name, json.loads(p.read_text(encoding="utf-8"))) for p in sorted(paths)
+        ]
+
+    def test_a_no_head_names_a_superseded_version_as_current(self) -> None:
+        for name, payload in self._heads():
+            with self.subTest(registry=name):
+                found = _stale_cross_references(payload)
+                self.assertEqual(
+                    [],
+                    found,
+                    "\n".join(f"{loc} names {token}" for loc, token in found),
+                )
+
+    def test_b_the_superseded_set_is_derived_not_declared(self) -> None:
+        """Non-vacuity for the check's own input.
+
+        If ``_superseded_tokens`` returned nothing, ``test_a`` would pass
+        against any registry at all.
+        """
+        stale = _superseded_tokens()
+        self.assertGreater(len(stale), 0)
+        heads = {
+            cs.governing_version(family).artifact_id for family in cs.REGISTRY_FAMILIES
+        }
+        for token in stale:
+            with self.subTest(token=token):
+                self.assertNotIn(token, heads)
+        self.assertIn("ce_cpi_scope_rules_v0_2.json", stale)
+
+    def test_c_the_check_fires_on_the_reference_that_was_corrected(self) -> None:
+        """Non-vacuity, against the exact text this correction removed."""
+        head_name = Path(
+            cs.governing_version("ucc_provenance_classes").relative_path
+        ).name
+        payload = json.loads(
+            (cs.REGISTRY_DIR / head_name).read_text(encoding="utf-8")
+        )
+        broken = copy.deepcopy(payload)
+        broken["consumer_of_this_artifact"] = (
+            "registry/research/ce_cpi_scope_rules_v0_2.json, whose two "
+            "rental-equivalence introduce rules read pumd_quantitative_usability "
+            "and pumd_estimate_quality from here."
+        )
+        self.assertEqual(
+            _stale_cross_references(broken),
+            [(".consumer_of_this_artifact", "ce_cpi_scope_rules_v0_2.json")],
+        )
+
+    def test_d_the_check_follows_the_lineage_rather_than_a_version_number(
+        self,
+    ) -> None:
+        """The head moving must move the check with it.
+
+        A scratch family is given one more version. The reference that was
+        correct a moment ago now names a checkpoint, and the check has to say
+        so without anything having told it about the new file.
+        """
+        scratch = _mutable_registry()
+        head = _scope_rules_head()
+        payload = json.loads((scratch / head).read_text(encoding="utf-8"))
+        successor = dict(payload)
+        successor["artifact_id"] = "CE_CPI_SCOPE_RULES_V0_4"
+        successor["version"] = "0.4"
+        successor["predecessor"] = {
+            "artifact_id": payload["artifact_id"],
+            "path": f"registry/research/{head}",
+            "version": payload["version"],
+        }
+        (scratch / "ce_cpi_scope_rules_v0_4.json").write_text(
+            json.dumps(successor, indent=2, sort_keys=True) + "\n", "utf-8"
+        )
+        families = dict(cs.REGISTRY_FAMILIES)
+        families["ce_cpi_scope_rules"] = (
+            *families["ce_cpi_scope_rules"],
+            "ce_cpi_scope_rules_v0_4.json",
+        )
+        original = cs.REGISTRY_FAMILIES
+        cs.REGISTRY_FAMILIES = families
+        try:
+            stale = _superseded_tokens(scratch)
+            self.assertIn(head, stale, "the old head was not demoted")
+            self.assertNotIn("ce_cpi_scope_rules_v0_4.json", stale)
+            probe = {"consumer_of_this_artifact": f"registry/research/{head}"}
+            self.assertEqual(
+                _stale_cross_references(probe, scratch),
+                [(".consumer_of_this_artifact", head)],
+            )
+        finally:
+            cs.REGISTRY_FAMILIES = original
+
+    def test_e_a_dated_evidence_citation_may_name_an_earlier_version(self) -> None:
+        """The exemption is real and is exercised by the committed data.
+
+        The 510115 membership observation cites where it was recorded, which
+        is a historical checkpoint and correctly so. If this exemption were
+        dropped the citation would have to be bent forward to the current
+        head, which would make it say something that never happened.
+        """
+        head_name = Path(
+            cs.governing_version("ucc_provenance_classes").relative_path
+        ).name
+        payload = json.loads(
+            (cs.REGISTRY_DIR / head_name).read_text(encoding="utf-8")
+        )
+        roster = payload["concordance_only_uccs"]["roster"]
+        entry = next(r for r in roster if r["ucc"] == "510115")
+        citation = entry["pumd_membership_evidence"]["citation"]
+        self.assertIn("evidence_kind", entry["pumd_membership_evidence"])
+        stale = _superseded_tokens()
+        self.assertTrue(
+            any(token in citation for token in stale),
+            "this test no longer exercises the exemption it was written for",
+        )
+        self.assertEqual([], _stale_cross_references(payload))
+
+    def test_f_the_corrected_reference_names_the_current_head(self) -> None:
+        head_name = Path(
+            cs.governing_version("ucc_provenance_classes").relative_path
+        ).name
+        payload = json.loads(
+            (cs.REGISTRY_DIR / head_name).read_text(encoding="utf-8")
+        )
+        rules_head = cs.governing_version("ce_cpi_scope_rules")
+        self.assertIn(
+            Path(rules_head.relative_path).name,
+            payload["consumer_of_this_artifact"],
         )
 
 
