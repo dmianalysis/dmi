@@ -286,12 +286,31 @@ def _url_to_dest(url: str, deploy_dir: Path) -> Path:
     return deploy_dir / url.lstrip("/")
 
 
+#: Filename markers that must never reach the public deployment tree.
+#: `core` is the withdrawn Core spec. `_u6` and `_with_ci` are
+#: pre-v0.1.12 legacy artifacts (quarantined under
+#: data/quarantine/pre_v0.1.12/); they are NOT Core, but they are
+#: equally not part of the v0.1.12 published contract, so they must not
+#: be staged either. Guarding all three here means the builder cannot
+#: publish a retired artifact even if some manifest advertised one.
+RETIRED_NAME_MARKERS = ("core", "_u6", "_with_ci")
+
+
+def _retired_marker(name: str) -> Optional[str]:
+    """Return the retired marker present in ``name``, or None."""
+    lowered = name.lower()
+    for marker in RETIRED_NAME_MARKERS:
+        if marker in lowered:
+            return marker
+    return None
+
+
 def _guard_core(path: Path) -> None:
-    name = path.name.lower()
-    if "core" in name:
+    marker = _retired_marker(path.name)
+    if marker is not None:
         raise StageError(
-            f"refusing to stage file whose name references the "
-            f"withdrawn Core spec: {path}"
+            f"refusing to stage file whose name references a retired "
+            f"artifact class ({marker!r}): {path}"
         )
 
 
@@ -310,6 +329,16 @@ def _is_ancestor(candidate: Path, of_path: Path) -> bool:
             return True
         except ValueError:
             return False
+
+
+#: The one pre-existing directory the builder is allowed to rebuild
+#: without a sentinel: the repository's own committed staging tree.
+CANONICAL_DEPLOY_DIRNAME = "deploy"
+
+
+def _is_canonical_deploy(resolved: Path, repo: Path) -> bool:
+    """True iff ``resolved`` is exactly ``<repo>/deploy``."""
+    return resolved == (repo / CANONICAL_DEPLOY_DIRNAME).resolve(strict=False)
 
 
 def _forbidden_target_reason(
@@ -348,23 +377,46 @@ def _forbidden_target_reason(
         if not target.is_dir():
             return f"target exists and is not a directory: {target}"
         contents = list(target.iterdir())
-        if contents and not (target / STAGING_SENTINEL).exists():
+        # §5: the canonical repository `deploy/` target is permitted
+        # explicitly, not merely because it happens to carry a
+        # committed sentinel. Relying on the sentinel alone made the
+        # whole deployment pipeline fail closed if that dotfile was
+        # ever dropped from a commit or stripped by a reviewer.
+        if contents and not _is_canonical_deploy(resolved, repo) \
+                and not (target / STAGING_SENTINEL).exists():
             return (
-                f"refusing to overwrite non-empty directory that lacks "
+                f"refusing to overwrite non-empty directory that is "
+                f"neither the canonical deploy/ target nor carries "
                 f"'{STAGING_SENTINEL}': {target}"
             )
     return None
 
 
 def _write_sentinel(target: Path) -> None:
+    """Mark ``target`` as builder-owned.
+
+    Round-3 §6 requires the committed tree to equal a fresh build
+    byte-for-byte, with an exception only for non-public packaging
+    files "whose generated contents are deterministic". An earlier
+    version stamped `created_at_utc` here, which made the sentinel the
+    single file that could never match — every rebuild produced a
+    different byte. A timestamp is not needed for the sentinel's job
+    (proving the directory is ours to delete), so the contents are now
+    fixed and the WHOLE tree, sentinel included, is reproducible.
+
+    Provenance that genuinely varies per build belongs in the build
+    log, not in a file that must compare equal.
+    """
     target.mkdir(parents=True, exist_ok=True)
     payload = {
         "created_by": "scripts.prepare_deployment",
-        "created_at_utc": (
-            datetime.now(timezone.utc)
-            .isoformat(timespec="seconds")
-            .replace("+00:00", "Z")
+        "purpose": (
+            "Marks this directory as builder-owned staging. "
+            "scripts.prepare_deployment refuses to delete or rebuild a "
+            "non-empty directory that lacks this file, unless it is the "
+            "canonical repository deploy/ target."
         ),
+        "deterministic": True,
     }
     (target / STAGING_SENTINEL).write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n"
@@ -591,9 +643,35 @@ def verify_deployment(
             continue
         if path.name == STAGING_SENTINEL:
             continue
-        if "core" in path.name.lower():
+        marker = _retired_marker(path.name)
+        if marker is not None:
             problems.append(
-                f"Core-named artifact present in deploy tree: "
+                f"retired artifact ({marker!r}) present in deploy tree: "
+                f"{path.relative_to(deploy_dir)}"
+            )
+
+    # §6: the tree must contain nothing beyond the closure. A builder
+    # that only checks "is everything advertised present?" would pass
+    # while shipping a stale extra file left over from a previous
+    # layout, which is how `qa_report_2026-03_core.json` and the 2026-03
+    # specifications snapshot survived earlier rebuilds.
+    expected = {
+        (deploy_dir / dst_rel).resolve()
+        for dst_rel in DASHBOARD_SHELL.values()
+    }
+    expected |= {
+        (deploy_dir / rel).resolve() for rel in TOP_LEVEL_MANIFESTS
+    }
+    expected |= {
+        _url_to_dest(url, deploy_dir).resolve()
+        for url in _collect_urls(repo_root)
+    }
+    for path in sorted(deploy_dir.rglob("*")):
+        if not path.is_file() or path.name == STAGING_SENTINEL:
+            continue
+        if path.resolve() not in expected:
+            problems.append(
+                f"unexpected file in deploy tree (not in closure): "
                 f"{path.relative_to(deploy_dir)}"
             )
 
