@@ -242,6 +242,24 @@ def render_one(release: dict, outputs_dir: Path) -> tuple[Path, str, list[str]]:
     return (out_path, html, warnings)
 
 
+class IncompleteRollbackError(RuntimeError):
+    """A write failed AND the rollback that followed did not fully succeed.
+
+    Kept distinct from the underlying failure so the caller can tell the
+    operator the truth. "Everything was restored" and "the restore itself
+    hit a problem" require different responses, and reporting the second
+    as the first is how an operator ends up trusting a tree that needs
+    inspecting.
+    """
+
+    def __init__(self, original: BaseException, problems: list[str]):
+        self.original = original
+        self.problems = problems
+        super().__init__(
+            f"{original}; rollback incomplete: " + "; ".join(problems)
+        )
+
+
 def _commit_notes(rendered: list[tuple[Path, str]]) -> list[Path]:
     """Write every rendered note, or leave all of them untouched.
 
@@ -251,6 +269,15 @@ def _commit_notes(rendered: list[tuple[Path, str]]) -> list[Path]:
     exact pre-run bytes — including deleting one that did not exist
     before, since a stray new note is as much a corruption of the
     published set as a modified one.
+
+    The temporary path is registered for cleanup BEFORE the write is
+    attempted. This ordering is the whole point: ``write_text`` can
+    create the file and then raise partway through — disk exhaustion is
+    the obvious case — and if registration happened after a successful
+    write, that partial ``.regen-*`` file would be invisible to the
+    cleanup loop and survive the rollback. The notes themselves were
+    restored correctly, so the run looked clean while leaving debris in
+    the published directory and reporting complete restoration.
     """
     snapshot: dict[Path, Optional[bytes]] = {
         path: (path.read_bytes() if path.is_file() else None)
@@ -262,25 +289,38 @@ def _commit_notes(rendered: list[tuple[Path, str]]) -> list[Path]:
         for path, html in rendered:
             path.parent.mkdir(parents=True, exist_ok=True)
             tmp = path.with_name(f".{path.name}.regen-{uuid.uuid4().hex[:8]}")
-            tmp.write_text(html)
+            # Register BEFORE writing: a partial file from a failed
+            # write must still be reachable by cleanup.
             temps.append(tmp)
+            tmp.write_text(html)
             tmp.replace(path)
             temps.remove(tmp)
             written.append(path)
         return written
-    except Exception:
+    except Exception as exc:
+        problems: list[str] = []
+
         for path, original in snapshot.items():
-            if original is None:
-                if path.exists():
-                    path.unlink()
-            elif not path.is_file() or path.read_bytes() != original:
-                path.write_bytes(original)
+            try:
+                if original is None:
+                    if path.exists():
+                        path.unlink()
+                elif not path.is_file() or path.read_bytes() != original:
+                    path.write_bytes(original)
+            except OSError as cleanup_exc:
+                problems.append(f"could not restore {path}: {cleanup_exc}")
+
         for tmp in temps:
-            if tmp.exists():
-                try:
+            try:
+                if tmp.exists():
                     tmp.unlink()
-                except OSError:
-                    pass
+            except OSError as cleanup_exc:
+                problems.append(
+                    f"could not remove temporary file {tmp}: {cleanup_exc}"
+                )
+
+        if problems:
+            raise IncompleteRollbackError(exc, problems) from exc
         raise
 
 
@@ -356,10 +396,21 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     try:
         written = _commit_notes(rendered)
+    except IncompleteRollbackError as exc:
+        print(
+            f"error: writing release notes failed ({exc.original}), and the "
+            f"rollback did NOT fully succeed. Inspect the release-note "
+            f"directory before relying on it:",
+            file=sys.stderr,
+        )
+        for problem in exc.problems:
+            print(f"  - {problem}", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(
             f"error: writing release notes failed ({exc}); all notes were "
-            f"restored to their pre-run state.",
+            f"restored to their pre-run state and no temporary file "
+            f"remains.",
             file=sys.stderr,
         )
         return 1

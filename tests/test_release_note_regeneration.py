@@ -469,6 +469,214 @@ class TestWritePhaseRollsBack(unittest.TestCase):
             self.assertEqual(leftovers, [], f"temp files leaked: {leftovers}")
 
 
+class TestPartialWriteLeavesNoTemporaryFile(unittest.TestCase):
+    """A temp file that was partially written must still be cleaned up.
+
+    The rollback path used to register the temporary path only *after*
+    ``write_text`` returned:
+
+        tmp.write_text(html)      # can create the file, then raise
+        temps.append(tmp)         # never reached on failure
+
+    So a write that created the file and then failed — disk exhaustion is
+    the obvious cause — left a ``.regen-*`` file that the cleanup loop
+    could not see. The notes themselves were restored correctly and the
+    command returned non-zero, so every existing assertion passed: the
+    run looked clean while leaving debris in the published directory and
+    printing that everything had been restored.
+
+    These tests target that exact window. The patched ``write_text``
+    creates a real partial file before raising, and the test proves it
+    did so, so a run where the failure never happened cannot pass by
+    finding nothing to clean up.
+    """
+
+    def _partial_write_patch(self, created: list):
+        """Return a ``write_text`` that partially writes ``.regen-*`` then fails."""
+        real_write_text = Path.write_text
+
+        def flaky(self_path, data, *args, **kwargs):
+            if ".regen-" in self_path.name:
+                # Create a genuinely partial file, then fail.
+                real_write_text(self_path, data[:200])
+                created.append(Path(str(self_path)))
+                raise OSError("simulated partial temp write")
+            return real_write_text(self_path, data, *args, **kwargs)
+
+        return real_write_text, flaky
+
+    @staticmethod
+    def _leftover_temps(tree: "_Tree") -> list[str]:
+        return sorted(
+            p.name for p in (tree.outputs / "releases").rglob("*")
+            if ".regen-" in p.name
+        )
+
+    def test_partial_write_failure_leaves_no_temporary_file(self):
+        with _Tree() as tree:
+            before = tree.digests()
+            created: list[Path] = []
+            real_write_text, flaky = self._partial_write_patch(created)
+
+            Path.write_text = flaky
+            try:
+                rc = tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.write_text = real_write_text
+
+            # Non-vacuity: the failure path must actually have been
+            # exercised, and it must have created a real partial file.
+            self.assertTrue(
+                created,
+                "the patched write_text never ran; this test would pass "
+                "for the wrong reason.",
+            )
+
+            self.assertEqual(rc, 1, "the run must report failure")
+            self.assertEqual(
+                before, tree.digests(),
+                "every existing note and manifest must be byte-identical.",
+            )
+            self.assertEqual(
+                self._leftover_temps(tree), [],
+                "a partially written temporary file must be removed by "
+                "rollback; leaving it violates the all-or-nothing "
+                "guarantee.",
+            )
+
+    def test_the_patched_writer_really_creates_a_partial_file(self):
+        """Prove the simulation is a partial write, not a no-op.
+
+        If the patch raised without writing anything, the cleanup
+        assertion above would be satisfied trivially.
+        """
+        with _Tree() as tree:
+            created: list[Path] = []
+            real_write_text, flaky = self._partial_write_patch(created)
+            observed: list[int] = []
+
+            def observing(self_path, data, *args, **kwargs):
+                if ".regen-" in self_path.name:
+                    try:
+                        return flaky(self_path, data, *args, **kwargs)
+                    finally:
+                        # Record the on-disk size at the moment of failure.
+                        if self_path.exists():
+                            observed.append(self_path.stat().st_size)
+                return real_write_text(self_path, data, *args, **kwargs)
+
+            Path.write_text = observing
+            try:
+                tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.write_text = real_write_text
+
+            self.assertTrue(observed, "no temporary file was observed")
+            self.assertGreater(
+                observed[0], 0,
+                "the simulated failure must leave a non-empty partial "
+                "file, otherwise the cleanup assertion is vacuous.",
+            )
+
+    def test_a_new_note_stays_absent_after_a_partial_write_failure(self):
+        with _Tree() as tree:
+            tree.note(EARLIER_TWO_SPEC).unlink()
+            self.assertIsNone(_sha(tree.note(EARLIER_TWO_SPEC)))
+
+            created: list[Path] = []
+            real_write_text, flaky = self._partial_write_patch(created)
+            Path.write_text = flaky
+            try:
+                rc = tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.write_text = real_write_text
+
+            self.assertTrue(created)
+            self.assertEqual(rc, 1)
+            self.assertIsNone(
+                _sha(tree.note(EARLIER_TWO_SPEC)),
+                "a note that did not exist before must remain absent.",
+            )
+            self.assertEqual(self._leftover_temps(tree), [])
+
+    def test_manifests_are_untouched_by_a_partial_write_failure(self):
+        with _Tree() as tree:
+            before = {
+                name: _sha(tree.outputs / name)
+                for name in ("releases.json", "latest.json",
+                             "specifications.json")
+            }
+            created: list[Path] = []
+            real_write_text, flaky = self._partial_write_patch(created)
+            Path.write_text = flaky
+            try:
+                tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.write_text = real_write_text
+
+            self.assertTrue(created)
+            after = {
+                name: _sha(tree.outputs / name)
+                for name in ("releases.json", "latest.json",
+                             "specifications.json")
+            }
+            self.assertEqual(before, after)
+
+    def test_cleanup_failure_is_not_reported_as_full_restoration(self):
+        """§8: do not claim complete restoration if cleanup itself failed.
+
+        Both the write and the subsequent temp-file removal fail here.
+        The command must still return non-zero, but it must say the
+        rollback was incomplete rather than printing the reassuring
+        message — an operator told "all notes were restored" will not go
+        looking.
+        """
+        from scripts.regenerate_release_notes import IncompleteRollbackError
+
+        with _Tree() as tree:
+            created: list[Path] = []
+            real_write_text, flaky = self._partial_write_patch(created)
+            real_unlink = Path.unlink
+
+            def refuse_unlink(self_path, *args, **kwargs):
+                if ".regen-" in self_path.name:
+                    raise OSError("simulated cleanup failure")
+                return real_unlink(self_path, *args, **kwargs)
+
+            Path.write_text = flaky
+            Path.unlink = refuse_unlink
+            try:
+                rc = tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.write_text = real_write_text
+                Path.unlink = real_unlink
+
+            self.assertTrue(created)
+            self.assertEqual(rc, 1)
+
+            # And the distinct error type exists for the caller to act on.
+            self.assertTrue(issubclass(IncompleteRollbackError, RuntimeError))
+
+    def test_replacement_failure_also_leaves_no_temporary_file(self):
+        """The pre-existing replace-failure path must stay clean too."""
+        with _Tree() as tree:
+            before = tree.digests()
+            real_replace = Path.replace
+
+            def always_fail(self_path, target):
+                raise OSError("simulated replace failure")
+
+            Path.replace = always_fail
+            try:
+                rc = tree.run(EARLIER_TWO_SPEC, TWO_SPEC)
+            finally:
+                Path.replace = real_replace
+
+            self.assertEqual(rc, 1)
+            self.assertEqual(before, tree.digests())
+            self.assertEqual(self._leftover_temps(tree), [])
+
+
 class TestDryRunIsReadOnly(unittest.TestCase):
     def test_dry_run_changes_nothing(self):
         with _Tree() as tree:
