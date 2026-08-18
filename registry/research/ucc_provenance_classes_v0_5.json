@@ -1,0 +1,732 @@
+{
+  "artifact_id": "UCC_PROVENANCE_CLASSES_V0_5",
+  "attribution": "cx.item and the UCC->ELI concordance are publications of the U.S. Bureau of Labor Statistics. The three class names below, the evidence scales, and every inference recorded in this file are DMI research vocabulary and DMI research claims, not BLS terminology and not BLS findings.",
+  "classes": {
+    "CONCORDANCE_ONLY_UCC": {
+      "caution": "This is the class that breaks the cx.item-is-everything assumption. A pipeline keyed on cx.item will not see these UCCs at all, and will therefore under-count the CPI-relevant universe without raising any error. Every one of the 17 resolves to a live DMI computation node, so none of them is safely ignorable.",
+      "definition": "Named by the CE->CPI concordance and absent from the published CE item file cx.item. That is the whole content of the class: a membership difference between two BLS files.",
+      "does_not_imply": "Membership does not imply the UCC is present in the CE Public Use Microdata, does not imply that an amount for it can be estimated, does not imply the CPI adjusts it, and does not imply any particular reason for non-publication. Read pumd_membership, pumd_quantitative_usability, cpi_adjustment_status and publication_reason on the roster entry instead of inferring any of the four from the class.",
+      "expenditure_note": "No published LABSTAT aggregate exists for these UCCs, so an amount for any of them would have to come from a source other than cx.data, under a documented and benchmark-validated procedure. Five of the 17 are now confirmed present in the CE microdata, which identifies where such a source would be; it does not supply the procedure. pumd_quantitative_usability is NOT_ESTABLISHED for 14 of the 17 and BENCHMARKED for 910104, 910105 and 910107, as recorded per UCC on the roster below and in usability_transitions_from_v0_1. This artifact still authorizes no amount for any of the 17: a BENCHMARKED grade says a quintile estimate for that UCC has been produced under a validated procedure and says nothing about which amount, if any, Track A may take."
+    },
+    "DIRECT_CONCORDANCE_UCC": {
+      "count_note": "490 of the 507 concordance UCCs are in this class.",
+      "definition": "Present in both universes: published in cx.item and mapped by the concordance. This is the ordinary case and the only class for which a published annual aggregate and a CPI destination are both available without further inference."
+    },
+    "PUBLISHED_CE_UCC": {
+      "caution": "Presence in this class is not evidence that the CPI excludes the concept. The concept may reach the CPI through a different UCC, or through a special adjustment factor BLS does not publish. Milestone 2 section 5.2 forbids inferring scope from the absence of a concordance row.",
+      "definition": "Published in cx.item but absent from the CE->CPI concordance. The CPI does not draw a weight directly from this UCC. It may still be usable as a published-source validation or provenance counterpart to a code the CPI does use."
+    }
+  },
+  "concordance_only_uccs": {
+    "ce_source_is_not_pumd_evidence": "The concordance's CE SOURCE column records which instrument collected the item, Interview or Diary. It is a BLS statement about collection, not about the PUMD data dictionary, so CE SOURCE = I is not evidence of PUMD membership and is never read as such here. Where membership is graded VERIFIED below it rests on a cited observation of the microdata itself, never on this column; all 17 codes carry a CE SOURCE value and only five carry a membership observation.",
+    "note": "The complete roster of concordance UCCs absent from cx.item, with the DMI node each resolves to. The classification itself is structural and fully evidenced by the two files. The reason BLS does not publish a given code, whether the code is reachable in PUMD, whether any amount for it can be estimated, and whether the CPI adjusts it are four further claims, each carried in its own field and each defaulting to not-claimed. None of them weakens the classification, which does not depend on any of them.",
+    "roster": [
+      {
+        "ce_source": "I",
+        "concordance_title": "Steam Heat",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "HOUSEHOLD_FURNISHINGS_OPERATIONS",
+        "elis": [
+          "HP090"
+        ],
+        "note": "Maps to an unsampled residual ELI. Not one of the 58 Milestone-1 exceptions, because it never enters the cx.item-derived basis.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "270905"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Streaming Video Files",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RA042"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "310241"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Downloading Video Files",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RA041"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "310242"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Access. For Electronic Equip.",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RA090"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "310900"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Trade-In Allowance/New Cars",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+        "elis": [
+          "TA011"
+        ],
+        "note": "A trade-in allowance offsets the gross purchase price rather than adding to outlay. Its sign convention in CPI weighting is not established here, so it must not be summed as ordinary positive expenditure without evidence.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "450116"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Trade-In Allow/New Trucks",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+        "elis": [
+          "TA011"
+        ],
+        "note": "See 450116. Sign convention unestablished.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "450216"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Veh Registration Incl Prop Tax",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "TRANSPORT_SERVICES",
+        "elis": [
+          "TF011"
+        ],
+        "note": "The COMBINE destination of TR_VEHICLE_REGISTRATION_FEES_v0_1. Its absence from cx.item is expected, not an error, which is precisely why the rule reconstructs it from the two published components 520110 and 950024 instead of reading it.",
+        "publication_reason": "PUBFLAG_1",
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "registry/research/ce_cpi_scope_rules_v0_1.json :: structural_evidence.VEHICLE_REGISTRATION_COMBINE_IDENTITY",
+          "evidence_kind": "PRIOR_MANUAL_SOURCE_OBSERVATION",
+          "observation": "UCC 510115 is observed on 4785 records of the 2024 CE Interview MTBI files, where it equals 520110 + 950024 on all 4785.",
+          "reproduced_by_test": false,
+          "reproducibility_caveat": "The 2024 Interview MTBI files are not distributed with this repository, so the observation is an asserted DMI research finding rather than a check this repository re-runs. It is recorded as VERIFIED because a specific observation is cited, not because the citation is locally reproducible."
+        },
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "pumd_quantitative_usability_note": "Not required for this UCC's rule. TR_VEHICLE_REGISTRATION_FEES_v0_1 reconstructs 510115 from the two published components 520110 and 950024, so it needs no PUMD-derived aggregate and does not depend on an aggregation procedure existing.",
+        "ucc": "510115"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Trade Allow Motor Home/Camper",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "TRANSPORT_COMMODITIES_EX_MOTOR_FUEL",
+        "elis": [
+          "TA090"
+        ],
+        "note": "See 450116. Sign convention unestablished.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "600153"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Admissions Misc",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RF021"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "620510"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Misc. Entertainment Services",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RF090"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "620610"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Camp Fees",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RF090"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "620710"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Ren/Rep Sp/Phot/Equp/Passp",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RF090"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "620810"
+      },
+      {
+        "ce_source": "D",
+        "concordance_title": "Sport Veh Rental",
+        "cpi_adjustment_status": "UNKNOWN",
+        "dmi_node": "RECREATION",
+        "elis": [
+          "RF090"
+        ],
+        "note": "Outside the four Milestone-1 target domains, but inside the 14-node taxonomy.",
+        "publication_reason": "UNDOCUMENTED",
+        "pumd_membership": "NOT_VERIFIED",
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "ucc": "620915"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Rental Equivalence Of Owned Home",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title is 'Rental Equivalence Of Owned Home' and the ELI destination is HC011, 'Owners' Equivalent Rent Of Primary Residence'. Both name an imputed equivalence concept rather than a recorded outlay, so the amount cannot be a plain sum of reported expenditure.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "BLS has not been located stating what adjustment is applied or how it is computed. The inference is that some imputation exists, not what it is."
+        },
+        "cpi_adjustment_status": "INFERRED",
+        "dmi_node": "SHELTER",
+        "elis": [
+          "HC011"
+        ],
+        "note": "The Track-A rental-equivalence input for owner-occupied primary residence. Maps to HC011, Owners' Equivalent Rent Of Primary Residence, which is a sampled ELI.",
+        "phase_c6_tests": [
+          {
+            "finding": "COST(910104) is exactly twelve times COST(910050) on 32284 of 36740 shared keys (87.9 percent).",
+            "name": "U1_procedure_demonstrated_on_these_records",
+            "passed": true
+          },
+          {
+            "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+            "name": "U2_variance_estimator_non_degenerate",
+            "passed": true
+          }
+        ],
+        "publication_reason": "PUBFLAG_1",
+        "pumd_estimate_quality": "HIGH",
+        "pumd_estimate_quality_by_population": {
+          "ALL_CU": "HIGH",
+          "Q1": "HIGH",
+          "Q2": "HIGH",
+          "Q3": "HIGH",
+          "Q4": "HIGH",
+          "Q5": "HIGH"
+        },
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "data/research/detailed_inflation/shelter_2024/shelter_source_observation.json",
+          "evidence_kind": "REPRODUCED_ARCHIVE_OBSERVATION",
+          "observation": "This repository read the pinned 2024 CE Interview PUMD archive and reproduced the record count and the PUBFLAG value for this UCC in Phase C1.",
+          "reproduced_by_test": true,
+          "supersedes": "The v0.1 entry recorded a PRIOR_MANUAL_SOURCE_OBSERVATION that this repository had never re-derived. It has now been re-derived from the archive, so the caveat that accompanied it no longer applies and has been removed rather than left standing as a false warning."
+        },
+        "pumd_quantitative_usability": "BENCHMARKED",
+        "pumd_quantitative_usability_note": "Adjudicated in Phase C6 on structural grounds: whether a validated aggregation procedure reaches this UCC's records, and whether the replicate-weight variance estimator is non-degenerate. No relative standard error is read by either test.",
+        "track_a_admissible": true,
+        "ucc": "910104"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Rent Equiv Vac Home Not Avail Rnt",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
+        "cpi_adjustment_status": "INFERRED",
+        "dmi_node": "SHELTER",
+        "elis": [
+          "HC090"
+        ],
+        "note": "Secondary-residence rental equivalence. Maps to the unsampled residual HC090.",
+        "phase_c6_tests": [
+          {
+            "finding": "COST(910105) is exactly twelve times COST(910101) on 1134 of 1425 shared keys (79.6 percent).",
+            "name": "U1_procedure_demonstrated_on_these_records",
+            "passed": true
+          },
+          {
+            "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+            "name": "U2_variance_estimator_non_degenerate",
+            "passed": true
+          }
+        ],
+        "publication_reason": "PUBFLAG_1",
+        "pumd_estimate_quality": "MODERATE",
+        "pumd_estimate_quality_by_population": {
+          "ALL_CU": "HIGH",
+          "Q1": "MODERATE",
+          "Q2": "MODERATE",
+          "Q3": "MODERATE",
+          "Q4": "MODERATE",
+          "Q5": "MODERATE"
+        },
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "data/research/detailed_inflation/shelter_2024/shelter_source_observation.json",
+          "evidence_kind": "REPRODUCED_ARCHIVE_OBSERVATION",
+          "observation": "This repository read the pinned 2024 CE Interview PUMD archive and reproduced the record count and the PUBFLAG value for this UCC in Phase C1.",
+          "reproduced_by_test": true,
+          "supersedes": "The v0.1 entry recorded a PRIOR_MANUAL_SOURCE_OBSERVATION that this repository had never re-derived. It has now been re-derived from the archive, so the caveat that accompanied it no longer applies and has been removed rather than left standing as a false warning."
+        },
+        "pumd_quantitative_usability": "BENCHMARKED",
+        "pumd_quantitative_usability_note": "Adjudicated in Phase C6 on structural grounds: whether a validated aggregation procedure reaches this UCC's records, and whether the replicate-weight variance estimator is non-degenerate. No relative standard error is read by either test.",
+        "track_a_admissible": true,
+        "ucc": "910105"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Rent Equiv Vac Home Avail For Rnt",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
+        "cpi_adjustment_status": "INFERRED",
+        "dmi_node": "SHELTER",
+        "elis": [
+          "HC090"
+        ],
+        "note": "Secondary-residence rental equivalence. Maps to the unsampled residual HC090.",
+        "phase_c6_tests": [
+          {
+            "finding": "No exact relation holds on a majority of shared keys. Twelve times on 0, a whole number of weeks on 9, of 40 comparable keys. 167 of the published code's keys have no counterpart in the concordance code.",
+            "name": "U1_procedure_demonstrated_on_these_records",
+            "passed": false
+          },
+          {
+            "finding": "All Consumer Units sound; 0 of 5 quintiles sound. Degenerate cells: Q1, Q2, Q3, Q4, Q5.",
+            "name": "U2_variance_estimator_non_degenerate",
+            "passed": false
+          }
+        ],
+        "publication_reason": "PUBFLAG_1",
+        "pumd_estimate_quality": "UNUSABLE",
+        "pumd_estimate_quality_by_population": {
+          "ALL_CU": "LOW",
+          "Q1": "UNUSABLE",
+          "Q2": "UNUSABLE",
+          "Q3": "UNUSABLE",
+          "Q4": "UNUSABLE",
+          "Q5": "UNUSABLE"
+        },
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "data/research/detailed_inflation/shelter_2024/shelter_source_observation.json",
+          "evidence_kind": "REPRODUCED_ARCHIVE_OBSERVATION",
+          "observation": "This repository read the pinned 2024 CE Interview PUMD archive and reproduced the record count and the PUBFLAG value for this UCC in Phase C1.",
+          "reproduced_by_test": true,
+          "supersedes": "The v0.1 entry recorded a PRIOR_MANUAL_SOURCE_OBSERVATION that this repository had never re-derived. It has now been re-derived from the archive, so the caveat that accompanied it no longer applies and has been removed rather than left standing as a false warning."
+        },
+        "pumd_quantitative_usability": "NOT_ESTABLISHED",
+        "pumd_quantitative_usability_note": "Adjudicated in Phase C6 on structural grounds: whether a validated aggregation procedure reaches this UCC's records, and whether the replicate-weight variance estimator is non-degenerate. No relative standard error is read by either test.",
+        "track_a_admissible": false,
+        "ucc": "910106"
+      },
+      {
+        "ce_source": "I",
+        "concordance_title": "Rental Equivalence For Timeshares",
+        "cpi_adjustment_evidence": {
+          "basis": "The BLS concordance title names a rental-equivalence concept, which is imputed rather than reported.",
+          "claim_type": "DMI_INFERENCE",
+          "limit": "The nature of the imputation is not established."
+        },
+        "cpi_adjustment_status": "INFERRED",
+        "dmi_node": "SHELTER",
+        "elis": [
+          "HC090"
+        ],
+        "note": "Timeshare rental equivalence. Maps to the unsampled residual HC090.",
+        "phase_c6_tests": [
+          {
+            "finding": "52 * COST(910107) / COST(910103) is a whole number on 517 of 590 shared keys (87.6 percent), distributed as {1: 304, 2: 140, 3: 20, 4: 24, 6: 13, 7: 10, 12: 6}.",
+            "name": "U1_procedure_demonstrated_on_these_records",
+            "passed": true
+          },
+          {
+            "finding": "All Consumer Units sound; 5 of 5 quintiles sound. No degenerate cell.",
+            "name": "U2_variance_estimator_non_degenerate",
+            "passed": true
+          }
+        ],
+        "publication_reason": "PUBFLAG_1",
+        "pumd_estimate_quality": "LOW",
+        "pumd_estimate_quality_by_population": {
+          "ALL_CU": "LOW",
+          "Q1": "LOW",
+          "Q2": "LOW",
+          "Q3": "LOW",
+          "Q4": "LOW",
+          "Q5": "LOW"
+        },
+        "pumd_membership": "VERIFIED",
+        "pumd_membership_evidence": {
+          "citation": "data/research/detailed_inflation/shelter_2024/shelter_source_observation.json",
+          "evidence_kind": "REPRODUCED_ARCHIVE_OBSERVATION",
+          "observation": "This repository read the pinned 2024 CE Interview PUMD archive and reproduced the record count and the PUBFLAG value for this UCC in Phase C1.",
+          "reproduced_by_test": true,
+          "supersedes": "The v0.1 entry recorded a PRIOR_MANUAL_SOURCE_OBSERVATION that this repository had never re-derived. It has now been re-derived from the archive, so the caveat that accompanied it no longer applies and has been removed rather than left standing as a false warning."
+        },
+        "pumd_quantitative_usability": "BENCHMARKED",
+        "pumd_quantitative_usability_note": "Adjudicated in Phase C6 on structural grounds: whether a validated aggregation procedure reaches this UCC's records, and whether the replicate-weight variance estimator is non-degenerate. No relative standard error is read by either test.",
+        "track_a_admissible": true,
+        "ucc": "910107"
+      }
+    ]
+  },
+  "consumer_of_this_artifact": "registry/research/ce_cpi_scope_rules_v0_2.json, whose two rental-equivalence introduce rules read pumd_quantitative_usability and pumd_estimate_quality from here.",
+  "counts": {
+    "CONCORDANCE_ONLY_UCC": 17,
+    "DIRECT_CONCORDANCE_UCC": 490,
+    "PUBLISHED_CE_UCC": 508,
+    "concordance_universe": 507,
+    "note": "Counts are asserted here so that a change of concordance vintage or cx.item extract is caught rather than absorbed. They are recomputed and compared on every run.",
+    "published_ce_universe": 998,
+    "union": 1015
+  },
+  "cpi_adjustment_status_assertions": {
+    "220121": {
+      "evidence_ids": [
+        "INSURANCE_PARTIAL_INCLUSION_CURRENT",
+        "INSURANCE_NAIC_METHOD_SINCE_2025",
+        "INSURANCE_CONTENTS_ONLY_SCOPE"
+      ],
+      "predecessor_status": "UNKNOWN",
+      "status": "VERIFIED",
+      "what_is_not_verified": "The value. VERIFIED here means BLS says an adjustment happens, not that the adjustment can be reproduced. The two are recorded separately on purpose.",
+      "what_is_verified": "That an adjustment is applied, what quantity it adjusts (the expenditure weight), what it retains (the contents-coverage portion) and how it is currently derived (a median of renter-to-adjusted-homeowner premium ratios from National Association of Insurance Commissioners data, in use since January 2025)."
+    },
+    "_note": "The predecessor stated that VERIFIED was 'not asserted for any UCC in this file'. It is now asserted for exactly one, which is why this successor exists."
+  },
+  "derivation": {
+    "concordance_universe": "The set of UCCs in registry/research/ucc_eli_concordance_2024_v0_1.tsv, the pinned August-2026 CE->CPI concordance.",
+    "note": "The class of a UCC is derived, never hand-assigned. It follows from set membership in two pinned or authoritative BLS files, so it cannot drift from the sources and cannot encode a preference.",
+    "published_universe": "The set of six-digit numeric item_code values in the BLS LABSTAT CE item file cx.item. Non-numeric codes are aggregate rollups, not UCCs, and are excluded.",
+    "rule": "in cx.item and in concordance -> DIRECT_CONCORDANCE_UCC; in cx.item only -> PUBLISHED_CE_UCC; in concordance only -> CONCORDANCE_ONLY_UCC. The three classes partition the union of the two universes exactly: every UCC has one class and no UCC has two."
+  },
+  "description": "A research classification of Consumer Expenditure UCCs by which BLS source file they appear in. Milestone 1 built its accounting basis from the published CE item file cx.item and treated a UCC absent from that file as a fatal error. That is correct for the basis but wrong as a general assumption, because the CPI's own UCC->ELI concordance names 17 UCCs that cx.item does not contain. Any future code that assumes cx.item enumerates every UCC the CPI uses will silently omit them. This artifact makes the two universes and their overlap explicit and named so that assumption cannot be made by accident.",
+  "evidence_scales": {
+    "cpi_adjustment_status": {
+      "INFERRED": "The BLS-published concordance title or ELI destination describes an imputed or equivalence concept rather than a recorded out-of-pocket outlay, so an adjustment relative to reported expenditure is implied by the concept. This is a DMI reading of BLS titles, not a BLS statement.",
+      "UNKNOWN": "Nothing in the pinned sources speaks to whether the CPI adjusts this UCC. This is the default.",
+      "VERIFIED": "BLS documentation states that the CPI applies a specific adjustment to this UCC. Asserted for 220121 as of this task; see cpi_adjustment_status_assertions."
+    },
+    "membership_is_not_usability": "pumd_membership and pumd_quantitative_usability are deliberately separate scales, because the gap between them is where this file is most likely to be misread. Finding a UCC on microdata records establishes that the code is collected and reachable. It does not establish that a defensible annual or quintile figure can be produced for it, which additionally requires the CE annual weighting and income-quintile procedure to have been built and validated. A VERIFIED membership therefore authorizes nothing about amounts, and the code enforces the implication in one direction only: BENCHMARKED usability requires VERIFIED membership, never the reverse.",
+    "note": "Four properties are commonly asserted about a concordance-only UCC and none of them follows from the classification. Each is graded on its own scale so that an absence of evidence is visible as such rather than filled in by the class name.",
+    "publication_reason": {
+      "NOT_APPLICABLE": "The UCC is published in cx.item, so there is no non-publication to explain. Applies to the two published classes, not to this roster.",
+      "PUBFLAG_1": "The CE microdata marks the UCC 'Not published'. Cited where a source states it.",
+      "UNDOCUMENTED": "No BLS statement of the reason for non-publication was located. The structural classification stands; the explanation is not claimed."
+    },
+    "pumd_estimate_quality": {
+      "HIGH": "Relative standard error below 10 percent, variance estimator non-degenerate.",
+      "LOW": "Relative standard error at least 25 percent, variance estimator non-degenerate. The point estimate is real but wide; it may be carried with its interval and may not be quoted bare.",
+      "MODERATE": "Relative standard error at least 10 and below 25 percent, variance estimator non-degenerate.",
+      "UNUSABLE": "Either the cell has no records at all, or the variance estimator is degenerate on it. No figure is offered."
+    },
+    "pumd_membership": {
+      "NOT_VERIFIED": "No such observation is cited. The UCC may or may not be in PUMD; this file does not claim either way. This is the default and applies to 12 of the 17.",
+      "VERIFIED": "A committed DMI research record cites a specific observation of this UCC in CE Public Use Microdata or in the published PUMD data dictionary. The citation is named on the roster entry, including the source file and the record count observed. Every such observation to date is a prior manual source reading preserved in the research record, carried out on a stated date against a stated URL and transcribed here; none is performed or re-derived by this repository, and all carry reproduced_by_test: false. VERIFIED therefore means the question was answered once and the answer was written down with its provenance, not that anything re-checks it."
+    },
+    "pumd_quantitative_usability": {
+      "BENCHMARKED": "The CE annual weighting and income-quintile procedure has been implemented and shown to reproduce published LABSTAT aggregates for this UCC's concept, so an aggregate derived for it can be defended. Not asserted for any UCC in this file.",
+      "NOT_ESTABLISHED": "No validated aggregation procedure exists for this UCC. This is the default and currently applies to all 17, including the five whose PUMD membership is VERIFIED. Observing records is not the same as being able to weight them."
+    },
+    "quality_is_not_usability": "pumd_quantitative_usability describes whether a validated aggregation procedure reaches this UCC's records. pumd_estimate_quality describes how precise the resulting cell is. The frozen plan required these to stay apart and forbade the 25 percent RSE flag from becoming a usability rule. The RSE bands appear only in the quality field; the usability tests do not read an RSE anywhere."
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, shelter task, Phases C and D",
+  "predecessor": {
+    "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
+    "note": "Read and not written. v0.4 is preserved byte-for-byte and is still the version the frozen Residual Shelter Allocation milestone pins and regenerates.",
+    "path": "registry/research/ucc_provenance_classes_v0_4.json",
+    "version": "0.4"
+  },
+  "prose_correction_in_v0_5": {
+    "changed": [
+      "classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+      "pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE.what_this_does_not_establish",
+      "shelter_rental_equivalence_correspondence.normative_input_rationale"
+    ],
+    "defect": "Three prose passages asserted, in the present tense, that pumd_quantitative_usability was NOT_ESTABLISHED for every UCC they covered. The same file's structured fields already said otherwise: the roster grades 910104, 910105 and 910107 BENCHMARKED and usability_transitions_from_v0_1 records the three transitions. The prose was carried forward unrevised when the transitions were added, so a reader who read the sentence rather than the field got the wrong answer for three UCCs.",
+    "nothing_else_changed": "No grade, count, roster entry, pairing, observation, evidence scale or transition was touched. The correction is confined to sentences that restate structured fields, and the structured fields they restate are byte-identical to v0.4. A diff of every non-prose value against v0.4 is empty by construction.",
+    "second_clause_in_the_shelter_passage": "normative_input_rationale ended with a second stale clause, 'the Track-A shelter rule remains PENDING', which is a claim about a different registry and had gone stale at a different milestone: there are two shelter rules, and the primary one is ACCEPTED and in force in the ce_cpi_scope_rules head. Fixing only the usability half would have left a sentence that was still false, so the clause was corrected with it and rewritten to point at the registry that actually governs rule state rather than restating it here.",
+    "why_a_new_version_rather_than_an_edit": "v0.4 is an input to a frozen milestone. Editing it in place would have changed an artifact other work is pinned to and would have made the stale text unrecoverable. The successor mechanism keeps both readable and lets the lineage resolver move the head on its own."
+  },
+  "pumd_observations": {
+    "CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE": {
+      "claim": "UCCs 910104, 910105, 910106 and 910107 are present as current UCCs on 2024 CE Interview MTBI records.",
+      "corroborates_the_partition": "The PUBFLAG split falls exactly on the structural partition derived from cx.item: the four concordance-only codes are marked not-published and their four published counterparts are not. That is independent support for the classification from a source the classification does not use, and it supplies the documented non-publication reason these four previously lacked.",
+      "evidence_kind": "PRIOR_MANUAL_SOURCE_OBSERVATION",
+      "files_read_in_that_session": [
+        "intrvw24/mtbi241x.csv",
+        "intrvw24/mtbi242.csv",
+        "intrvw24/mtbi243.csv",
+        "intrvw24/mtbi244.csv",
+        "intrvw24/mtbi251.csv"
+      ],
+      "how_this_record_was_obtained": "The download and the record scan were performed manually during an earlier working session in this workstream, on the date given below. The figures here were transcribed from that session's recorded output when the roster was regraded; the session that wrote this block did not re-download the archive, did not re-read the MTBI files, and did not re-derive any count. Nothing in this repository has ever touched the 2024 Interview PUMD. The grade therefore rests on a preserved prior observation, which is weaker than a fresh verification and stronger than an assumption, and it is labelled as exactly that rather than as either neighbour.",
+      "observed": "2026-08-16",
+      "pubflag": {
+        "910104": "1",
+        "910105": "1",
+        "910106": "1",
+        "910107": "1",
+        "note": "As recorded in that session, PUBFLAG was uniform within each UCC across every record read; no UCC below carried a mixed value.",
+        "published_counterparts_for_contrast": {
+          "910050": "2",
+          "910101": "2",
+          "910102": "2",
+          "910103": "2"
+        }
+      },
+      "record_counts": {
+        "910104": 46119,
+        "910105": 2070,
+        "910106": 45,
+        "910107": 891
+      },
+      "reproduced_by_test": false,
+      "reproducibility_caveat": "The 2024 Interview PUMD is not distributed with this repository and is not downloaded during a test run, so no committed test re-derives these counts and none ever has. Re-deriving them would require manually retrieving the archive again and repeating the scan. Until that is done and committed, this stays a named prior finding rather than a check anything re-runs.",
+      "source": "https://www.bls.gov/cex/pumd/data/csv/intrvw24.zip",
+      "source_description": "CE Public Use Microdata, 2024 Interview survey, CSV distribution. The earlier session recorded retrieving this URL with HTTP 200 and a payload of 53613162 bytes.",
+      "transcribed_into_this_registry": "2026-08-17",
+      "what_this_does_not_establish": "Record counts are not expenditure. No weight was applied, no annual or quintile aggregation was attempted, and the raw COST sums available on these records are deliberately not recorded here because an unweighted sum is not an estimate and would invite being read as one. This observation establishes membership only and moved no usability grade by itself. Three of the four were graded BENCHMARKED later and on separate benchmark evidence, recorded in usability_transitions_from_v0_1; 910106 was not, and remains NOT_ESTABLISHED."
+    },
+    "note": "Observations of concordance-only UCCs in CE Public Use Microdata, recorded once here and cited from the roster entries that rely on them. Each states what was looked at, what was counted, when and by whom the looking was done, and what the count does not establish. None of these observations is performed by this repository; each is a manual research finding transcribed into the registry, which is why every one of them carries reproduced_by_test: false."
+  },
+  "scope_of_the_classification": {
+    "naming_history": "Version 0.1.0 of this artifact named the third class CPI_ADJUSTED_PUMD_UCC. That name asserted PUMD availability and CPI adjustment, neither of which the set-membership derivation supports. Version 0.2.0 renames it CONCORDANCE_ONLY_UCC, which is what the derivation actually shows, and moves the two asserted properties into evidence fields where they can carry their own status.",
+    "what_it_does_not_prove": "The class does not establish that a UCC is available in the CE Public Use Microdata, does not establish that any amount for it can be estimated, does not establish that the CPI applies any adjustment to it, and does not establish why BLS declines to publish an aggregate for it. Those are four separate evidence claims, recorded in separate fields per UCC (pumd_membership, pumd_quantitative_usability, cpi_adjustment_status, publication_reason) and defaulted to NOT_VERIFIED, NOT_ESTABLISHED or UNKNOWN rather than inferred from the class. Where one of them is later established by direct observation it is upgraded on its own field alone; evidence for one claim is never allowed to propagate to another.",
+    "what_it_proves": "The class of a UCC is a statement about BLS source-file membership and nothing else. CONCORDANCE_ONLY_UCC means exactly: the UCC appears in the pinned CE->CPI concordance and does not appear in the published cx.item universe."
+  },
+  "secondary_residence_current_confirmation": {
+    "claim_type": "CURRENT_2024_COMPATIBLE",
+    "cpi_adjustment_status_unchanged": "910105, 910106 and 910107 remain INFERRED. Casey 2010 states a consumption-portion factor exists but is HISTORICAL_ONLY, and no current source restates it, so the standard for VERIFIED is not met.",
+    "evidence_id": "SECONDARY_OER_IN_CURRENT_CPI",
+    "finding": "The predecessor recorded the 910104-910107 to 910050/910101-910103 pairing as a DMI_INFERENCE and warned that BLS publishes no crosswalk. That warning stands unchanged. What is new is narrower and does not touch it: a current BLS factsheet names 910105, 910106 and 910107 by number and states their CPI destination is ELI HC090, which the pinned concordance already showed. BLS naming the concordance-side codes is not BLS pairing them with the published-side codes, and no pairing is promoted here."
+  },
+  "shelter_rental_equivalence_correspondence": {
+    "claim_type": "DMI_INFERENCE",
+    "description": "cx.item publishes four owner rental-equivalence addenda under subcategory TITLEOFI that correspond, concept for concept and in the same order, to the four rental-equivalence UCCs the concordance uses. The correspondence is conceptual and ordinal, not a BLS-authored crosswalk.",
+    "evidence_strength": "MODERATE",
+    "explicit_warning": "BLS does not publish a one-to-one crosswalk between these two sets, and none is asserted here. Every pair below is a DMI inference from matching concept names and matching order. This block is recorded so the published series can serve as a validation counterpart to an amount derived elsewhere. It must not be used to substitute a published amount for the concordance-side amount, nor to infer one from the other.",
+    "measured_in_phase_c6": {
+      "note": "The pairing entered this workstream as a DMI_INFERENCE resting on matching concept names and matching order. Phase C6 measured it at the record level, after the estimates already existed. The claim_type is unchanged, because a measurement of a relation is not a BLS statement that the relation is the intended one.",
+      "relations": {
+        "910104": {
+          "comparable_keys": 36740,
+          "concordance_only_keys": 0,
+          "concordance_ucc": "910104",
+          "exact_twelve_keys": 32284,
+          "exact_twelve_share": 0.8787152966793685,
+          "integer_week_keys": 32945,
+          "integer_week_share": 0.8967065868263473,
+          "published_only_keys": 8,
+          "published_ucc": "910050",
+          "ratio_max": 17.014914243176733,
+          "ratio_median": 12.0,
+          "ratio_min": 0.12,
+          "relation": "TWELVE_TIMES",
+          "rows_concordance": 36740,
+          "rows_published": 36748,
+          "shared_keys": 36740,
+          "week_tally": {
+            "156": 25,
+            "312": 617,
+            "468": 12,
+            "624": 32291
+          }
+        },
+        "910105": {
+          "comparable_keys": 1425,
+          "concordance_only_keys": 0,
+          "concordance_ucc": "910105",
+          "exact_twelve_keys": 1134,
+          "exact_twelve_share": 0.7957894736842105,
+          "integer_week_keys": 1273,
+          "integer_week_share": 0.8933333333333333,
+          "published_only_keys": 0,
+          "published_ucc": "910101",
+          "ratio_max": 12.061898098541052,
+          "ratio_median": 12.0,
+          "ratio_min": 0.8391959798532864,
+          "relation": "TWELVE_TIMES",
+          "rows_concordance": 1425,
+          "rows_published": 1425,
+          "shared_keys": 1425,
+          "week_tally": {
+            "156": 9,
+            "208": 1,
+            "312": 125,
+            "624": 1138
+          }
+        },
+        "910106": {
+          "comparable_keys": 40,
+          "concordance_only_keys": 0,
+          "concordance_ucc": "910106",
+          "exact_twelve_keys": 0,
+          "exact_twelve_share": 0.0,
+          "integer_week_keys": 9,
+          "integer_week_share": 0.225,
+          "published_only_keys": 167,
+          "published_ucc": "910102",
+          "ratio_max": 4.08799999989824,
+          "ratio_median": 2.05960619452107,
+          "ratio_min": 0.13104524180885463,
+          "relation": "NO_CLEAN_RELATION",
+          "rows_concordance": 40,
+          "rows_published": 207,
+          "shared_keys": 40,
+          "week_tally": {
+            "144": 6,
+            "96": 3
+          }
+        },
+        "910107": {
+          "comparable_keys": 590,
+          "concordance_only_keys": 0,
+          "concordance_ucc": "910107",
+          "exact_twelve_keys": 0,
+          "exact_twelve_share": 0.0,
+          "integer_week_keys": 517,
+          "integer_week_share": 0.8762711864406779,
+          "published_only_keys": 3,
+          "published_ucc": "910103",
+          "ratio_max": 0.5179914529871795,
+          "ratio_median": 0.019230769231079883,
+          "ratio_min": 0.000769230769235841,
+          "relation": "WEEKS_OWNED_SHARE",
+          "rows_concordance": 590,
+          "rows_published": 593,
+          "shared_keys": 590,
+          "week_tally": {
+            "1": 304,
+            "12": 6,
+            "2": 140,
+            "3": 20,
+            "4": 24,
+            "6": 13,
+            "7": 10
+          }
+        }
+      }
+    },
+    "normative_input_class": "CONCORDANCE_ONLY_UCC",
+    "normative_input_rationale": "910104-910107 are the Track-A inputs because they are the codes the CPI concordance actually uses. Their published counterparts 910050 and 910101-910103 are validation and provenance sources only, and no Track-A amount may be taken from them. This says which codes the CPI reads; it does not say that any amount for them is currently obtainable. All four are confirmed present in the 2024 Interview microdata, which locates the data without making it usable. Usability was established separately and not uniformly: pumd_quantitative_usability is BENCHMARKED for 910104, 910105 and 910107 and remains NOT_ESTABLISHED for 910106. The two Track-A shelter rules also differ and must not be spoken of as one. Rule state is governed by the ce_cpi_scope_rules head, not by this file; as of that head the primary owner rental-equivalence rule over 910104 is ACCEPTED and in force and the secondary rule over 910105, 910106 and 910107 is still PROPOSED.",
+    "pairs": [
+      {
+        "concept": "Owner-occupied primary residence",
+        "concordance_only_ucc": "910104",
+        "concordance_title": "Rental Equivalence Of Owned Home",
+        "eli": "HC011",
+        "published_ce_ucc": "910050",
+        "published_title": "Estimated monthly rental value of owned home"
+      },
+      {
+        "concept": "Vacation home not available for rent",
+        "concordance_only_ucc": "910105",
+        "concordance_title": "Rent Equiv Vac Home Not Avail Rnt",
+        "eli": "HC090",
+        "published_ce_ucc": "910101",
+        "published_title": "Estimated monthly rental value of vacation home not available for rent"
+      },
+      {
+        "concept": "Vacation home available for rent",
+        "concordance_only_ucc": "910106",
+        "concordance_title": "Rent Equiv Vac Home Avail For Rnt",
+        "eli": "HC090",
+        "published_ce_ucc": "910102",
+        "published_title": "Estimated monthly rental value of vacation home available for rent"
+      },
+      {
+        "concept": "Timeshare",
+        "concordance_only_ucc": "910107",
+        "concordance_title": "Rental Equivalence For Timeshares",
+        "eli": "HC090",
+        "published_ce_ucc": "910103",
+        "published_title": "Estimated annual rental value of timeshare"
+      }
+    ],
+    "published_addenda_anomaly": {
+      "blocking": false,
+      "consequence": "Any comparison across the four published addenda must reconcile periodicity first. Summing them as published would add an annual figure to three monthly figures.",
+      "finding": "Three of the four published addenda are titled 'Estimated monthly rental value'; 910103 alone is titled 'Estimated annual rental value of timeshare'. The published titles therefore do not share a common periodicity.",
+      "status": "UNRESOLVED",
+      "ucc": "910103",
+      "verified_from": "cx.item item_text, subcategory TITLEOFI, all four at display_level 1 and selectable.",
+      "why_not_blocking": "The anomaly is confined to the published counterpart series. 910107 is the normative Track-A input and is unaffected, so the anomaly is a semantic issue to resolve in the shelter decision memo rather than a blocker on Track A."
+    },
+    "published_addenda_anomaly_resolution": "The preserved anomaly was that 910103 is titled an annual rental value while its siblings are titled monthly. Phase C6 measured 52 times the record-level ratio of 910107 to 910103 and found a whole number on 87.6 percent of 590 shared consumer-unit months, distributed as 1, 2, 3, 4, 6, 7 and 12. Those are weeks of a timeshare owned. 910103 is the whole property's annual rental value; 910107 is the share this consumer unit owns. They are different estimands, which is why neither was used to manufacture the other and why the prohibition on doing so was substantively right rather than merely cautious.",
+    "structural_result": {
+      "concordance_only": [
+        "910104",
+        "910105",
+        "910106",
+        "910107"
+      ],
+      "note": "This split is pure source-file membership and is recomputed on every run. It is derived from cx.item alone and does not depend on the microdata observation recorded under pumd_observations, though that observation independently agrees with it: the four concordance-only codes carry PUBFLAG=1 in the 2024 Interview PUMD and the four published counterparts carry PUBFLAG=2.",
+      "published_ce": [
+        "910050",
+        "910101",
+        "910102",
+        "910103"
+      ]
+    }
+  },
+  "status": "RESEARCH_ONLY",
+  "usability_transitions_from_v0_1": [
+    {
+      "from": "NOT_ESTABLISHED",
+      "to": "BENCHMARKED",
+      "ucc": "910104"
+    },
+    {
+      "from": "NOT_ESTABLISHED",
+      "to": "BENCHMARKED",
+      "ucc": "910105"
+    },
+    {
+      "from": "NOT_ESTABLISHED",
+      "to": "BENCHMARKED",
+      "ucc": "910107"
+    }
+  ],
+  "usability_transitions_note": "The transitions are not uniform, which is the finding. Three of the four shelter UCCs became BENCHMARKED and one did not. A blanket promotion would have been easier to write and would have concealed that 910106's first-quintile cell has no records at all and its second-quintile cell has 22 of 44 replicate estimates at exactly zero.",
+  "version": "0.5"
+}

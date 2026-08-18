@@ -46,6 +46,7 @@ import ast
 import copy
 import csv
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -115,6 +116,107 @@ def _scope_rules_head() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Prose-versus-structured-field scanner, used by Group 1b
+# ---------------------------------------------------------------------------
+
+#: Usability grades. Taken from the vocabulary rather than from the files, so
+#: a file that dropped a grade could not shrink the scanner's alphabet.
+USABILITY_GRADES = ("NOT_ESTABLISHED", "BENCHMARKED")
+
+_GRADE = re.compile(r"\b(?:%s)\b" % "|".join(USABILITY_GRADES))
+_UNIVERSAL = re.compile(r"\b(?:all|every|each|both)\b", re.IGNORECASE)
+_UCC = re.compile(r"\b\d{6}\b")
+#: Sentence break. Splitting on punctuation followed by whitespace is safe on
+#: these files because their dotted tokens (``cx.item``, ``0.4``, ``87.6``)
+#: never carry a space after the dot.
+_SENTENCE = re.compile(r"(?<=[.;:])\s+")
+
+
+def _prose(node: object, path: str = "") -> list[tuple[str, str]]:
+    """Every string leaf in a payload, with its dotted location."""
+    if isinstance(node, dict):
+        return [p for k, v in node.items() for p in _prose(v, f"{path}.{k}")]
+    if isinstance(node, list):
+        return [p for i, v in enumerate(node) for p in _prose(v, f"{path}[{i}]")]
+    if isinstance(node, str):
+        return [(path, node)]
+    return []
+
+
+def _structured_usability(payload: object) -> dict[str, str]:
+    """The registry's own current usability grade per UCC.
+
+    Two sources, both structured, both inside the same file: the per-UCC
+    ``pumd_quantitative_usability`` fields, and ``usability_transitions_from_v0_1``
+    which is applied last because a transition is by definition the later word.
+    """
+    grades: dict[str, str] = {}
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            if "ucc" in node and "pumd_quantitative_usability" in node:
+                grades[str(node["ucc"])] = node["pumd_quantitative_usability"]
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(payload)
+    if isinstance(payload, dict):
+        for entry in payload.get("usability_transitions_from_v0_1", ()):
+            grades[str(entry["ucc"])] = entry["to"]
+    return grades
+
+
+def _usability_contradictions(payload: object) -> list[tuple[str, str, str]]:
+    """Prose in a registry that its own structured fields contradict.
+
+    Two checks, both deliberately conservative, because a scanner that guesses
+    at which population a sentence meant would produce arguments rather than
+    findings.
+
+    *Universal.* A sentence asserting a usability grade under a universal
+    quantifier is a violation whenever the file's own grades are not uniform.
+    No qualification is needed to reach that conclusion and no scope
+    resolution is attempted: if the file records two different grades, then no
+    sentence in it can truthfully say every UCC has one of them, whichever
+    population the author had in mind. A sentence that means a subset must
+    name the subset.
+
+    *Enumerated.* A sentence that names UCC codes alongside a grade must at
+    least mention the grade the structured field actually records for each
+    code it names. This is weaker than checking the sentence's grammar, and it
+    is meant to be: it catches "910106 is BENCHMARKED" without adjudicating
+    sentences that correctly discuss several codes at several grades.
+
+    Returns ``(location, kind, sentence)`` per violation.
+    """
+    grades = _structured_usability(payload)
+    if not grades:
+        return []
+    uniform = len(set(grades.values())) == 1
+    found: list[tuple[str, str, str]] = []
+    for location, text in _prose(payload):
+        # The correction record quotes the defect it repaired. Exempting it is
+        # the same allowance the milestone-2 rename sweep makes for migration
+        # prose: a file must be able to say what it fixed.
+        if location.startswith(".prose_correction_in_"):
+            continue
+        for sentence in _SENTENCE.split(text):
+            claimed = set(_GRADE.findall(sentence))
+            if not claimed:
+                continue
+            named = [u for u in _UCC.findall(sentence) if u in grades]
+            if named:
+                if any(grades[u] not in claimed for u in named):
+                    found.append((location, "ENUMERATED", sentence))
+            elif not uniform and _UNIVERSAL.search(sentence):
+                found.append((location, "UNIVERSAL", sentence))
+    return found
+
+
+# ---------------------------------------------------------------------------
 # Group 1: C1, registry lineage is derived rather than assumed
 # ---------------------------------------------------------------------------
 
@@ -147,7 +249,7 @@ class TestRegistryLineage(unittest.TestCase):
         )
         self.assertEqual(
             cs.governing_version("ucc_provenance_classes").artifact_id,
-            "UCC_PROVENANCE_CLASSES_V0_4",
+            "UCC_PROVENANCE_CLASSES_V0_5",
         )
 
     def test_d_every_non_head_is_marked_a_historical_checkpoint(self) -> None:
@@ -210,6 +312,196 @@ class TestRegistryLineage(unittest.TestCase):
         (scratch / _scope_rules_head()).write_text('{"artifact_id": "X"}\n', "utf-8")
         with self.assertRaises(cs.CanonicalStateError):
             cs.resolve_family("ce_cpi_scope_rules", registry_dir=scratch)
+
+
+# ---------------------------------------------------------------------------
+# Group 1b: C1, a governing registry may not contradict itself in prose
+# ---------------------------------------------------------------------------
+
+
+class TestProseAgreesWithStructuredState(unittest.TestCase):
+    """A registry's sentences may not deny its own structured fields.
+
+    This is the guard the v0.5 correction was made to install. Three passages
+    in UCC_PROVENANCE_CLASSES_V0_4 asserted, in the present tense, that
+    ``pumd_quantitative_usability`` was NOT_ESTABLISHED for every UCC they
+    covered, while the roster in the same file graded three of those UCCs
+    BENCHMARKED and ``usability_transitions_from_v0_1`` recorded the three
+    transitions that put them there.
+
+    None of it ever moved a number: the ledger reads the structured fields and
+    has never read a sentence. That is precisely why the contradiction could
+    sit there across three milestones without anything failing, and why a
+    test is the only thing that will catch the next one. Two of the three were
+    found by reading; the third was found by this scanner.
+    """
+
+    def _heads(self) -> list[tuple[str, dict]]:
+        paths = [
+            cs.REGISTRY_DIR / Path(cs.governing_version(family).relative_path).name
+            for family in cs.REGISTRY_FAMILIES
+        ]
+        paths += [cs.REGISTRY_DIR / name for name in cs.SINGLE_VERSION_REGISTRIES]
+        return [
+            (p.name, json.loads(p.read_text(encoding="utf-8"))) for p in sorted(paths)
+        ]
+
+    def test_a_no_governing_registry_contradicts_its_own_usability_fields(self) -> None:
+        for name, payload in self._heads():
+            with self.subTest(registry=name):
+                found = _usability_contradictions(payload)
+                self.assertEqual(
+                    [],
+                    found,
+                    "\n".join(f"{kind} at {loc}: {s}" for loc, kind, s in found),
+                )
+
+    def test_b_the_repaired_registry_is_the_governing_one(self) -> None:
+        head = cs.governing_version("ucc_provenance_classes")
+        self.assertEqual(head.artifact_id, "UCC_PROVENANCE_CLASSES_V0_5")
+        self.assertEqual(
+            head.predecessor_artifact_id.casefold(),
+            "ucc_provenance_classes_v0_4",
+        )
+
+    def test_c_the_scanner_fires_on_the_defect_it_was_written_for(self) -> None:
+        """Non-vacuity, against the real historical text.
+
+        The predecessor is still on disk and still carries all three passages,
+        so the scanner can be shown to fire on the exact prose it exists to
+        catch rather than on a specimen written to be caught.
+        """
+        stale = json.loads(
+            (cs.REGISTRY_DIR / "ucc_provenance_classes_v0_4.json").read_text("utf-8")
+        )
+        found = _usability_contradictions(stale)
+        self.assertEqual(
+            sorted(location for location, _, _ in found),
+            [
+                ".classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+                ".pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE"
+                ".what_this_does_not_establish",
+                ".shelter_rental_equivalence_correspondence.normative_input_rationale",
+            ],
+        )
+        for _, kind, sentence in found:
+            self.assertEqual(kind, "UNIVERSAL")
+            self.assertIn("NOT_ESTABLISHED", sentence)
+
+    def test_d_the_enumerated_check_fires_too(self) -> None:
+        """The other half of the scanner, which the real files do not trip."""
+        head = json.loads(
+            (
+                cs.REGISTRY_DIR
+                / Path(cs.governing_version("ucc_provenance_classes").relative_path).name
+            ).read_text("utf-8")
+        )
+        broken = copy.deepcopy(head)
+        broken["a_planted_sentence"] = "910106 is BENCHMARKED and settled."
+        self.assertEqual([], _usability_contradictions(head))
+        self.assertEqual(
+            [(loc, kind) for loc, kind, _ in _usability_contradictions(broken)],
+            [(".a_planted_sentence", "ENUMERATED")],
+        )
+
+    def test_e_the_scanner_reads_transitions_as_the_later_word(self) -> None:
+        """A transition must override the roster grade, not be averaged with it.
+
+        If the transitions were ignored, the head would look uniformly
+        NOT_ESTABLISHED, ``uniform`` would be true, and the universal check
+        would switch itself off entirely.
+        """
+        head = json.loads(
+            (cs.REGISTRY_DIR / "ucc_provenance_classes_v0_5.json").read_text("utf-8")
+        )
+        grades = _structured_usability(head)
+        for ucc in ("910104", "910105", "910107"):
+            with self.subTest(ucc=ucc):
+                self.assertEqual(grades[ucc], "BENCHMARKED")
+        self.assertEqual(grades["910106"], "NOT_ESTABLISHED")
+        self.assertGreater(len(set(grades.values())), 1)
+
+    def test_f_the_correction_moved_prose_and_nothing_else(self) -> None:
+        """Column-wise equivalence, at the registry rather than the ledger.
+
+        Every value in the successor that is not a string is asserted equal to
+        the predecessor's. A grade, count, roster entry, pairing or transition
+        that moved would be a non-string leaf or a changed structure, and this
+        would catch it.
+        """
+        older = json.loads(
+            (cs.REGISTRY_DIR / "ucc_provenance_classes_v0_4.json").read_text("utf-8")
+        )
+        newer = json.loads(
+            (cs.REGISTRY_DIR / "ucc_provenance_classes_v0_5.json").read_text("utf-8")
+        )
+        changed: list[str] = []
+
+        def compare(x: object, y: object, path: str = "") -> None:
+            if type(x) is not type(y):
+                changed.append(path)
+            elif isinstance(x, dict):
+                assert isinstance(y, dict)
+                for key in sorted(set(x) | set(y)):
+                    if key in x and key in y:
+                        compare(x[key], y[key], f"{path}.{key}")
+                    else:
+                        changed.append(f"{path}.{key}")
+            elif isinstance(x, list):
+                assert isinstance(y, list)
+                if len(x) != len(y):
+                    changed.append(path)
+                else:
+                    for i, (a, b) in enumerate(zip(x, y)):
+                        compare(a, b, f"{path}[{i}]")
+            elif x != y:
+                changed.append(path)
+
+        compare(older, newer)
+        self.assertEqual(
+            sorted(changed),
+            [
+                ".artifact_id",
+                ".classes.CONCORDANCE_ONLY_UCC.expenditure_note",
+                ".predecessor.artifact_id",
+                ".predecessor.note",
+                ".predecessor.path",
+                ".predecessor.version",
+                ".prose_correction_in_v0_5",
+                ".pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE"
+                ".what_this_does_not_establish",
+                ".shelter_rental_equivalence_correspondence.normative_input_rationale",
+                ".version",
+            ],
+        )
+
+    def test_g_every_recorded_inconsistency_says_what_became_of_it(self) -> None:
+        """The record is not deleted on repair, it is closed.
+
+        A consumer holding an older ledger has to be able to find out why the
+        prose they read no longer matches the file, which deleting the entry
+        would take away from them.
+        """
+        self.assertGreater(len(cs.KNOWN_INTERNAL_INCONSISTENCIES), 0)
+        for entry in cs.KNOWN_INTERNAL_INCONSISTENCIES:
+            with self.subTest(location=entry["location"]):
+                self.assertIn("repaired_in", entry)
+                repaired = entry["repaired_in"]
+                if repaired is None:
+                    continue
+                self.assertEqual(repaired, "UCC_PROVENANCE_CLASSES_V0_5")
+                self.assertNotEqual(repaired, entry["artifact_id"])
+
+    def test_h_the_repair_is_reachable_from_the_manifest(self) -> None:
+        manifest = json.loads(cs.MANIFEST_PATH.read_text(encoding="utf-8"))
+        family = manifest["governing_registry_families"]["ucc_provenance_classes"]
+        head = [v for v in family if v["role"] == "CURRENT_GOVERNING_INPUT"]
+        self.assertEqual([v["artifact_id"] for v in head], ["UCC_PROVENANCE_CLASSES_V0_5"])
+        recorded = manifest["known_internal_inconsistencies"]
+        self.assertEqual(len(recorded), 3)
+        self.assertTrue(
+            all(e["repaired_in"] == "UCC_PROVENANCE_CLASSES_V0_5" for e in recorded)
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1199,14 +1491,27 @@ class TestSchemaAndVocabularies(Built, unittest.TestCase):
         self.assertIn("blank", schema["null_semantics"])
         self.assertIn(NULL_ZERO_UCC, schema["null_semantics"]["regression_case"])
 
-    def test_e_the_manifest_records_the_unrepaired_contradictions(self) -> None:
+    def test_e_the_manifest_records_each_contradiction_and_its_outcome(self) -> None:
+        """Both readings, and what became of the disagreement.
+
+        This test previously required ``not_repaired_because`` on every entry,
+        because when it was written none of them had been repaired and the
+        manifest's whole contribution was to say why not. The v0.5 correction
+        closed all three, so the required field is now ``repaired_in``, which
+        carries a successor id or ``None`` while the contradiction stands. The
+        two structured readings stay required either way: an entry that
+        recorded only the outcome would leave a reader who has the old prose
+        in hand with no way to see what it disagreed with.
+        """
         manifest = json.loads(cs.MANIFEST_PATH.read_text(encoding="utf-8"))
         entries = manifest["known_internal_inconsistencies"]
         self.assertGreater(len(entries), 0)
         for entry in entries:
             with self.subTest(location=entry["location"]):
-                self.assertIn("not_repaired_because", entry)
+                self.assertIn("repaired_in", entry)
+                self.assertIn("prose_claim", entry)
                 self.assertIn("structured_claim", entry)
+                self.assertIn("resolution_in_this_manifest", entry)
 
 
 if __name__ == "__main__":

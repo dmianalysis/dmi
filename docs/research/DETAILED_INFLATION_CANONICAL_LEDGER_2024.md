@@ -81,7 +81,7 @@ other node claims as its predecessor.
 | Family | Head | Version | Why |
 | --- | --- | --- | --- |
 | `ce_cpi_scope_rules` | `ce_cpi_scope_rules_v0_3.json` | 0.3 | `v0_3` names `V0_2` as predecessor; `v0_2` names `v0_1`; nothing names `v0_3` |
-| `ucc_provenance_classes` | `ucc_provenance_classes_v0_4.json` | 0.4 | `v0_4` names `V0_3` as predecessor; `v0_3` names `v0_1` (**not** a nonexistent `v0_2`) |
+| `ucc_provenance_classes` | `ucc_provenance_classes_v0_5.json` | 0.5 | `v0_5` names `V0_4`; `v0_4` names `V0_3`; `v0_3` names `v0_1` (**not** a nonexistent `v0_2`) |
 
 Seven further registries exist in exactly one version and are recorded as
 `CURRENT_GOVERNING_INPUT` without a lineage walk: the taxonomy, the ELI→node
@@ -162,18 +162,49 @@ the amount would have two treatments and no principled way to choose. There is
 no fall-back to file order anywhere, because a rule that appears earlier in a
 file is not thereby more authoritative.
 
-### 3.5 Two inconsistencies recorded rather than repaired
+### 3.5 Three inconsistencies recorded, then repaired in a successor
 
-The governing provenance registry contains two prose passages that went stale
-when its own structured fields were updated. Both say
-`pumd_quantitative_usability` is `NOT_ESTABLISHED` for UCCs that the same
-file's `usability_transitions_from_v0_1` block records as `BENCHMARKED`.
+`UCC_PROVENANCE_CLASSES_V0_4` contained prose passages that went stale when its
+own structured fields were updated. Each asserted, in the present tense, that
+`pumd_quantitative_usability` was `NOT_ESTABLISHED` for every UCC it covered,
+while the roster in the same file graded `910104`, `910105` and `910107`
+`BENCHMARKED` and `usability_transitions_from_v0_1` recorded the three
+transitions that put them there.
 
-The manifest records both readings, states that the structured field governs,
-and says why the prose was not fixed: **changing a governing registry's text is
-an adjudication**, and this task is authorised to describe the current state,
-not to revise it. Silently correcting it would have made the artifact cleaner
-and the record worse.
+C1 recorded both readings and declined to fix them, on the ground that
+**changing a governing registry's text is an adjudication** and C1 was
+authorised to describe the current state, not revise it. That authorisation was
+subsequently given, and `UCC_PROVENANCE_CLASSES_V0_5` supersedes v0.4 with the
+prose corrected. Two points about how:
+
+- **v0.4 is preserved byte-for-byte.** It is still on disk, still the version
+  the frozen Residual Shelter Allocation milestone pins and regenerates, and
+  still the artifact the recorded contradictions are attributed to. The
+  correction is a successor, not an edit, so the stale text stays recoverable
+  and nothing pinned to v0.4 moved.
+- **The head moved on its own.** Nothing in the manifest names v0.5. The
+  lineage walk found it because v0.5 declares v0.4 as its predecessor and
+  nothing declares v0.5, which is the same derivation §3 describes and not a
+  special case added for this.
+
+There were three passages, not two. The reading that commissioned the repair
+found two; the third was found by the scanner the repair installed, in
+`pumd_observations`. That is the argument for having a test rather than a
+careful reader, and it is why the entries are closed with a `repaired_in` field
+rather than deleted: a consumer holding an older ledger still needs to be able
+to find out why the prose they read no longer matches the file.
+
+**No number moved.** The ledger reads `usability_transitions_from_v0_1` and
+`shelter_rental_equivalence_correspondence.pairs[].published_ce_ucc` from this
+registry and has never read a sentence from it. All 42 columns × 2,076 rows are
+byte-identical across the correction, as is `canonical_ledger_summary.json` and
+the ledger schema. The manifest changes in exactly two places: v0.4 is demoted
+to `HISTORICAL_CHECKPOINT` with v0.5 appended as `CURRENT_GOVERNING_INPUT`, and
+the contradiction records gain the third entry and their outcomes.
+
+That the correction was invisible to the ledger is the finding, not a
+disappointment. Prose that no consumer reads is exactly the prose that goes
+stale without anything failing.
 
 ---
 

@@ -126,6 +126,7 @@ REGISTRY_FAMILIES: Mapping[str, tuple[str, ...]] = {
         "ucc_provenance_classes_v0_1.json",
         "ucc_provenance_classes_v0_3.json",
         "ucc_provenance_classes_v0_4.json",
+        "ucc_provenance_classes_v0_5.json",
     ),
 }
 
@@ -837,12 +838,13 @@ def current_pumd_usability(registry_dir: Path = REGISTRY_DIR) -> dict[str, str]:
     return transitions
 
 
-#: Contradictions found inside a governing registry and deliberately not
-#: repaired here. Repairing one would be an adjudication, and this task has no
-#: authority to adjudicate. Recording it means a consumer reads the structured
-#: field knowing the prose beside it disagrees, rather than reading the prose
-#: and being wrong.
-KNOWN_INTERNAL_INCONSISTENCIES: tuple[Mapping[str, str], ...] = (
+#: Contradictions found inside a governing registry, each recorded with what
+#: became of it. An entry is not deleted once repaired: the manifest's job is
+#: to say what the substrate's state is and how it got there, and a consumer
+#: holding an older ledger needs to be able to find out why the prose they
+#: read no longer matches the file. ``repaired_in`` names the successor that
+#: fixed it, or is ``None`` while the contradiction still stands.
+KNOWN_INTERNAL_INCONSISTENCIES: tuple[Mapping[str, str | None], ...] = (
     {
         "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
         "location": "classes.CONCORDANCE_ONLY_UCC.expenditure_note",
@@ -852,19 +854,38 @@ KNOWN_INTERNAL_INCONSISTENCIES: tuple[Mapping[str, str], ...] = (
         ),
         "structured_claim": (
             "usability_transitions_from_v0_1 in the same file records 910104, "
-            "910105 and 910107 moving from NOT_ESTABLISHED to BENCHMARKED."
+            "910105 and 910107 moving from NOT_ESTABLISHED to BENCHMARKED, "
+            "and the roster grades those three BENCHMARKED per UCC."
         ),
         "resolution_in_this_manifest": (
-            "The structured field governs. The prose is carried forward "
-            "verbatim from v0.1 and was not updated when the transitions were "
-            "added in v0.3. Both readings are recorded so that a consumer "
-            "who read the prose can see why the number differs."
+            "The structured field governs, and always did: no amount, grade "
+            "or disposition anywhere in this substrate was ever read from the "
+            "prose. Both readings stay recorded so a consumer who read the "
+            "sentence can see why the number differed."
         ),
-        "not_repaired_because": (
-            "Changing a governing registry's text is an adjudication. This "
-            "task is authorised to describe the current state, not to revise "
-            "it. The correction belongs to whoever next opens that registry."
+        "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
+    },
+    {
+        "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
+        "location": (
+            "pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE"
+            ".what_this_does_not_establish"
         ),
+        "prose_claim": (
+            "pumd_quantitative_usability remains NOT_ESTABLISHED for all four "
+            "rental-equivalence UCCs."
+        ),
+        "structured_claim": (
+            "Three of the four are BENCHMARKED per "
+            "usability_transitions_from_v0_1."
+        ),
+        "resolution_in_this_manifest": (
+            "The structured field governs. This third instance of the same "
+            "defect was found by the sweep the repair added, not by the "
+            "reading that commissioned it, which is the argument for the "
+            "sweep: two of these were noticed by eye and the third was not."
+        ),
+        "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
     },
     {
         "artifact_id": "UCC_PROVENANCE_CLASSES_V0_4",
@@ -884,13 +905,11 @@ KNOWN_INTERNAL_INCONSISTENCIES: tuple[Mapping[str, str], ...] = (
             "CE_CPI_SCOPE_RULES_V0_3."
         ),
         "resolution_in_this_manifest": (
-            "The structured fields govern, in both registries."
+            "The structured fields govern, in both registries. The successor "
+            "corrects both halves and stops restating another registry's rule "
+            "state, which is what let the second half go stale unnoticed."
         ),
-        "not_repaired_because": (
-            "Same reason. The two halves of the sentence went stale at "
-            "different milestones, which is worth someone's attention and is "
-            "not this task's to give."
-        ),
+        "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
     },
 )
 
