@@ -4,7 +4,6 @@
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Data](https://img.shields.io/badge/data-monthly-blue)
-![Coverage](https://img.shields.io/badge/tests-passing-success)
 
 **A transparent, reproducible measure of economic pressure across income
 groups.**
