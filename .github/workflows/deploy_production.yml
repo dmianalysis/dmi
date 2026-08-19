@@ -26,10 +26,24 @@ on:
   push:
     branches: [ main ]
     paths:
+      # --- published content ---
       - 'data/outputs/**'
       - 'web/**'
-      - 'scripts/prepare_deployment.py'
       - 'deploy/**'
+      # --- the machinery that produces and delivers it ---
+      #
+      # HOTFIX: these were missing. A change that repairs deployment
+      # itself — the workflows, the private-key helper, the pinned
+      # host-key helper — matched no path, so merging it produced no
+      # deployment run. The fix for a broken deployment could not
+      # deploy itself, and the only way to exercise it was to rerun the
+      # old, still-defective revision.
+      - 'scripts/prepare_deployment.py'
+      - 'scripts/install_deploy_key.sh'
+      - 'scripts/install_known_hosts.py'
+      - '.github/workflows/deploy_production.yml'
+      - '.github/workflows/deploy_web_dashboard.yml'
+      - '.github/workflows/deploy_wp_plugins.yml'
   workflow_dispatch:
     inputs:
       production:
@@ -160,9 +174,14 @@ jobs:
           python -m scripts.install_known_hosts \
             --host "$IFASTNET_SSH_HOST" --port 1394 \
             --known-hosts "$HOME/.ssh/dmi_known_hosts"
-          mkdir -p ~/.ssh
-          printf '%s' "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          # HOTFIX: key installation goes through the single canonical
+          # helper. It was previously written inline with
+          # `printf '%s'`, which drops the terminal newline OpenSSH
+          # requires and made the runner fail with
+          # "Load key ...: error in libcrypto" before any upload.
+          # The helper adds the newline, normalises CRLF, sets modes,
+          # and validates the key with ssh-keygen before we connect.
+          bash scripts/install_deploy_key.sh "$HOME/.ssh/deploy_key"
 
       - name: Deploy to iFastNet via rsync (pinned host key)
         if: needs.authorize.outputs.production == 'true'
@@ -171,7 +190,7 @@ jobs:
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
           rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts" \
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts" \
             ./deploy/ \
             "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/"
 
