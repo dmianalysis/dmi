@@ -398,6 +398,11 @@ if __name__ == "__main__":
 DASHBOARD_PATH = WORKFLOWS / "deploy_web_dashboard.yml"
 WP_PLUGINS_PATH = WORKFLOWS / "deploy_wp_plugins.yml"
 PR_CI_PATH = WORKFLOWS / "pr_ci.yml"
+#: Read-only Phase-1 Core inventory. Manual dispatch only; holds
+#: production SSH secrets but has no deployment capability, so it is
+#: covered by the repo-wide policy tests below but is NOT a deployment
+#: workflow. Its own structural tests live in test_inventory_workflow.py.
+INVENTORY_PATH = WORKFLOWS / "inventory_withdrawn_core.yml"
 
 #: Every workflow that must obey the deployment-safety policy.
 ALL_WORKFLOWS = (
@@ -406,6 +411,7 @@ ALL_WORKFLOWS = (
     DASHBOARD_PATH,
     WP_PLUGINS_PATH,
     PR_CI_PATH,
+    INVENTORY_PATH,
 )
 
 #: Workflows that are allowed to touch production at all.

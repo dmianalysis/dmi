@@ -1,0 +1,182 @@
+name: Inventory Withdrawn Core Artifacts (read-only)
+
+# Phase 1 of the Core withdrawal, and ONLY phase 1.
+#
+# Why this workflow exists
+# ------------------------
+# The withdrawal procedure needs SSH access to the deployment host. Those
+# credentials live as GitHub Actions secrets and are deliberately not
+# available anywhere else — an operator running the inventory from a
+# laptop would first have to copy a production private key onto it, which
+# is a worse outcome than the problem being solved.
+#
+# So the inventory runs here instead, on an ephemeral runner, using the
+# secrets that already exist. Nothing is copied out. The only thing that
+# leaves this workflow is the inventory JSON itself: remote paths, sizes
+# and SHA-256 digests of the withdrawn Core artifacts.
+#
+# What this workflow CANNOT do
+# ----------------------------
+# It runs `scripts.withdraw_remote_artifacts inventory` and nothing else.
+# There is no input, variable, conditional or branch that can reach
+# `execute` or `reseal`; the subcommand is a literal, not a parameter.
+# It holds `contents: read`, so it cannot write to the repository. It has
+# no push, pull_request or schedule trigger, no rsync, scp or release
+# step, and it never deletes anything on the remote.
+#
+# Phase 2 (deletion) is deliberately NOT automated. It stays a manual,
+# separately authorized act performed against a reviewed inventory — see
+# docs/repair/REMOTE_WITHDRAWAL.md.
+
+on:
+  workflow_dispatch:
+
+# Read-only. This workflow must never gain write, packages, deployments,
+# or id-token scope.
+permissions:
+  contents: read
+
+# One inventory at a time. Two concurrent read-only SSH enumerations of
+# the same directory would not corrupt anything, but they would produce
+# two inventories with different `generated_at_utc` values for the same
+# remote state, and a reviewer would have to work out which one phase 2
+# is meant to consume. Queue rather than cancel: an in-flight SSH session
+# should finish cleanly.
+concurrency:
+  group: core-withdrawal-inventory
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    # Enumerating a few dozen files over SSH takes seconds. A short cap
+    # means a hung connection fails fast instead of holding the
+    # concurrency group.
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install deployment key via the canonical helper
+        env:
+          IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
+        run: |
+          # The same helper the deployment workflows use: it adds the
+          # terminal newline OpenSSH requires, normalises CRLF, sets
+          # modes, and validates with ssh-keygen before any connection.
+          # The key is never written inline here.
+          bash scripts/install_deploy_key.sh \
+            "${{ runner.temp }}/dmi_withdrawal_key"
+
+      - name: Run Phase 1 inventory (read-only; deletes nothing)
+        env:
+          DMI_REMOTE_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+          DMI_REMOTE_USER: ${{ secrets.IFASTNET_SSH_USER }}
+          DMI_REMOTE_PORT: '1394'
+          DMI_REMOTE_BASE: /home/agiraces/dmianalysis
+          DMI_REMOTE_KEY: ${{ runner.temp }}/dmi_withdrawal_key
+          DMI_KNOWN_HOSTS: ${{ runner.temp }}/dmi_known_hosts
+          DMI_KNOWN_HOSTS_DATA: ${{ secrets.IFASTNET_KNOWN_HOSTS }}
+        run: |
+          # `inventory` is a literal. It is not read from an input, an
+          # environment variable, or a matrix value, so no dispatch of
+          # this workflow can turn it into `execute`.
+          #
+          # The tool installs the PINNED host key from
+          # DMI_KNOWN_HOSTS_DATA and connects with
+          # StrictHostKeyChecking=yes against that file. It never runs
+          # ssh-keyscan.
+          python -m scripts.withdraw_remote_artifacts inventory \
+            --output "${{ runner.temp }}/core-withdrawal-inventory.json"
+
+      - name: Summarise the inventory (no secret material)
+        run: |
+          # Prints counts and remote paths only. The inventory contains
+          # no hostname, no user, and no key material — but this step is
+          # also written so that even if that changed, it would surface
+          # nothing beyond paths and digests.
+          python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          path = Path(os.environ["RUNNER_TEMP"]) / "core-withdrawal-inventory.json"
+          inv = json.loads(path.read_text())
+          files = inv.get("files", [])
+          print(f"remote base      : {inv.get('remote_base')}")
+          print(f"enumerated dir   : {inv.get('remote_outputs')}")
+          print(f"matched files    : {len(files)}")
+          print(f"integrity_sha256 : {inv.get('integrity_sha256')}")
+          print()
+          for record in files:
+              print(f"  {record['sha256'][:16]}…  {record['size']:>10}  {record['path']}")
+
+          # Fail closed if anything outside the Core classes appears.
+          import re
+          allowed = (
+              r"^dmi_release_\d{4}-\d{2}_core\.json$",
+              r"^dmi-\d{4}-\d{2}-core\.(csv|parquet)$",
+              r"^qa_report_\d{4}-\d{2}_core\.json$",
+          )
+          bad = [
+              r["path"] for r in files
+              if not any(re.match(p, r["path"].rsplit("/", 1)[-1]) for p in allowed)
+          ]
+          if bad:
+              print("\nERROR: out-of-scope path(s) in the inventory:")
+              for b in bad:
+                  print(f"  {b}")
+              sys.exit(1)
+          print("\nAll inventoried paths are Core artifacts.")
+          PY
+
+      - name: Guard the artifact against key material
+        run: |
+          # Belt and braces before upload: refuse to publish a file that
+          # somehow contains a private key or a known_hosts entry.
+          INV="${{ runner.temp }}/core-withdrawal-inventory.json"
+          if grep -qE 'PRIVATE KEY|ssh-rsa |ssh-ed25519 |ecdsa-sha2-' "$INV"; then
+            echo "ERROR: inventory contains key-like material; refusing to upload."
+            exit 1
+          fi
+          echo "Inventory contains no key material."
+
+      - name: Upload the inventory for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-withdrawal-inventory
+          # Exactly one file. No logs, no environment dump, no ssh config.
+          path: ${{ runner.temp }}/core-withdrawal-inventory.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove temporary credentials from the runner
+        if: always()
+        run: |
+          # Ephemeral runners are discarded after the job, but a failure
+          # partway through should not leave the key readable to any
+          # later step. `shred -u` overwrites before unlinking.
+          #
+          # This touches the RUNNER only. It opens no connection and
+          # deletes nothing on the remote host.
+          for f in "${{ runner.temp }}/dmi_withdrawal_key" \
+                   "${{ runner.temp }}/dmi_known_hosts"; do
+            if [ -f "$f" ]; then
+              shred -u "$f" && echo "removed $f"
+            fi
+          done
+          echo "Runner-local credential cleanup complete."
