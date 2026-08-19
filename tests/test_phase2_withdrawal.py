@@ -2,12 +2,11 @@
 """Phase-2 Core withdrawal: the only workflow that destroys data.
 
 The interesting question is not whether it works but what the worst
-outcome of a dispatch is. 
-The answer should be: delete exactly the 21 reviewed files, after a verified backup,
-or provide a recoverable state.
+outcome of a dispatch is.  The answer should be: delete exactly the 21 reviewed files,
+after a verified backup, or provide a recoverable state.
 
-Pre-deletion failures delete nothing. Once deletion begins, an interruption 
-can leave partial state; the workflow records the deleted and surviving sets, 
+Pre-deletion failures delete nothing. Once deletion begins, an interruption
+can leave partial state; the workflow records the deleted and surviving sets,
 runs post-state verification, and preserves the verified backup for a
 separately authorized recovery decision.
 
