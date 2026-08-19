@@ -7,8 +7,12 @@ authoritative release date for the version stamped on the same file.
 Prior to §11 this repo shipped a placeholder date (`2026-08-15`) that
 predated any real v0.1.12 tag. Downstream tools consumed it as fact.
 
-§11 removes that placeholder; the field must stay absent until the
-v0.1.12 tag is actually cut. These tests pin the invariant.
+§11 removed that placeholder and held the field absent until the
+release was actually cut. The v0.1.12 release is now cut, so the field
+carries the real release date; what these tests pin is that the
+placeholder never returns and that no date other than a real release
+date is asserted. The release date itself, and its agreement with the
+changelog, are pinned in `tests/test_release_metadata_v0_1_12.py`.
 
 Additional locked-in invariants (defensive, low-cost):
 
@@ -55,17 +59,16 @@ class TestCitationCff(unittest.TestCase):
             "§11: the 2026-08-15 placeholder date must not resurface.",
         )
 
-    def test_date_released_absent_until_tag_is_cut(self):
-        # Until the v0.1.12 tag exists, the field itself must be absent.
-        # A future edit that puts back a placeholder date (of any value)
-        # while no tag exists must fail here. Test author judgment: we
-        # verify the field is not present in the current file; when the
-        # tag is cut, the person adding the real date will need to
-        # remove or update this assertion.
-        self.assertNotIn(
+    def test_date_released_is_the_real_release_date(self):
+        # The v0.1.12 release is cut, so the field must be present and
+        # must hold the actual release date as a parsed ISO-8601 date —
+        # not a string, and not the withdrawn placeholder.
+        self.assertIn(
             "date-released", self.doc,
-            "§11: date-released must be absent until the real tag is cut.",
+            "§11: date-released must be present now that the release "
+            "is cut.",
         )
+        self.assertEqual(self.doc["date-released"], date(2026, 8, 19))
 
     def test_cff_version_is_supported(self):
         self.assertEqual(

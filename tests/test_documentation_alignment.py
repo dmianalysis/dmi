@@ -953,11 +953,20 @@ class TestPrDraftDescribesTheFinalBranch(unittest.TestCase):
                 self.assertNotIn(phrase, self.lower)
 
     def test_citation_claims_match_the_actual_file(self):
+        # §8: the draft's claims about CITATION.cff must stay true of
+        # the file itself. The DOI claim is unchanged. The
+        # `date-released` claim was rewritten when the v0.1.12 release
+        # was cut: the draft no longer says the field is absent, and
+        # the file now carries the real release date.
         import yaml as _yaml
         cff = _yaml.safe_load((ROOT / "CITATION.cff").read_text())
         self.assertNotIn("doi", cff)
-        self.assertNotIn("date-released", cff)
         self.assertIn("no** `doi`", self.text)
+        self.assertIn("date-released", cff)
+        self.assertNotIn(
+            "**no** `doi` and **no**", self.text,
+            "§8: the draft must not still claim `date-released` is absent.",
+        )
 
     def test_it_states_merge_invokes_the_single_deployment_workflow(self):
         self.assertIn("deploy_production.yml", self.text)

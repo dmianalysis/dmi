@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.12]
+## [0.1.12] - 2026-08-19
+
+**Formal release of the finalized operational DMI contract.** Two
+specifications are operational — **Baseline** (quintile-weighted headline
+CPI inflation + U-3) and **Slack-Plus** (the same inflation measure +
+U-6). **Core is withdrawn and unimplemented**; it is not an operational
+specification and no valid operational Core series exists. Alongside the
+contract, this release makes release publication transactional and
+QA-gated, centralizes production-deployment authority in a single
+authoritative workflow, hardens SSH host trust and deployment-key
+handling, and completes the withdrawal of historical mislabeled Core
+artifacts from the public origin with durable verification evidence
+([`docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md`](docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md)).
+
+### Added - Release and deployment hardening
+- Release publication is **transactional and QA-gated**: computation no
+  longer publishes, `scripts/finalize_release.py` is the sole publication
+  orchestrator, and a failed gate leaves every mutable public artifact
+  byte-identical to its pre-run state.
+- Baseline/Slack-Plus cross-specification identity is enforced as a
+  release gate, not only as a test.
+- **One authoritative production-deployment workflow**; ad-hoc deployment
+  paths were removed.
+- **Pinned SSH host keys** and hardened deployment-key handling on every
+  deployment path.
+- Historical mislabeled Core artifacts were withdrawn from the public
+  origin, with the inventory, backup identity, execution log, and
+  post-withdrawal verification preserved under
+  [`docs/repair/evidence/`](docs/repair/evidence/).
 
 **Pre-1.0 exceptional breaking public-schema release.** v0.1.12 brings the
 repository back into agreement with the concept note. It withdraws the
