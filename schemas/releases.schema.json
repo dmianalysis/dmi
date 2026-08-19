@@ -12,7 +12,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      "const": "3.0.0"
     },
     "generated_at": {
       "type": "string",
@@ -36,6 +36,7 @@
           "methodology_version",
           "summary",
           "summary_facts",
+          "release_note",
           "spec_urls",
           "metrics"
         ],
@@ -105,18 +106,21 @@
               }
             }
           },
+          "release_note": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "Shared release-note HTML for this release entry. Covers the shared distributional summary across all specifications published for the period."
+          },
           "spec_urls": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["baseline", "slack_plus", "core"],
+            "required": ["baseline"],
+            "description": "URL block per published specification. `baseline` is always present. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published. Neither block carries a release_note; the shared top-level `release_note` field covers all specifications.",
             "properties": {
               "baseline": {
                 "$ref": "#/$defs/spec_url_block"
               },
               "slack_plus": {
-                "$ref": "#/$defs/spec_url_block"
-              },
-              "core": {
                 "$ref": "#/$defs/spec_url_block"
               }
             }
@@ -174,17 +178,14 @@
     "spec_url_block": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["csv", "parquet", "release_note"],
+      "required": ["csv", "parquet"],
+      "description": "Per-specification artifact URLs. No release_note is nested here; the shared release_note lives at the top of the release entry.",
       "properties": {
         "csv": {
           "type": "string",
           "format": "uri-reference"
         },
         "parquet": {
-          "type": "string",
-          "format": "uri-reference"
-        },
-        "release_note": {
           "type": "string",
           "format": "uri-reference"
         }

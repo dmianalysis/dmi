@@ -1,0 +1,12 @@
+# DMI Dashboard - 301 redirect from /dashboard/ to /dashboard.html
+#
+# The canonical dashboard lives at /dashboard.html. This directory contains a
+# stale December 2025 copy that we keep around only so the historical
+# /dashboard/ URL continues to resolve. The redirect masks the stale content
+# and points clients at the current dashboard, where the relative data paths
+# (./data/outputs/..., health.json) resolve against the web root.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^.*$ /dashboard.html [R=301,L]
+</IfModule>

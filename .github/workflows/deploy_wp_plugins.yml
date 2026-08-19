@@ -1,75 +1,139 @@
-name: Deploy Custom WordPress Plugins
+name: Deploy WordPress Plugins (component)
+
+# ROUND-4 REPAIR (§2/§3). This workflow no longer has production
+# authority of its own and no longer hand-builds its deployment tree.
+#
+# It previously carried a `push: branches: [main]` trigger and staged
+# plugins with an inline `rsync` recipe holding its own exclusion list
+# and its own Core guard — an unrelated deployment tree that could not
+# be built or tested outside CI.
+#
+# Staging is now `scripts.prepare_deployment --component wp-plugins`, a
+# component of the single canonical builder, inheriting its fail-closed
+# target validation, temp-sibling-then-swap, and Core refusal.
+# Production is initiated only by `deploy_production.yml`.
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'web/wp-plugins/dmi-latest-info/**'
-      - 'web/wp-plugins/dmi-release-data/**'
+  workflow_call:
+    inputs:
+      production:
+        description: Whether to perform the real upload. Caller must be explicit.
+        required: true
+        type: boolean
+      ref:
+        description: The exact commit to deploy.
+        required: true
+        type: string
+    secrets:
+      IFASTNET_SSH_HOST:
+        required: false
+      IFASTNET_SSH_USER:
+        required: false
+      IFASTNET_SSH_KEY:
+        required: false
+      IFASTNET_KNOWN_HOSTS:
+        required: false
+
   workflow_dispatch:
+    inputs:
+      production:
+        description: >-
+          Set to true to actually rsync plugins to the live site.
+          Default false is a dry-run.
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: read
+
+env:
+  PYTHON_VERSION: '3.9'
 
 jobs:
   deploy-wp-plugins:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # §2: deploy the exact commit named by the caller; never `ref: main`.
+      - name: Checkout target commit
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ inputs.ref || github.sha }}
 
-      - name: Prepare plugin deployment package
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
         run: |
-          echo "📦 Preparing WordPress custom plugin deployment package..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-          mkdir -p deploy/wp-content/plugins
-
-          for plugin in dmi-latest-info dmi-release-data; do
-            if [ -d "web/wp-plugins/$plugin" ]; then
-              mkdir -p "deploy/wp-content/plugins/$plugin"
-              rsync -a \
-                --exclude=".git/" \
-                --exclude=".github/" \
-                --exclude=".DS_Store" \
-                --exclude="node_modules/" \
-                --exclude="tests/" \
-                --exclude="test/" \
-                --exclude="__pycache__/" \
-                "web/wp-plugins/$plugin/" \
-                "deploy/wp-content/plugins/$plugin/"
-            fi
-          done
-
-          if ! find deploy/wp-content/plugins -type f | grep -q .; then
-            echo "❌ No plugin files were staged for deployment"
-            exit 1
-          fi
-
-          echo "📁 Plugin deployment contents:"
-          find deploy/wp-content/plugins -type f | sed -n '1,120p'
-
-      - name: Setup SSH key
+      - name: Resolve production flag
+        id: mode
+        env:
+          # §2: never inferred from the event type.
+          CALLER_PRODUCTION: ${{ inputs.production }}
         run: |
+          case "$CALLER_PRODUCTION" in
+            true|True|TRUE) PROD="true" ;;
+            *)              PROD="false" ;;
+          esac
+          echo "production=$PROD" >> "$GITHUB_OUTPUT"
+          echo "Production deployment: $PROD"
+
+      - name: Stage plugins via the canonical builder
+        run: |
+          # §2: a component of the single builder, not a bespoke recipe.
+          # It refuses to stage any plugin source referencing the
+          # withdrawn Core spec, and verifies the staged tree matches its
+          # sources exactly with no extra files.
+          python -m scripts.prepare_deployment \
+            --component wp-plugins \
+            --output-dir "$RUNNER_TEMP/wp-plugins" \
+            --verify
+          find "$RUNNER_TEMP/wp-plugins" -type f | sed -n '1,120p'
+
+      - name: Skip remote deployment (dry-run)
+        if: steps.mode.outputs.production != 'true'
+        run: |
+          echo "Dry-run: skipping SSH setup and rsync."
+
+      - name: Install pinned host key (no trust-on-first-use)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
+          IFASTNET_SSH_KEY: ${{ secrets.IFASTNET_SSH_KEY }}
+          IFASTNET_KNOWN_HOSTS: ${{ secrets.IFASTNET_KNOWN_HOSTS }}
+        run: |
+          python -m scripts.install_known_hosts \
+            --host "$IFASTNET_SSH_HOST" --port 1394 \
+            --known-hosts "$HOME/.ssh/dmi_known_hosts"
           mkdir -p ~/.ssh
-          echo "${{ secrets.IFASTNET_SSH_KEY }}" > ~/.ssh/deploy_key
+          printf '%s' "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 1394 ${{ secrets.IFASTNET_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy plugins to iFastNet via rsync
+      - name: Deploy plugins to iFastNet (pinned host key)
+        if: steps.mode.outputs.production == 'true'
+        env:
+          IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
+          IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
           rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
-            ./deploy/wp-content/plugins/ \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/wp-content/plugins/
+            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts" \
+            "$RUNNER_TEMP/wp-plugins/wp-content/plugins/" \
+            "$IFASTNET_SSH_USER@$IFASTNET_SSH_HOST:/home/agiraces/dmianalysis/wp-content/plugins/"
 
       - name: Deployment summary
         run: |
-          echo "🚀 WordPress plugin deployment complete!"
-          echo "   Plugins deployed:"
-          echo "   - dmi-latest-info"
-          echo "   - dmi-release-data"
-          echo "   Target: /home/agiraces/dmianalysis/wp-content/plugins/"
-          echo "   Site:   https://dmianalysis.org/"
+          if [ "${{ steps.mode.outputs.production }}" = "true" ]; then
+            echo "WordPress plugin deployment complete."
+          else
+            echo "Dry-run complete (nothing deployed)."
+          fi

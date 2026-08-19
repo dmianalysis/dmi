@@ -1,17 +1,66 @@
-# NOTE:  Any file deployed from deploy/ but maintained elsewhere **MUST** be refreshed into deploy/ during the deployment workflow.
+# Monthly DMI Computation (release preparation only — never deploys).
+#
+# ROUND-3 REPAIR (§1). This workflow is now scoped strictly to release
+# PREPARATION. It computes, QAs, generates manifests + release notes,
+# builds and validates a deployment candidate locally, and (in
+# prepare_release mode) opens a review PR. It NEVER:
+#
+#   - configures SSH keys,
+#   - runs rsync/sftp/ssh against the live site,
+#   - auto-merges a PR,
+#   - performs any production write.
+#
+# Actual production deployment happens in a separate, post-merge
+# workflow (.github/workflows/deploy_production.yml) that is triggered
+# only by an authorized push to `main` or an explicit production
+# workflow_dispatch. See docs/deployment-workflows.md.
+#
+# Two-spec pipeline (v0.1.12): Baseline (U-3, headline CPI) + Slack-Plus
+# (U-6, headline CPI). Core is intended/unimplemented and withdrawn; see
+# docs/repair/CORE_WITHDRAWAL.md.
 
-name: Monthly DMI Computation
+name: Monthly DMI Preparation
 
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: >-
+          Execution mode. `validate` runs offline against committed
+          fixtures/artifacts and is safe (no secrets required, no PR
+          opened). `prepare_release` runs the full monthly pipeline
+          against live BLS data and opens a review PR. Neither mode
+          deploys.
+        required: false
+        default: 'validate'
+        type: choice
+        options:
+          - validate
+          - prepare_release
+      data_source:
+        description: >-
+          Data source. `fixture` uses committed artifacts already in
+          the repository and never touches the network. `live` fetches
+          from the BLS API and requires production secrets. `fixture`
+          is only compatible with `mode=validate`.
+        required: false
+        default: 'fixture'
+        type: choice
+        options:
+          - fixture
+          - live
       reference_period:
-        description: 'Reference period (YYYY-MM)'
-        required: true
-        default: '2026-04'
+        description: >-
+          Reference period (YYYY-MM). Leave blank on scheduled runs and
+          on validate/fixture runs; the workflow resolves the correct
+          period automatically.
+        required: false
+        default: ''
 
   schedule:
-    # Run on the 15th after CPI release, but avoid top-of-hour GitHub Actions congestion.
+    # 17 minutes past the hour on the 15th of every month (after CPI release,
+    # off the top-of-hour Actions congestion). Scheduled runs use
+    # prepare_release + live data; a human must still review and merge the PR.
     - cron: '17 10 15 * *'
 
 env:
@@ -22,14 +71,17 @@ permissions:
   pull-requests: write
 
 jobs:
-  compute-dmi:
+  prepare-dmi:
     runs-on: ubuntu-latest
 
     steps:
+      # §1: use the default checkout behavior. Scheduled runs execute
+      # against the default branch (main); manual dispatch executes
+      # against the branch the operator selected in the Actions UI (which
+      # may be a repair branch); release-preparation runs from their
+      # triggering ref. `ref: main` is intentionally NOT hardcoded.
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -42,133 +94,250 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set reference period
-        id: period
+      - name: Resolve run mode
+        id: mode
+        env:
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+          INPUT_DATA_SOURCE: ${{ github.event.inputs.data_source }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "period=${{ github.event.inputs.reference_period }}" >> $GITHUB_OUTPUT
+          # Scheduled runs always execute prepare_release + live data.
+          # Manual runs default to validate + fixture (safe/offline).
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            MODE="prepare_release"
+            DATA_SOURCE="live"
           else
-            echo "period=$(date -d 'last month' '+%Y-%m')" >> $GITHUB_OUTPUT
+            MODE="${INPUT_MODE:-validate}"
+            DATA_SOURCE="${INPUT_DATA_SOURCE:-fixture}"
           fi
 
-      - name: Fetch CPI data
+          case "$MODE" in
+            validate|prepare_release) ;;
+            *) echo "ERROR: unknown mode '$MODE'"; exit 1 ;;
+          esac
+          case "$DATA_SOURCE" in
+            fixture|live) ;;
+            *) echo "ERROR: unknown data_source '$DATA_SOURCE'"; exit 1 ;;
+          esac
+
+          if [ "$DATA_SOURCE" = "live" ] && [ "$MODE" = "validate" ]; then
+            echo "ERROR: data_source=live requires mode=prepare_release."
+            echo "  validate mode is offline and must not touch the BLS API."
+            exit 1
+          fi
+
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "data_source=$DATA_SOURCE" >> "$GITHUB_OUTPUT"
+          echo "Resolved: mode=$MODE, data_source=$DATA_SOURCE"
+
+      - name: Resolve reference period
+        id: period
+        env:
+          INPUT_PERIOD: ${{ github.event.inputs.reference_period }}
+          DATA_SOURCE: ${{ steps.mode.outputs.data_source }}
+        run: |
+          if [ -n "$INPUT_PERIOD" ]; then
+            PERIOD="$INPUT_PERIOD"
+          elif [ "$DATA_SOURCE" = "fixture" ]; then
+            # In fixture/offline mode, use the period already advertised
+            # by the committed latest.json. Never fabricates a period.
+            PERIOD=$(python -c "import json; print(json.load(open('data/outputs/latest.json'))['releases'][0]['release_id'])")
+          else
+            PERIOD="$(date -u -d 'last month' '+%Y-%m')"
+          fi
+          if ! [[ "$PERIOD" =~ ^[0-9]{4}-(0[1-9]|1[0-2])$ ]]; then
+            echo "ERROR: resolved reference period '$PERIOD' is not YYYY-MM."
+            exit 1
+          fi
+          echo "period=$PERIOD" >> "$GITHUB_OUTPUT"
+          echo "Reference period: $PERIOD"
+
+      # -------- LIVE-ONLY steps: skipped entirely in fixture/validate mode --------
+
+      - name: Fetch CPI data (live only)
+        if: steps.mode.outputs.data_source == 'live'
         env:
           BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
         run: |
           echo "Fetching CPI data for ${{ steps.period.outputs.period }}..."
           python -m scripts.test_bls_api
 
-      - name: Check CE weights status
-        run: |
-          PERIOD_YEAR=$(echo "${{ steps.period.outputs.period }}" | cut -d'-' -f1)
-          WEIGHTS_YEAR=$(python -c "import json; print(json.load(open('data/curated/weights_by_group_latest.json'))['weights_year'])")
-
-          echo "Period year: $PERIOD_YEAR"
-          echo "Current weights year: $WEIGHTS_YEAR"
-
-          if [ $((PERIOD_YEAR - WEIGHTS_YEAR)) -gt 2 ]; then
-            echo "⚠️ WARNING: Weights are $((PERIOD_YEAR - WEIGHTS_YEAR)) years old"
-            echo "Consider updating CE weights"
-          fi
-          echo "WEIGHTS_YEAR=$WEIGHTS_YEAR" >> $GITHUB_ENV
-
-      - name: Compute DMI Baseline
+      - name: Compute DMI Baseline (live only)
+        if: steps.mode.outputs.data_source == 'live'
         env:
           BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
         run: |
+          PERIOD_YEAR=$(echo "${{ steps.period.outputs.period }}" | cut -d'-' -f1)
+          WEIGHTS_YEAR=$(python -c "import json; print(json.load(open('data/curated/weights_by_group_latest.json'))['weights_year'])")
+          echo "WEIGHTS_YEAR=$WEIGHTS_YEAR" >> $GITHUB_ENV
           echo "Computing baseline DMI for ${{ steps.period.outputs.period }}..."
           python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec baseline --weights-year "$WEIGHTS_YEAR"
 
-          test -f data/outputs/dmi_release_${{ steps.period.outputs.period }}.json
-          test -f data/outputs/latest.json
-          test -f data/outputs/releases.json
-
-      - name: Compute DMI Slack+
+      - name: Compute DMI Slack+ (live only)
+        if: steps.mode.outputs.data_source == 'live'
         env:
           BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
         run: |
           echo "Computing slack-plus DMI for ${{ steps.period.outputs.period }}..."
           python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec slack_plus --weights-year "$WEIGHTS_YEAR"
-          test -f data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json
 
-      - name: Compute DMI Core
-        env:
-          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+      # §1: specifications.json, the release note and the timeseries are
+      # NOT built here. They are mutable public artifacts, and building
+      # them before QA has been evaluated is what let a failing release
+      # reach the public tree. They are produced by the finalization
+      # step below, after every gate has passed.
+
+      # -------- Finalization: gates first, publication second --------
+
+      - name: Finalize release (gates, then publish) — live only
+        if: steps.mode.outputs.data_source == 'live'
         run: |
-          echo "Computing core DMI for ${{ steps.period.outputs.period }}..."
-          python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --spec core --weights-year "$WEIGHTS_YEAR"
+          # §1: runs, in order — validate both raw outputs against their
+          # schema; validate both QA reports against theirs; enforce QA
+          # OUTCOME policy (not merely JSON shape); enforce the
+          # Baseline/Slack-Plus cross-specification identity gate; and
+          # only then generate CSV/Parquet, releases.json, latest.json,
+          # specifications.json, the release note, the public timeseries,
+          # web/health.json and the deployment staging tree.
+          #
+          # On any gate failure nothing is published and every mutable
+          # public artifact is left byte-identical to its pre-run state.
+          python -m scripts.finalize_release ${{ steps.period.outputs.period }}
 
-          test -f data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json
-
-      - name: Build specifications manifest
+      - name: Verify release gates against committed artifacts — fixture only
+        if: steps.mode.outputs.data_source == 'fixture'
         run: |
-          python -m scripts.build_specifications_manifest ${{ steps.period.outputs.period }}
-          test -f data/outputs/specifications.json
+          # §1: fixture/offline mode exercises the SAME gates against the
+          # artifacts already committed to the repository, but publishes
+          # nothing. This is what makes a manual validation run a real
+          # test of the release path rather than a syntax check.
+          python -m scripts.finalize_release ${{ steps.period.outputs.period }} --dry-run
 
-      - name: Generate deferred baseline release note
+      # -------- Validation gates: run in every mode against on-disk artifacts --------
+
+      - name: Guard against stale specifications.json
         run: |
-          echo "Generating release note after all three specifications are available..."
-          python -m scripts.compute_dmi_release ${{ steps.period.outputs.period }} --release-note-only
-          test -f data/outputs/releases/${{ steps.period.outputs.period }}.html
-
-      - name: Update timeseries
-        run: |
-          echo "Appending ${{ steps.period.outputs.period }} to timeseries..."
-          python -m scripts.update_timeseries ${{ steps.period.outputs.period }}
-
-      - name: Run QA validation
-        run: |
-          echo "QA validation completed."
-
-          QA_STATUS_BASELINE=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json'))['status'])")
-          QA_STATUS_SLACK_PLUS=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json'))['status'])")
-          QA_STATUS_CORE=$(python -c "import json; print(json.load(open('data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json'))['status'])")
-
-          if [ "$QA_STATUS_BASELINE" != "PASS" ] && [ "$QA_STATUS_BASELINE" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_BASELINE"
+          PERIOD="${{ steps.period.outputs.period }}"
+          SPEC_PERIOD=$(python -c "import json; print(json.load(open('data/outputs/specifications.json'))['reference_period'])")
+          if [ "$SPEC_PERIOD" != "$PERIOD" ]; then
+            echo "specifications.json reference_period is '$SPEC_PERIOD'; expected '$PERIOD'."
             exit 1
           fi
 
-          if [ "$QA_STATUS_SLACK_PLUS" != "PASS" ] && [ "$QA_STATUS_SLACK_PLUS" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_SLACK_PLUS"
-            exit 1
-          fi
+      - name: Validate release artifacts against schemas
+        run: |
+          PERIOD="${{ steps.period.outputs.period }}"
+          PERIOD="$PERIOD" python <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
 
-          if [ "$QA_STATUS_CORE" != "PASS" ] && [ "$QA_STATUS_CORE" != "PASS_WITH_WARNING" ]; then
-            echo "❌ QA validation failed: $QA_STATUS_CORE"
-            exit 1
-          fi
+          SCHEMAS = Path("schemas")
+          OUT = Path("data/outputs")
+          period = os.environ["PERIOD"]
 
-          echo "✅ QA validation (Baseline): $QA_STATUS_BASELINE, (slack-plus): $QA_STATUS_SLACK_PLUS, (core): $QA_STATUS_CORE"
+          targets = [
+              (SCHEMAS / "dmi_output.schema.json", OUT / f"dmi_release_{period}.json"),
+              (SCHEMAS / "dmi_output.schema.json", OUT / f"dmi_release_{period}_slack_plus.json"),
+              (SCHEMAS / "releases.schema.json",   OUT / "releases.json"),
+              (SCHEMAS / "releases.schema.json",   OUT / "latest.json"),
+              (SCHEMAS / "specifications.schema.json", OUT / "specifications.json"),
+          ]
+          failed = 0
+          for schema_path, instance_path in targets:
+              schema = json.loads(schema_path.read_text())
+              Draft202012Validator.check_schema(schema)
+              validator = Draft202012Validator(schema)
+              instance = json.loads(instance_path.read_text())
+              errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+              if errors:
+                  print(f"FAIL {instance_path.name} vs {schema_path.name}:")
+                  for err in errors:
+                      print(f"   path={list(err.absolute_path)}: {err.message}")
+                  failed += 1
+              else:
+                  print(f"OK   {instance_path.name} vs {schema_path.name}")
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: Validate QA reports for the reference period
+        run: |
+          # §1 step 4/6: QA is produced by `compute_dmi_release` during the
+          # compute steps above (live mode) and is already committed for
+          # the fixture path. Either way it is a published artifact, so it
+          # gets a validation gate here in EVERY mode rather than being
+          # trusted implicitly.
+          PERIOD="${{ steps.period.outputs.period }}" python <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          period = os.environ["PERIOD"]
+          schema = json.loads(Path("schemas/qa_report.schema.json").read_text())
+          Draft202012Validator.check_schema(schema)
+          validator = Draft202012Validator(schema)
+
+          failed = 0
+          checked = 0
+          for spec in ("baseline", "slack_plus"):
+              path = Path(f"data/outputs/qa_report_{period}_{spec}.json")
+              if not path.exists():
+                  print(f"MISSING {path}")
+                  failed += 1
+                  continue
+              instance = json.loads(path.read_text())
+              errors = sorted(
+                  validator.iter_errors(instance),
+                  key=lambda e: list(e.absolute_path),
+              )
+              if errors:
+                  print(f"FAIL {path.name}:")
+                  for err in errors:
+                      print(f"   path={list(err.absolute_path)}: {err.message}")
+                  failed += 1
+              else:
+                  print(f"OK   {path.name}")
+                  checked += 1
+
+          # A gate that validated nothing must not report success.
+          if checked == 0:
+              print("ERROR: no QA report was validated for this period.")
+              failed += 1
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: Validate public timeseries
+        run: |
+          # §15: the dashboard fetches this on every load, so it is part
+          # of the published contract and is gated in every mode.
+          python <<'PY'
+          import json, sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          schema = json.loads(
+              Path("schemas/dmi_timeseries_schema.json").read_text()
+          )
+          Draft202012Validator.check_schema(schema)
+          instance = json.loads(
+              Path("data/outputs/published/dmi_timeseries.json").read_text()
+          )
+          errors = sorted(
+              Draft202012Validator(schema).iter_errors(instance),
+              key=lambda e: list(e.absolute_path),
+          )
+          for err in errors:
+              print(f"   path={list(err.absolute_path)}: {err.message}")
+          sys.exit(1 if errors else 0)
+          PY
 
       - name: Sanity-check release manifest vs raw release
         run: |
-          echo "Verifying releases.json/latest.json metrics match the raw baseline release for ${{ steps.period.outputs.period }}..."
           PERIOD="${{ steps.period.outputs.period }}" python <<'PY'
-          import json
-          import os
-          import sys
+          import json, os, sys
           from pathlib import Path
-
           period = os.environ["PERIOD"]
-          raw_path = Path(f"data/outputs/dmi_release_{period}.json")
-          releases_path = Path("data/outputs/releases.json")
-          latest_path = Path("data/outputs/latest.json")
-
-          REQUIRED_METRICS = (
-              "dmi_median",
-              "dmi_stress",
-              "income_pressure_spread",
-              "income_pressure_tilt",
-              "most_pressured_group",
-              "least_pressured_group",
-              "unemployment",
-          )
-          # Field names in raw summary_metrics differ for unemployment; pull that
-          # one from the Q1 slack value, matching build_metrics_payload().
-          NUMERIC_TOL = 1e-6
-
-          raw = json.loads(raw_path.read_text())
+          raw = json.loads(Path(f"data/outputs/dmi_release_{period}.json").read_text())
           raw_summary = raw["summary_metrics"]
           raw_metrics = {
               "dmi_median": raw_summary["dmi_median"],
@@ -179,194 +348,133 @@ jobs:
               "least_pressured_group": raw_summary["least_pressured_group"],
               "unemployment": raw["dmi_by_group"][0]["slack"],
           }
-
-          # Guard against the original silent-zero bug: spread must match a non-zero
-          # raw spread; tilt must agree in sign with raw tilt.
-          if raw_metrics["income_pressure_spread"] <= 0:
-              print(f"ERROR: raw income_pressure_spread is {raw_metrics['income_pressure_spread']}; expected positive.")
-              sys.exit(1)
-
-          def check_manifest(manifest_path: Path, label: str) -> int:
-              manifest = json.loads(manifest_path.read_text())
-              entries = [r for r in manifest["releases"] if r["release_id"] == period]
+          if raw_metrics["income_pressure_spread"] < 0:
+              print("ERROR: negative spread"); sys.exit(1)
+          def check(mp, label):
+              m = json.loads(Path(mp).read_text())
+              entries = [r for r in m["releases"] if r["release_id"] == period]
               if not entries:
-                  print(f"ERROR: {label} has no entry for {period}.")
-                  return 1
-              entry_metrics = entries[0]["metrics"]
-              errs = 0
-              for key in REQUIRED_METRICS:
-                  if key not in entry_metrics:
-                      print(f"ERROR: {label} entry {period} missing metric '{key}'.")
-                      errs += 1
-                      continue
-                  manifest_val = entry_metrics[key]
-                  raw_val = raw_metrics[key]
-                  if isinstance(raw_val, str):
-                      if manifest_val != raw_val:
-                          print(f"ERROR: {label} entry {period} metric '{key}': manifest={manifest_val!r}, raw={raw_val!r}")
-                          errs += 1
+                  print(f"ERROR: {label} missing entry for {period}"); return 1
+              em = entries[0]["metrics"]; errs = 0
+              for k, raw_v in raw_metrics.items():
+                  mv = em.get(k)
+                  if isinstance(raw_v, str):
+                      if mv != raw_v:
+                          print(f"ERROR {label} {k}: {mv!r} vs {raw_v!r}"); errs += 1
                   else:
-                      if abs(float(manifest_val) - float(raw_val)) > NUMERIC_TOL:
-                          print(f"ERROR: {label} entry {period} metric '{key}': manifest={manifest_val}, raw={raw_val}")
-                          errs += 1
+                      if abs(float(mv) - float(raw_v)) > 1e-6:
+                          print(f"ERROR {label} {k}: {mv} vs {raw_v}"); errs += 1
               return errs
-
-          errs = 0
-          errs += check_manifest(releases_path, "releases.json")
-          errs += check_manifest(latest_path, "latest.json")
-
-          if errs:
-              print(f"❌ Sanity check failed with {errs} mismatch(es).")
-              sys.exit(1)
-          print("✅ Sanity check passed: manifest metrics match raw release.")
+          errs = check("data/outputs/releases.json", "releases.json")
+          errs += check("data/outputs/latest.json", "latest.json")
+          sys.exit(1 if errs else 0)
           PY
 
-      # =========================================
-      # DEPLOYMENT TO IFASTNET (THIN MONTHLY DEPLOY)
-      # =========================================
-
-      - name: Prepare deployment package
+      - name: Build local deployment candidate (never deployed here)
         run: |
-          echo "📦 Preparing deployment package (thin monthly deploy)..."
-          PERIOD="${{ steps.period.outputs.period }}"
-
-          # Create deploy directory structure
-          mkdir -p deploy/data/outputs/published
-          mkdir -p deploy/data/outputs/releases
-
-          # The monthly workflow deploys /deploy.
-          # Keep the deployed dashboard shell aligned with the canonical source located in the 'web' directory
-          cp web/dashboard.html deploy/dashboard.html
-
-          # Refresh the health endpoint from the just-generated workspace copy
-          cp web/health.json deploy/health.json
-
-          # Refresh release manifests used by the site and by manual deployments
-          cp data/outputs/latest.json deploy/data/outputs/
-          cp data/outputs/releases.json deploy/data/outputs/
-          cp data/outputs/specifications.json deploy/data/outputs/
-
-          # Copy release data files for THIS PERIOD only
-          cp data/outputs/dmi_release_"$PERIOD"*.json deploy/data/outputs/
-          cp data/outputs/qa_report_"$PERIOD"*.json deploy/data/outputs/
-          cp data/outputs/dmi-"$PERIOD"*.csv deploy/data/outputs/ || true
-          cp data/outputs/dmi-"$PERIOD"*.parquet deploy/data/outputs/ || true
-
-          # Copy release notes
-          cp data/outputs/releases/"$PERIOD".html deploy/data/outputs/releases/
-
-          # Copy published timeseries / lightweight published assets
-          # IMPORTANT: exclude historical from routine monthly deploys
-          rsync -a --exclude 'historical/' data/outputs/published/ deploy/data/outputs/published/
-
-          # List deployment contents
-          echo "📁 Deployment package contents:"
-          find deploy -type f | sed -n '1,80p'
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.IFASTNET_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 1394 ${{ secrets.IFASTNET_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Deploy to iFastNet via rsync
-        run: |
-          rsync -avz --progress \
-            -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
-            ./deploy/ \
-            ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:/home/agiraces/dmianalysis/
-
-      - name: Deploy new historical file only (optional)
-        run: |
-          PERIOD="${{ steps.period.outputs.period }}"
-          HIST_LOCAL="data/outputs/published/historical/dmi_release_${PERIOD}.json"
-          HIST_REMOTE="/home/agiraces/dmianalysis/data/outputs/published/historical/"
-
-          if [ -f "$HIST_LOCAL" ]; then
-            echo "📦 Uploading historical delta: $HIST_LOCAL"
-            rsync -avz \
-              -e "ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=no" \
-              "$HIST_LOCAL" \
-              ${{ secrets.IFASTNET_SSH_USER }}@${{ secrets.IFASTNET_SSH_HOST }}:"$HIST_REMOTE"
+          # §4/§5: builds and verifies the deployment tree LOCALLY inside
+          # the runner. Nothing here talks to the live site.
+          #
+          # In prepare_release mode the finalization step above already
+          # rebuilt ./deploy/ as part of the published set, so this is a
+          # verification pass over that tree. In validate mode nothing
+          # may be published, so the candidate is built into a scratch
+          # directory and the committed staging tree is left untouched.
+          if [ "${{ steps.mode.outputs.mode }}" = "prepare_release" ]; then
+            python -m scripts.prepare_deployment --output-dir deploy --verify
+            echo "CANDIDATE_DIR=deploy" >> "$GITHUB_ENV"
           else
-            echo "ℹ️ No historical delta found for ${PERIOD}; skipping."
+            CANDIDATE="$RUNNER_TEMP/dmi-deploy-candidate"
+            rm -rf "$CANDIDATE"
+            python -m scripts.prepare_deployment --output-dir "$CANDIDATE" --verify
+            echo "CANDIDATE_DIR=$CANDIDATE" >> "$GITHUB_ENV"
           fi
 
-      - name: Deployment summary
+      - name: Confirm committed deployment tree matches a fresh build
         run: |
-          PERIOD="${{ steps.period.outputs.period }}"
-          echo "🚀 Deployment complete!"
-          echo "   Dashboard: https://dmianalysis.org/dashboard.html"
-          echo "   Health:    https://dmianalysis.org/health.json"
-          echo "   Data (baseline):   https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}.json"
-          echo "   Data (slack_plus): https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_slack_plus.json"
-          echo "   Data (core):       https://dmianalysis.org/data/outputs/dmi_release_${PERIOD}_core.json"
+          # §8: the committed staging tree must equal a fresh verified
+          # build byte-for-byte. Checked in every mode.
+          FRESH="$RUNNER_TEMP/dmi-deploy-fresh"
+          rm -rf "$FRESH"
+          python -m scripts.prepare_deployment --output-dir "$FRESH" --verify
+          diff -r deploy "$FRESH"
+          echo "committed deploy/ is byte-identical to a fresh build"
 
+      - name: Show deployment candidate summary
+        run: |
+          echo "Deployment candidate files:"
+          find "$CANDIDATE_DIR" -type f | wc -l
+          find "$CANDIDATE_DIR" -type f | sed -n '1,80p'
+
+      # -------- PR creation: prepare_release mode only, no auto-merge --------
 
       - name: Ensure workflow files are not included in release PR
+        if: steps.mode.outputs.mode == 'prepare_release'
         run: |
           git restore --source=HEAD --staged --worktree .github/workflows || true
 
-      - name: Create Pull Request
+      - name: Create Release PR (no deployment)
         id: create-pr
+        if: steps.mode.outputs.mode == 'prepare_release'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
             Add DMI release for ${{ steps.period.outputs.period }}
 
-            - DMI computed for all quintiles
-            - Baseline robustness variant generated
-            - Slack-plus robustness variant generated
-            - Core robustness variant generated
-            - QA validation passed
+            - Baseline (U-3, headline CPI) computed
+            - Slack-Plus (U-6, headline CPI) computed
+            - QA passed
+            - Deployment candidate built and verified locally
+            - NOT DEPLOYED
           branch: release/${{ steps.period.outputs.period }}
           branch-suffix: timestamp
-          title: 'DMI Release: ${{ steps.period.outputs.period }}'
+          title: 'DMI Release: ${{ steps.period.outputs.period }} (not deployed)'
           body: |
             ## DMI Release for ${{ steps.period.outputs.period }}
-            
-            **Automated monthly computation**
-            
-            ### Summary
-            - **Reference Period**: ${{ steps.period.outputs.period }}
-            - **DMI Results (baseline)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}.json`
-            - **DMI Results (slack_plus)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json`
-            - **DMI Results (core)**: `data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json`
-            - **QA (baseline)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json`
-            - **QA (slack_plus)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json`
-            - **QA (core)**: `data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json`
-            
-            ### Files Changed
+
+            Automated monthly preparation (two-spec pipeline: Baseline +
+            Slack-Plus). This PR contains the computed artifacts and a
+            locally verified deployment candidate.
+
+            **This PR does NOT deploy to the live site.** Deployment is
+            performed by a separate post-merge workflow
+            (`deploy_production.yml`) after this PR is reviewed and
+            merged to `main`.
+
+            ### Artifacts
             - `data/outputs/dmi_release_${{ steps.period.outputs.period }}.json`
             - `data/outputs/dmi_release_${{ steps.period.outputs.period }}_slack_plus.json`
-            - `data/outputs/dmi_release_${{ steps.period.outputs.period }}_core.json`
             - `data/outputs/qa_report_${{ steps.period.outputs.period }}_baseline.json`
             - `data/outputs/qa_report_${{ steps.period.outputs.period }}_slack_plus.json`
-            - `data/outputs/qa_report_${{ steps.period.outputs.period }}_core.json`
             - `data/outputs/specifications.json`
-            
-            ### Next Steps
-            1. Review baseline vs slack_plus vs core for reasonableness
-            2. Check QA warnings (especially weights vintage)
-            3. Approve and merge to update repository
-            
-            > ✅ **Website automatically updated**: dmianalysis.org now shows data for ${{ steps.period.outputs.period }}
-            
-            ---
-            *This PR was automatically created by the Monthly DMI workflow*
-            
+            - `data/outputs/releases.json`
+            - `data/outputs/latest.json`
+            - `data/outputs/releases/${{ steps.period.outputs.period }}.html`
+
+            ### Reviewer checklist
+            - [ ] Baseline vs Slack-Plus values reasonable.
+            - [ ] QA warnings (weights vintage etc.) triaged.
+            - [ ] `deploy/` tree in the workflow log lists all expected
+                  endpoints (releases, latest, specifications, health,
+                  timeseries, raw baseline + slack_plus).
+            - [ ] No Core, `_u6`, or `_with_ci` artifacts staged.
+            - [ ] Merge only after independent review. **This PR is
+                  never auto-merged.**
+
+            After merge, the post-merge deployment workflow will rebuild
+            staging from the merged commit and push to iFastNet under
+            its own gates.
+
           labels: |
             automated
             release
+            not-deployed
           add-paths: |
             data/outputs/
             data/outputs/published/
             web/health.json
+            deploy/
 
-      - name: Auto-merge release PR
-        if: steps.create-pr.outputs.pull-request-number
-        run: gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --merge --delete-branch
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # §1: NO deploy steps, NO ssh-keyscan, NO rsync, NO auto-merge.
+      # Deployment lives in .github/workflows/deploy_production.yml.

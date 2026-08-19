@@ -11,6 +11,12 @@ Combines:
 import sys
 import json
 from pathlib import Path
+
+from scripts.release_evidence import (  # §5: single authority
+    OPERATIONAL_SPECS,
+    build_spec_urls,
+    release_note_url,
+)
 from datetime import datetime
 from typing import Optional
 
@@ -24,6 +30,7 @@ from dmi_calculator.core import (
     validate_contributions_sum_to_total
 )
 from dmi_pipeline.agents.qa_validator import generate_qa_report, print_qa_summary
+from scripts.schema_versions import RELEASES_SCHEMA_VERSION
 
 
 # Methodology version (also written to web/health.json without the leading 'v')
@@ -263,7 +270,7 @@ def compute_dmi_for_period(
         alpha: Inflation vs slack weight (default: 0.5)
         scale_factor: DMI scaling factor (default: 2.0)
         weights_year: year weights were computed (default: 2023)
-        spec: specification (baseline, slack-plus or core)
+        spec: specification (baseline or slack_plus)
     
     Returns:
         Dictionary with DMI results
@@ -381,17 +388,24 @@ def generate_release_note_html(
     reference_period: str,
     metrics: dict,
     summary: str = "",
-    spec: str="baseline",
-    slack_measure: str="U-3",
+    spec: str = "baseline",
+    slack_measure: str = "U-3",
     specifications: Optional[dict] = None,
     published_at: Optional[str] = None,
 ) -> str:
     """Generate HTML release note for the current release.
 
-    ``specifications`` is supplied only after all three published
-    specifications have been computed.  Keeping it optional preserves the
-    legacy single-spec command while allowing the monthly release workflow to
-    defer the public note until the robustness assessment is complete.
+    Under §4 the release note is a *shared* per-period document — it is
+    linked from the top-level `release_note` field of each release
+    entry, not from any single spec. The generator therefore:
+
+    - Never synthesizes rows for specifications that are not present in
+      the supplied `specifications` manifest. Historical baseline-only
+      periods produce a single-row robustness table (or none, if no
+      manifest is supplied). Core is never rendered under any
+      circumstance.
+    - Titles the note by period only (`DMI Release: YYYY-MM`), not by a
+      per-spec label such as `YYYY-MM-baseline`.
     """
     # Parse reference period to human-readable format
     year, month = reference_period.split('-')
@@ -416,10 +430,15 @@ def generate_release_note_html(
         spec_labels = {
             "baseline": "Baseline (U-3, headline CPI)",
             "slack_plus": "Slack+ (U-6, headline CPI)",
-            "core": "Core (U-3, core CPI)",
         }
         rows = []
-        for spec_id in ("baseline", "slack_plus", "core"):
+        # Only render rows for specs that are actually present in the
+        # manifest. Never fabricate a row for a spec (e.g. slack_plus for
+        # a historical baseline-only period, or the withdrawn Core spec)
+        # that was not actually computed for this reference period.
+        for spec_id in ("baseline", "slack_plus"):
+            if spec_id not in specs_by_id:
+                continue
             spec_metrics = specs_by_id[spec_id]["metrics"]
             measure = str(spec_metrics["slack_measure"]).upper()
             measure = {"U3": "U-3", "U6": "U-6"}.get(measure, measure)
@@ -448,12 +467,22 @@ def generate_release_note_html(
         if not flags_consistent:
             warning_html = """    <p class="robustness-warning" role="alert">
         <strong>Warning:</strong> The distributional pattern or highest-pressure
-        income group is not consistent across all three specifications.
+        income group is not consistent across the published specifications.
     </p>
 """
 
-        robustness_html = f"""    <h2>Robustness across specifications</h2>
-{warning_html}
+        # If only baseline is present, the "robustness across specifications"
+        # framing is misleading (there is only one specification for this
+        # period). Label it accordingly and omit the robustness warning.
+        section_heading = (
+            "Robustness across specifications"
+            if len(rows) > 1
+            else "Specification"
+        )
+        section_warning = warning_html if len(rows) > 1 else ""
+
+        robustness_html = f"""    <h2>{section_heading}</h2>
+{section_warning}
     <div class="table-wrap">
         <table>
             <thead>
@@ -538,7 +567,7 @@ def generate_release_note_html(
     </style>
 </head>
 <body>
-    <h1>DMI Release: {reference_period}-{spec}</h1>
+    <h1>DMI Release: {reference_period}</h1>
     <p><strong>Data Through:</strong> {data_through}</p>
     <p><strong>Published:</strong> {published_at or datetime.now().strftime('%Y-%m-%d')}</p>
 
@@ -627,25 +656,26 @@ def update_releases_json(
     month_name = months[int(month) - 1]
     data_through_label = f"{month_name} {year}"
 
-    # Only baseline gets a release_note link. The released note is
-    # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus/core was misleading; the WP plugin
-    # gracefully skips the link when the field is absent.
-    spec_urls = {
-        "baseline": {
-            "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-            "release_note": f"/data/outputs/releases/{reference_period}.html",
-        },
-        "slack_plus": {
-            "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-        "core": {
-            "csv": f"/data/outputs/dmi-{reference_period}-core.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-core.parquet",
-        },
-    }
+    # `release_note` is shared across specifications (the distributional
+    # summary is spec-agnostic) and lives at the top of the release entry
+    # per releases.schema.json 3.0.0. It must not be nested inside any
+    # spec_urls block.
+    # §5: evidence-based, not literal. The previous version emitted BOTH
+    # specifications unconditionally as f-strings, so a manifest could
+    # advertise a Slack-Plus CSV that was never produced — a URL that
+    # 404s on the live site. `build_spec_urls` emits a specification only
+    # when its raw artifact exists, parses, validates against
+    # dmi_output.schema.json, and declares the matching reference period
+    # and specification identity.
+    #
+    # Both operational specs are REQUIRED here: these writers publish the
+    # current release, and a current release missing either spec must
+    # fail finalization rather than create partial public state.
+    spec_urls = build_spec_urls(
+        reference_period,
+        Path("data/outputs"),
+        require=OPERATIONAL_SPECS,
+    )
 
     if dashboard_url:
         for spec_key in spec_urls:
@@ -663,6 +693,7 @@ def update_releases_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
+        "release_note": release_note_url(reference_period),
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],
@@ -686,7 +717,7 @@ def update_releases_json(
     releases.insert(0, new_release)
 
     releases_manifest = {
-        "schema_version": "2.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.now().isoformat() + "Z",
         "current_release_id": reference_period,
         "releases": releases
@@ -719,25 +750,24 @@ def update_latest_json(
     month_name = months[int(month) - 1]
     data_through_label = f"{month_name} {year}"
 
-    # Only baseline gets a release_note link. The released note is
-    # spec-agnostic (driven by the robust distributional pattern), so
-    # advertising it on slack_plus/core was misleading; the WP plugin
-    # gracefully skips the link when the field is absent.
-    spec_urls = {
-        "baseline": {
-            "csv": f"/data/outputs/dmi-{reference_period}-baseline.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-baseline.parquet",
-            "release_note": f"/data/outputs/releases/{reference_period}.html",
-        },
-        "slack_plus": {
-            "csv": f"/data/outputs/dmi-{reference_period}-slack_plus.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-slack_plus.parquet",
-        },
-        "core": {
-            "csv": f"/data/outputs/dmi-{reference_period}-core.csv",
-            "parquet": f"/data/outputs/dmi-{reference_period}-core.parquet",
-        },
-    }
+    # `release_note` is shared across specifications and lives at the top
+    # of the release entry per releases.schema.json 3.0.0.
+    # §5: evidence-based, not literal. The previous version emitted BOTH
+    # specifications unconditionally as f-strings, so a manifest could
+    # advertise a Slack-Plus CSV that was never produced — a URL that
+    # 404s on the live site. `build_spec_urls` emits a specification only
+    # when its raw artifact exists, parses, validates against
+    # dmi_output.schema.json, and declares the matching reference period
+    # and specification identity.
+    #
+    # Both operational specs are REQUIRED here: these writers publish the
+    # current release, and a current release missing either spec must
+    # fail finalization rather than create partial public state.
+    spec_urls = build_spec_urls(
+        reference_period,
+        Path("data/outputs"),
+        require=OPERATIONAL_SPECS,
+    )
 
     if dashboard_url:
         for spec_key in spec_urls:
@@ -754,6 +784,7 @@ def update_latest_json(
         "methodology_version": methodology_version,
         "summary": summary,
         "summary_facts": summary_facts,
+        "release_note": release_note_url(reference_period),
         "spec_urls": spec_urls,
         "metrics": {
             "dmi_median": metrics['dmi_median'],
@@ -769,7 +800,7 @@ def update_latest_json(
         latest_release["notes"] = notes
 
     latest_manifest = {
-        "schema_version": "2.0.0",
+        "schema_version": RELEASES_SCHEMA_VERSION,
         "generated_at": datetime.now().isoformat() + "Z",
         "current_release_id": reference_period,
         "releases": [latest_release]
@@ -783,7 +814,16 @@ def update_latest_json(
 
 
 def update_health_json(reference_period: str):
-    """Update web/health.json with current release information."""
+    """Update web/health.json with current release information.
+
+    §8: after all updates, the endpoints block is passed through
+    ``sanitize_health_endpoints`` so any retired key present on disk
+    (e.g. ``latest_core``, ``latest_u6``) is stripped before the file
+    is written back. This defeats the round-trip resurrection failure
+    mode where a stale checkout re-blessed retired URLs.
+    """
+    from scripts.health_endpoints import sanitize_health_endpoints
+
     health_path = Path("web/health.json")
 
     # Read current health.json
@@ -803,19 +843,22 @@ def update_health_json(reference_period: str):
     # Update current release endpoints
     health["endpoints"]["latest"] = f"/data/outputs/dmi_release_{reference_period}.json"
     health["endpoints"]["latest_slack_plus"] = f"/data/outputs/dmi_release_{reference_period}_slack_plus.json"
-    health["endpoints"]["latest_u6"] = health["endpoints"]["latest_slack_plus"]    
-    health["endpoints"]["latest_core"] = f"/data/outputs/dmi_release_{reference_period}_core.json"
 
-    # Optional: only include latest_with_ci if current-period file exists
-    latest_with_ci_path = Path(f"data/outputs/dmi_release_{reference_period}_with_ci.json")
-    if latest_with_ci_path.exists():
-        health["endpoints"]["latest_with_ci"] = f"/data/outputs/dmi_release_{reference_period}_with_ci.json"
-    else:
-        health["endpoints"].pop("latest_with_ci", None)
+    # Round-3 §7: `latest_with_ci` was retired. The v0.1.12 published
+    # contract is Baseline + Slack-Plus only; a conditionally-emitted
+    # CI endpoint driven by on-disk file presence was itself the
+    # defect. `sanitize_health_endpoints` below strips it if a stale
+    # checkout carried it in.
 
     # Update observations count if we can determine it
     if "observations_count" not in health:
         health["observations_count"] = 895  # Default based on recent data
+
+    # §8: strip any retired / unknown endpoint keys that the on-disk
+    # health.json may have brought in via a stale checkout. This is the
+    # single choke-point that prevents `latest_core` / `latest_u6` /
+    # `timeseries` from resurfacing after each release.
+    sanitize_health_endpoints(health)
 
     with open(health_path, "w") as f:
         json.dump(health, f, indent=2)

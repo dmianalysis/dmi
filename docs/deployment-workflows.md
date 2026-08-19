@@ -6,15 +6,21 @@ This project uses **two separate deployment workflows** because they update diff
 **Purpose:** compute and publish the monthly DMI release data.
 
 ### What it does
-- computes the monthly **Baseline**, **Slack-Plus**, and **Core** specifications
-- runs QA validation on all specifications
+- computes the monthly **Baseline** and **Slack-Plus** specifications.
+  The previously advertised **Core** specification was withdrawn in v0.1.12
+  (see [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md));
+  the workflow no longer computes it, and a guard rejects any release
+  advertising a `*_core.*` URL.
+- runs QA validation on both specifications
 - updates:
   - `data/outputs/`
   - `data/outputs/published/`
-  - `web/health.json`
+  - `web/health.json` (endpoint keys are re-sanitised against an allow-list, §8)
   - release manifests (`latest.json`, `releases.json`, `specifications.json`)
-- deploys the updated data and dashboard assets to iFastNet
-- creates the monthly release PR
+- deploys the updated data and dashboard assets to iFastNet **only when
+  `dry_run=false` is set explicitly** (§6; the default is dry-run)
+- creates the monthly release PR **for manual review** (auto-merge was
+  removed in §6)
 
 ### What it should not do
 - update WordPress plugin code
@@ -74,7 +80,8 @@ Start with:
 - `monthly_dmi.yml`
 
 Check:
-- Baseline / Slack-Plus / Core outputs
+- Baseline / Slack-Plus outputs (Core is withdrawn — no `*_core.*`
+  artifact is expected; if one appears, the deploy guard will reject it)
 - QA reports
 - `latest.json`
 - `health.json`
@@ -142,25 +149,29 @@ Check in this order:
 1. `health.json`
 2. `latest.json`
 3. direct release files such as:
-   - `dmi_release_YYYY-MM.json`
-   - `dmi_release_YYYY-MM_slack_plus.json`
-   - `dmi_release_YYYY-MM_core.json`
+   - `dmi_release_YYYY-MM.json` (baseline)
+   - `dmi_release_YYYY-MM_slack_plus.json` (Slack-Plus companion)
 
 If the raw files are current but the page is stale, the issue is usually:
 - WordPress page caching
 - plugin rendering logic
 - browser cache
 
-### 2) Baseline updates, but Slack-Plus or Core is missing
+### 2) Baseline updates, but Slack-Plus is missing
 Start with:
 - `monthly_dmi.yml`
 
 Check:
-- whether the spec-specific compute step ran
+- whether the Slack-Plus compute step ran
 - whether the expected file was written:
   - `dmi_release_YYYY-MM_slack_plus.json`
-  - `dmi_release_YYYY-MM_core.json`
 - whether the corresponding QA report exists
+
+> Note (v0.1.12): a "Core" companion was previously advertised but has
+> been withdrawn — see `docs/repair/CORE_WITHDRAWAL.md`. No
+> `dmi_release_*_core.json` file is written by the current pipeline, and
+> the workflows include a guard that fails deployment if such a URL
+> appears in `releases.json`.
 
 ### 3) Slack-Plus fails for a new month
 Likely cause:
@@ -181,7 +192,12 @@ Most likely cause:
 Update the release plugin to support:
 - `spec_urls.baseline`
 - `spec_urls.slack_plus`
-- `spec_urls.core`
+
+`spec_urls.core` must **not** appear on any v0.1.12 release — Core was
+withdrawn (see [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md)).
+A plugin that still renders `spec_urls.core` will silently point at a
+404 (or, worse, a stale historical file). Remove any `core` branch from
+the plugin at the same time as adding `slack_plus`.
 
 ### 6) Weights vintage warning appears
 This is expected if the approved weights year lags the current reference year.

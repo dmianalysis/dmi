@@ -1,0 +1,338 @@
+name: PR CI
+
+# ROUND-4 REPAIR (§7). Read-only continuous integration for pull
+# requests.
+#
+# This workflow has `contents: read` and nothing else. It holds no
+# deployment authority, no production secrets, and no write permission of
+# any kind, so a pull request from any source can be checked without
+# granting it the ability to change anything.
+#
+# Everything here runs offline. The BLS-network tests skip for a
+# documented reason and the run reports how many skipped — a skipped test
+# is never counted as a pass.
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# §7: read-only. Do not add write scopes to this workflow; deployment
+# belongs to deploy_production.yml, which is triggered post-merge.
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          # Need the base commit too, for `git diff --check` against it.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ---------------- test suite ----------------
+
+      - name: Full test suite
+        run: |
+          # -rs lists every skip with its reason, so skipped tests are
+          # visible in the log rather than silently absorbed into a pass.
+          python -m pytest -q -rs
+
+      # ---------------- syntax and serialization ----------------
+
+      - name: Python compilation
+        run: |
+          python -m compileall -q scripts tests dmi_pipeline dmi_calculator dmi_web
+
+      - name: Python 3.9 syntax compatibility
+        run: |
+          # The deployment target runs 3.9. Parse every module under the
+          # 3.9 feature set so a 3.10+ construct cannot reach production
+          # via a newer local interpreter.
+          python - <<'PY'
+          import ast, pathlib, sys
+          if sys.version_info[:2] != (3, 9):
+              print(f"NOTE: interpreter is {sys.version_info[:2]}, expected 3.9")
+          roots = ("scripts", "tests", "dmi_pipeline", "dmi_calculator", "dmi_web")
+          bad = []
+          count = 0
+          for root in roots:
+              for path in sorted(pathlib.Path(root).rglob("*.py")):
+                  count += 1
+                  try:
+                      ast.parse(path.read_text(), filename=str(path),
+                                feature_version=(3, 9))
+                  except SyntaxError as exc:
+                      bad.append(f"{path}: {exc}")
+          print(f"parsed {count} module(s) against Python 3.9")
+          for item in bad:
+              print(f"  FAIL {item}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: JSON parsing (every tracked JSON file)
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys
+          files = subprocess.run(
+              ["git", "ls-files", "*.json"], capture_output=True, text=True
+          ).stdout.split()
+          bad = []
+          for f in files:
+              try:
+                  json.load(open(f))
+              except Exception as exc:
+                  bad.append(f"{f}: {exc}")
+          print(f"parsed {len(files)} tracked JSON file(s); failures: {len(bad)}")
+          for item in bad[:20]:
+              print(f"  FAIL {item}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Workflow YAML and CITATION.cff parsing
+        run: |
+          python - <<'PY'
+          import glob, sys, yaml
+          bad = 0
+          for f in sorted(glob.glob(".github/workflows/*.yml")) + ["CITATION.cff"]:
+              try:
+                  yaml.safe_load(open(f))
+                  print(f"  OK   {f}")
+              except Exception as exc:
+                  print(f"  FAIL {f}: {exc}")
+                  bad = 1
+          sys.exit(bad)
+          PY
+
+      # ---------------- schema validation ----------------
+
+      - name: Schema validation of canonical public JSON
+        run: |
+          python - <<'PY'
+          import glob, json, sys
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          S = Path("schemas")
+
+          def V(name):
+              schema = json.loads((S / name).read_text())
+              Draft202012Validator.check_schema(schema)
+              return Draft202012Validator(schema)
+
+          pairs = []
+          pairs += [(V("releases.schema.json"), f) for f in
+                    ("data/outputs/releases.json", "data/outputs/latest.json")]
+          pairs += [(V("specifications.schema.json"),
+                     "data/outputs/specifications.json")]
+          out = V("dmi_output.schema.json")
+          pairs += [(out, f) for f in sorted(glob.glob("data/outputs/dmi_release_*.json"))]
+          qa = V("qa_report.schema.json")
+          pairs += [(qa, f) for f in sorted(glob.glob("data/outputs/qa_report_*.json"))]
+          pairs += [(V("dmi_timeseries_schema.json"),
+                     "data/outputs/published/dmi_timeseries.json")]
+
+          bad = 0
+          for validator, path in pairs:
+              errors = sorted(validator.iter_errors(json.load(open(path))),
+                              key=lambda e: list(e.absolute_path))
+              if errors:
+                  bad += 1
+                  print(f"  FAIL {path}")
+                  for err in errors[:3]:
+                      print(f"        {list(err.absolute_path)}: {err.message}")
+          print(f"validated {len(pairs)} instance(s); failures: {bad}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: QA outcome policy for the current release
+        run: |
+          # §1: schema validity is not an outcome. Enforce the policy.
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          from scripts.release_policy import evaluate_qa_report
+
+          period = json.load(open("data/outputs/latest.json"))["releases"][0]["release_id"]
+          failed = 0
+          for spec in ("baseline", "slack_plus"):
+              problems, warnings = evaluate_qa_report(
+                  Path(f"data/outputs/qa_report_{period}_{spec}.json"),
+                  expected_period=period,
+                  expected_spec=spec,
+                  raw_artifact_path=Path(
+                      f"data/outputs/dmi_release_{period}"
+                      f"{'_slack_plus' if spec == 'slack_plus' else ''}.json"
+                  ),
+              )
+              for warning in warnings:
+                  print(f"  WARNING {warning}")
+              for problem in problems:
+                  print(f"  FAIL {problem}")
+              failed += len(problems)
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: Release gates (offline, publishes nothing)
+        run: |
+          # §1: run the real finalization gates against committed
+          # artifacts. --dry-run means nothing is written.
+          PERIOD=$(python -c "import json; print(json.load(open('data/outputs/latest.json'))['releases'][0]['release_id'])")
+          python -m scripts.finalize_release "$PERIOD" --dry-run
+
+      # ---------------- deterministic deployment ----------------
+
+      - name: Deterministic build, twice, into temporary directories
+        run: |
+          A="$RUNNER_TEMP/build-a"
+          B="$RUNNER_TEMP/build-b"
+          rm -rf "$A" "$B"
+          python -m scripts.prepare_deployment --output-dir "$A" --verify
+          python -m scripts.prepare_deployment --output-dir "$B" --verify
+          diff -r "$A" "$B"
+          echo "second build is byte-identical to the first"
+          echo "build file count: $(find "$A" -type f | wc -l)"
+
+      - name: Fresh build matches committed deploy/
+        run: |
+          FRESH="$RUNNER_TEMP/build-fresh"
+          rm -rf "$FRESH"
+          python -m scripts.prepare_deployment --output-dir "$FRESH" --verify
+          diff -r deploy "$FRESH"
+          echo "committed deploy/ is byte-identical to a fresh build"
+
+      - name: WordPress plugin component builds deterministically
+        run: |
+          A="$RUNNER_TEMP/wp-a"
+          B="$RUNNER_TEMP/wp-b"
+          rm -rf "$A" "$B"
+          python -m scripts.prepare_deployment --component wp-plugins --output-dir "$A" --verify
+          python -m scripts.prepare_deployment --component wp-plugins --output-dir "$B" --verify
+          diff -r "$A" "$B"
+
+      # ---------------- repository hygiene ----------------
+
+      - name: git diff --check against the PR base
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-parse origin/main)
+          fi
+          git diff --check "$BASE"...HEAD
+          echo "no whitespace errors or conflict markers"
+
+      - name: Repository-relative Markdown link validation
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          EXCLUDED = {".git", "venv", ".venv", "node_modules", "__pycache__",
+                      ".pytest_cache", "dmi-v0.1.10-deployment"}
+          bad, checked = [], 0
+          for md in Path(".").rglob("*.md"):
+              if set(md.parts) & EXCLUDED:
+                  continue
+              for label, target in re.findall(
+                      r"\[([^\]]*)\]\(([^)]+)\)", md.read_text(errors="ignore")):
+                  t = target.split("#")[0].strip()
+                  if not t or t.startswith(
+                          ("http://", "https://", "mailto:", "file://", "//", "/")):
+                      continue
+                  checked += 1
+                  if not (md.parent / t).exists():
+                      bad.append(f"{md}: [{label}]({target})")
+          print(f"checked {checked} repo-relative link(s); broken: {len(bad)}")
+          for item in bad[:20]:
+              print(f"  FAIL {item}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      # ---------------- policy guards ----------------
+
+      - name: Deployment-authority guard
+        run: |
+          # §2: exactly one workflow may auto-deploy after a merge.
+          python - <<'PY'
+          import glob, sys, yaml
+          deployers = []
+          for f in sorted(glob.glob(".github/workflows/*.yml")):
+              doc = yaml.safe_load(open(f))
+              on = doc.get("on") or doc.get(True) or {}
+              if "push" not in on:
+                  continue
+              script = "\n".join(
+                  step.get("run", "")
+                  for job in (doc.get("jobs") or {}).values()
+                  for step in (job.get("steps") or [])
+              )
+              if "rsync" in script:
+                  deployers.append(f)
+          print(f"workflows with automatic production authority: {deployers}")
+          sys.exit(0 if deployers == [".github/workflows/deploy_production.yml"] else 1)
+          PY
+
+      - name: Pinned-SSH-trust guard
+        run: |
+          # §3: no deployment or destructive path may acquire host trust
+          # dynamically, and StrictHostKeyChecking must never be disabled.
+          #
+          # This invokes the dedicated test classes rather than
+          # re-implementing the rule as a grep. A shell grep cannot tell a
+          # docstring explaining why scanning is unsafe from an
+          # executable line that scans, so a duplicated weaker check would
+          # either miss real violations or flag its own documentation.
+          python -m pytest -q \
+            tests/test_pinned_host_keys.py \
+            "tests/test_monthly_workflow_safety.py::TestRepositoryWideStrictHostKeyChecking"
+
+      - name: Core-withdrawal and quarantine guard
+        run: |
+          # §17/§18: no Core artifact in any public surface, and the
+          # quarantined U-6 / with-CI files stay out of deployment.
+          FOUND=0
+          if grep -rlE '"core"|_core\.json|-core\.(csv|parquet)|latest_core' \
+               data/outputs/*.json web/health.json deploy/ 2>/dev/null; then
+            echo "FAIL Core reference in a public surface"; FOUND=1
+          fi
+          if find deploy -type f \( -iname '*core*' -o -iname '*_u6*' \
+               -o -iname '*_with_ci*' \) 2>/dev/null | grep -q .; then
+            echo "FAIL retired artifact staged for deployment"; FOUND=1
+          fi
+          QDIR="data/$(printf 'quarantine')/pre_v0.1.12"
+          if [ -e "deploy/$QDIR" ]; then
+            echo "FAIL quarantined tree reached deployment"; FOUND=1
+          fi
+          for f in "$QDIR/dmi_release_2024-11_u6.json" \
+                   "$QDIR/dmi_release_2024-11_with_ci.json"; do
+            [ -f "$f" ] || { echo "FAIL quarantined file missing: $f"; FOUND=1; }
+          done
+          [ "$FOUND" -eq 0 ] && echo "Core withdrawn; quarantine intact and undeployed"
+          exit $FOUND
+
+      - name: Frozen v0.1.10 archive is unchanged
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-parse origin/main)
+          fi
+          CHANGED=$(git diff --name-only "$BASE"...HEAD -- \
+            dmi-v0.1.10-deployment/ dmi-v0.1.10-deployment.zip | wc -l)
+          echo "frozen archive files changed: $CHANGED"
+          [ "$CHANGED" -eq 0 ]

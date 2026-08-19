@@ -1,35 +1,215 @@
 {
-  "schema_version": "1.1.0",
-  "generated_at": "2026-04-20T05:31:36.367352Z",
-  "current_release_id": "2026-03",
+  "schema_version": "3.0.0",
+  "generated_at": "2026-08-16T04:37:51.285319Z",
+  "current_release_id": "2026-07",
   "releases": [
     {
-      "release_id": "2026-03",
-      "data_through_label": "March 2026",
-      "published_at": "2026-04-20",
+      "release_id": "2026-07",
+      "data_through_label": "July 2026",
+      "published_at": "2026-08-15",
       "status": "current",
-      "methodology_version": "v0.1.11",
-      "summary": "Economic pressure rose sharply in March 2026. Higher-income households faced more pressure than lower-income households. The labor-market backdrop improved slightly, with unemployment edging down to 4.3%.",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure fell modestly in July 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.1%.",
       "summary_facts": {
         "lower_income_more_pressure": false,
         "higher_income_more_pressure": true,
         "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "median_delta_mom": -0.27678480117446824,
+        "stress_delta_mom": -0.28426364528287884,
+        "spread_delta_mom": -0.03776332871727739,
+        "tilt_delta_mom": 0.03259818953309512,
+        "unemployment_delta_mom": -0.10000000000000053,
+        "overall_direction": "fell_modestly",
+        "spread_direction": "spread_narrowed_slightly"
+      },
+      "release_note": "/data/outputs/releases/2026-07.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-07-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-07-slack_plus.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 7.516957462855907,
+        "dmi_stress": 7.552376716747651,
+        "income_pressure_spread": 0.18013808520687125,
+        "income_pressure_tilt": -0.16977719669806213,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "unemployment": 4.1
+      }
+    },
+    {
+      "release_id": "2026-06",
+      "data_through_label": "June 2026",
+      "published_at": "2026-07-15",
+      "status": "superseded",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure fell sharply in June 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed materially from the prior month.",
+      "summary_facts": {
+        "lower_income_more_pressure": false,
+        "higher_income_more_pressure": true,
+        "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "median_delta_mom": -0.7699137066476398,
+        "stress_delta_mom": -0.7948983601093422,
+        "spread_delta_mom": -0.13401679085898355,
+        "tilt_delta_mom": 0.14954281855197493,
+        "unemployment_delta_mom": -0.09999999999999964,
+        "overall_direction": "fell_sharply",
+        "spread_direction": "spread_narrowed_materially"
+      },
+      "release_note": "/data/outputs/releases/2026-06.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-06-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-06-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-06-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-06-slack_plus.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 7.793742264030375,
+        "dmi_stress": 7.83664036203053,
+        "income_pressure_spread": 0.21790141392414863,
+        "income_pressure_tilt": -0.20237538623115725,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "unemployment": 4.2
+      }
+    },
+    {
+      "release_id": "2026-05",
+      "data_through_label": "May 2026",
+      "published_at": "2026-06-16",
+      "status": "superseded",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure rose sharply in May 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread widened materially from the prior month.",
+      "summary_facts": {
+        "lower_income_more_pressure": false,
+        "higher_income_more_pressure": true,
+        "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q5",
+        "least_pressured_group": "Q1",
+        "median_delta_mom": 0.4157339689118569,
+        "stress_delta_mom": 0.4442710674748902,
+        "spread_delta_mom": 0.13142737175371444,
+        "tilt_delta_mom": -0.15651495674906712,
+        "unemployment_delta_mom": 0.0,
+        "overall_direction": "rose_sharply",
+        "spread_direction": "spread_widened_materially"
+      },
+      "release_note": "/data/outputs/releases/2026-05.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-05-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-05-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-05-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-05-slack_plus.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 8.563655970678015,
+        "dmi_stress": 8.631538722139872,
+        "income_pressure_spread": 0.3519182047831322,
+        "income_pressure_tilt": -0.3519182047831322,
+        "most_pressured_group": "Q5",
+        "least_pressured_group": "Q1",
+        "unemployment": 4.3
+      }
+    },
+    {
+      "release_id": "2026-04",
+      "data_through_label": "April 2026",
+      "published_at": "2026-05-16",
+      "status": "superseded",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure rose sharply in April 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread widened materially from the prior month.",
+      "summary_facts": {
+        "lower_income_more_pressure": false,
+        "higher_income_more_pressure": true,
+        "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "median_delta_mom": 0.6159374651889546,
+        "stress_delta_mom": 0.6187394744084687,
+        "spread_delta_mom": 0.10499596871100714,
+        "tilt_delta_mom": -0.1164520273949643,
+        "unemployment_delta_mom": 0.0,
+        "overall_direction": "rose_sharply",
+        "spread_direction": "spread_widened_materially"
+      },
+      "release_note": "/data/outputs/releases/2026-04.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-04-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-04-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-04-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-04-slack_plus.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 8.147922001766158,
+        "dmi_stress": 8.187267654664982,
+        "income_pressure_spread": 0.22049083302941774,
+        "income_pressure_tilt": -0.19540324803406506,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "unemployment": 4.3
+      }
+    },
+    {
+      "release_id": "2026-03",
+      "data_through_label": "March 2026",
+      "published_at": "2026-04-20",
+      "status": "superseded",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure rose sharply in March 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed materially from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.3%.",
+      "summary_facts": {
+        "lower_income_more_pressure": false,
+        "higher_income_more_pressure": true,
+        "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
         "median_delta_mom": 0.677922055066948,
         "stress_delta_mom": 0.558608320051734,
-        "gap_delta_mom": -0.35694367783469794,
+        "spread_delta_mom": -0.16249759287718657,
+        "tilt_delta_mom": -0.35694367783469794,
         "unemployment_delta_mom": -0.10000000000000053,
         "overall_direction": "rose_sharply",
-        "gap_direction": "gap_narrowed_materially"
+        "spread_direction": "spread_narrowed_materially"
       },
-      "urls": {
-        "csv": "/data/outputs/dmi-2026-03.csv",
-        "parquet": "/data/outputs/dmi-2026-03.parquet",
-        "release_note": "/data/outputs/releases/2026-03.html"
+      "release_note": "/data/outputs/releases/2026-03.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-03-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-03-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-03-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-03-slack_plus.parquet"
+        }
       },
       "metrics": {
         "dmi_median": 7.531984536577204,
         "dmi_stress": 7.568528180256513,
-        "income_pressure_gap": -0.07895122063910076,
+        "income_pressure_spread": 0.1154948643184106,
+        "income_pressure_tilt": -0.07895122063910076,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
         "unemployment": 4.3
       }
     },
@@ -38,29 +218,37 @@
       "data_through_label": "February 2026",
       "published_at": "2026-03-22",
       "status": "superseded",
-      "methodology_version": "v0.1.11",
-      "summary": "Economic pressure rose modestly in February 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Gap narrowed slightly from the prior month. The labor-market backdrop also softened slightly, with unemployment edging up to 4.4%.",
-      "urls": {
-        "csv": "/data/outputs/dmi-2026-02.csv",
-        "parquet": "/data/outputs/dmi-2026-02.parquet",
-        "release_note": "/data/outputs/releases/2026-02.html"
-      },
-      "metrics": {
-        "dmi_median": 6.8540624815102555,
-        "dmi_stress": 7.009919860204779,
-        "income_pressure_gap": 0.2779924571955972,
-        "unemployment": 4.4
-      },
+      "methodology_version": "legacy/unknown",
+      "summary": "Economic pressure rose modestly in February 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop also softened slightly, with unemployment edging up to 4.4%.",
       "summary_facts": {
         "lower_income_more_pressure": true,
         "higher_income_more_pressure": false,
         "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
         "median_delta_mom": 0.17096627861884528,
         "stress_delta_mom": 0.14980681985498112,
-        "gap_delta_mom": -0.01779117124347529,
+        "spread_delta_mom": -0.01779117124347529,
+        "tilt_delta_mom": -0.01779117124347529,
         "unemployment_delta_mom": 0.10000000000000053,
         "overall_direction": "rose_modestly",
-        "gap_direction": "gap_narrowed_slightly"
+        "spread_direction": "spread_narrowed_slightly"
+      },
+      "release_note": "/data/outputs/releases/2026-02.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-02.csv",
+          "parquet": "/data/outputs/dmi-2026-02.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 6.8540624815102555,
+        "dmi_stress": 7.009919860204779,
+        "income_pressure_spread": 0.2779924571955972,
+        "income_pressure_tilt": 0.2779924571955972,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
+        "unemployment": 4.4
       }
     },
     {
@@ -68,29 +256,37 @@
       "data_through_label": "January 2026",
       "published_at": "2026-02-15",
       "status": "superseded",
-      "methodology_version": "v0.1.11",
-      "summary": "Economic pressure fell sharply in January 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Gap widened slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.3%.",
-      "urls": {
-        "csv": "/data/outputs/dmi-2026-01.csv",
-        "parquet": "/data/outputs/dmi-2026-01.parquet",
-        "release_note": "/data/outputs/releases/2026-01.html"
-      },
-      "metrics": {
-        "dmi_median": 6.68309620289141,
-        "dmi_stress": 6.860113040349798,
-        "income_pressure_gap": 0.29578362843907247,
-        "unemployment": 4.3
-      },
+      "methodology_version": "legacy/unknown",
+      "summary": "Economic pressure fell sharply in January 2026. Lower-income households continued to face more pressure than higher-income households, and the Income Pressure Spread widened slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.3%.",
       "summary_facts": {
         "lower_income_more_pressure": true,
         "higher_income_more_pressure": false,
         "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
         "median_delta_mom": -0.37714993395722196,
         "stress_delta_mom": -0.32240759093625826,
-        "gap_delta_mom": 0.07946377604384214,
+        "spread_delta_mom": 0.07946377604384214,
+        "tilt_delta_mom": 0.07946377604384214,
         "unemployment_delta_mom": -0.10000000000000053,
         "overall_direction": "fell_sharply",
-        "gap_direction": "gap_widened_slightly"
+        "spread_direction": "spread_widened_slightly"
+      },
+      "release_note": "/data/outputs/releases/2026-01.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-01.csv",
+          "parquet": "/data/outputs/dmi-2026-01.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 6.68309620289141,
+        "dmi_stress": 6.860113040349798,
+        "income_pressure_spread": 0.29578362843907247,
+        "income_pressure_tilt": 0.29578362843907247,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
+        "unemployment": 4.3
       }
     },
     {
@@ -98,24 +294,31 @@
       "data_through_label": "December 2025",
       "published_at": "2026-01-16",
       "status": "superseded",
-      "methodology_version": "v0.1.11",
-      "summary": "The December 2025 release shows higher measured pressure for lower-income households than for higher-income households. The current dashboard reports a DMI Median of 7.06, a DMI Stress reading of 7.18, and an Income Pressure Gap of 0.22.",
-      "urls": {
-        "csv": "/data/outputs/dmi-2025-12.csv",
-        "parquet": "/data/outputs/dmi-2025-12.parquet",
-        "release_note": "/data/outputs/releases/2025-12.html"
-      },
-      "metrics": {
-        "dmi_median": 7.060246136848632,
-        "dmi_stress": 7.182520631286057,
-        "income_pressure_gap": 0.21631985239523033,
-        "unemployment": 4.4
-      },
+      "methodology_version": "legacy/unknown",
+      "summary": "The December 2025 release shows higher measured pressure for lower-income households than for higher-income households. The current dashboard reports a DMI Median of 7.06, a DMI Stress reading of 7.18, and an Income Pressure Spread of 0.22.",
       "summary_facts": {
         "lower_income_more_pressure": true,
         "higher_income_more_pressure": false,
         "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
         "overall_direction": "no_prior"
+      },
+      "release_note": "/data/outputs/releases/2025-12.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2025-12.csv",
+          "parquet": "/data/outputs/dmi-2025-12.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 7.060246136848632,
+        "dmi_stress": 7.182520631286057,
+        "income_pressure_spread": 0.21631985239523033,
+        "income_pressure_tilt": 0.21631985239523033,
+        "most_pressured_group": "Q1",
+        "least_pressured_group": "Q5",
+        "unemployment": 4.4
       }
     }
   ]

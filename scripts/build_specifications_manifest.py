@@ -5,7 +5,6 @@ Build public robustness/specifications manifest for the current DMI release.
 Reads:
 - data/outputs/dmi_release_YYYY-MM.json
 - data/outputs/dmi_release_YYYY-MM_slack_plus.json
-- data/outputs/dmi_release_YYYY-MM_core.json
 
 Writes:
 - data/outputs/specifications.json
@@ -17,8 +16,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from scripts.schema_versions import SPECIFICATIONS_SCHEMA_VERSION
 
-SPEC_ORDER = ["baseline", "slack_plus", "core"]
+
+SPEC_ORDER = ["baseline", "slack_plus"]
 
 SPEC_META = {
     "baseline": {
@@ -30,11 +31,6 @@ SPEC_META = {
         "label": "DMI Slack+",
         "summary": "Companion DMI using broader labor-market slack.",
         "suffix": "_slack_plus",
-    },
-    "core": {
-        "label": "DMI Core",
-        "summary": "Companion DMI using core inflation inputs.",
-        "suffix": "_core",
     },
 }
 
@@ -88,7 +84,7 @@ def build_notes(releases_by_spec: dict) -> tuple[dict, list[str]]:
     tilt_consistent = True
     stress_consistent = True
 
-    for spec_id in ("slack_plus", "core"):
+    for spec_id in ("slack_plus",):
         release = releases_by_spec[spec_id]
         if pressure_pattern(release) != baseline_pattern:
             tilt_consistent = False
@@ -119,7 +115,12 @@ def build_specifications_manifest(
     output_dir: Path = Path("data/outputs"),
     releases_by_spec: Optional[dict] = None,
 ) -> dict:
-    """Build the three-spec manifest, optionally from preloaded releases."""
+    """Build the specifications manifest, optionally from preloaded releases.
+
+    v0.1.12 publishes two operational specifications, Baseline and
+    Slack-Plus. The original design had three; Core is withdrawn (see
+    docs/repair/CORE_WITHDRAWAL.md) and `SPEC_ORDER` no longer contains it.
+    """
     if releases_by_spec is None:
         releases_by_spec = {}
         for spec_id in SPEC_ORDER:
@@ -143,7 +144,7 @@ def build_specifications_manifest(
     robustness_assessment, notes = build_notes(releases_by_spec)
 
     manifest = {
-        "schema_version": "0.2.0",
+        "schema_version": SPECIFICATIONS_SCHEMA_VERSION,
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "reference_period": reference_period,
         "headline_spec": "baseline",

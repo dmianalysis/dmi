@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.0.0",
-  "generated_at": "2026-08-15T10:42:13.765411Z",
+  "schema_version": "3.0.0",
+  "generated_at": "2026-08-16T04:37:51.285319Z",
   "current_release_id": "2026-07",
   "releases": [
     {
@@ -24,19 +24,15 @@
         "overall_direction": "fell_modestly",
         "spread_direction": "spread_narrowed_slightly"
       },
+      "release_note": "/data/outputs/releases/2026-07.html",
       "spec_urls": {
         "baseline": {
           "csv": "/data/outputs/dmi-2026-07-baseline.csv",
-          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet",
-          "release_note": "/data/outputs/releases/2026-07.html"
+          "parquet": "/data/outputs/dmi-2026-07-baseline.parquet"
         },
         "slack_plus": {
           "csv": "/data/outputs/dmi-2026-07-slack_plus.csv",
           "parquet": "/data/outputs/dmi-2026-07-slack_plus.parquet"
-        },
-        "core": {
-          "csv": "/data/outputs/dmi-2026-07-core.csv",
-          "parquet": "/data/outputs/dmi-2026-07-core.parquet"
         }
       },
       "metrics": {

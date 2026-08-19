@@ -43,7 +43,10 @@
   "summary_metrics": {
     "dmi_median": 7.531984536577204,
     "dmi_stress": 7.568528180256513,
-    "dmi_income_pressure_gap": -0.07895122063910076
+    "income_pressure_spread": 0.1154948643184106,
+    "income_pressure_tilt": -0.07895122063910076,
+    "most_pressured_group": "Q4",
+    "least_pressured_group": "Q1"
   },
   "inflation_contributions": [
     {

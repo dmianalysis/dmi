@@ -1,18 +1,22 @@
 {
-  "schema_version": "0.1.0",
-  "generated_at": "2026-04-20T05:31:37.411848Z",
-  "reference_period": "2026-03",
+  "schema_version": "0.3.0",
+  "generated_at": "2026-08-15T23:33:33.309895Z",
+  "reference_period": "2026-07",
   "headline_spec": "baseline",
   "specifications": [
     {
       "spec_id": "baseline",
       "label": "DMI Baseline",
       "summary": "Headline DMI using current inflation inputs and U-3 unemployment.",
-      "release_json": "/data/outputs/dmi_release_2026-03.json",
+      "release_json": "/data/outputs/dmi_release_2026-07.json",
       "metrics": {
-        "dmi_median": 7.531984536577204,
-        "dmi_stress": 7.568528180256513,
-        "income_pressure_gap": -0.07895122063910076,
+        "dmi_median": 7.516957462855907,
+        "dmi_stress": 7.552376716747651,
+        "income_pressure_spread": 0.18013808520687125,
+        "income_pressure_tilt": -0.16977719669806213,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "slack": 4.1,
         "slack_measure": "u3"
       }
     },
@@ -20,29 +24,21 @@
       "spec_id": "slack_plus",
       "label": "DMI Slack+",
       "summary": "Companion DMI using broader labor-market slack.",
-      "release_json": "/data/outputs/dmi_release_2026-03_slack_plus.json",
+      "release_json": "/data/outputs/dmi_release_2026-07_slack_plus.json",
       "metrics": {
-        "dmi_median": 11.231984536577205,
-        "dmi_stress": 11.268528180256514,
-        "income_pressure_gap": -0.07895122063910165,
+        "dmi_median": 11.316957462855907,
+        "dmi_stress": 11.352376716747653,
+        "income_pressure_spread": 0.18013808520687213,
+        "income_pressure_tilt": -0.16977719669806213,
+        "most_pressured_group": "Q4",
+        "least_pressured_group": "Q1",
+        "slack": 7.9,
         "slack_measure": "u6"
-      }
-    },
-    {
-      "spec_id": "core",
-      "label": "DMI Core",
-      "summary": "Companion DMI using core inflation inputs.",
-      "release_json": "/data/outputs/dmi_release_2026-03_core.json",
-      "metrics": {
-        "dmi_median": 7.531984536577204,
-        "dmi_stress": 7.568528180256513,
-        "income_pressure_gap": -0.07895122063910076,
-        "slack_measure": "u3"
       }
     }
   ],
   "robustness_assessment": {
-    "pressure_gap_sign_consistent": true,
+    "pressure_tilt_sign_consistent": true,
     "stress_group_consistent": true,
     "notes": [
       "The distributional pattern is consistent across the published specifications.",

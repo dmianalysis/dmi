@@ -2,7 +2,7 @@
 /*
 Plugin Name: DMI Release Data
 Description: Renders DMI release data from releases.json
-Version: 0.2.0
+Version: 0.3.0
 Author: Thomas C. Williams
 */
 
@@ -108,22 +108,23 @@ if ( ! function_exists( 'tcw_dmi_render_spec_links_table' ) ) {
 			return '';
 		}
 
+		// Core specification was withdrawn in v0.1.12 (see
+		// docs/repair/CORE_WITHDRAWAL.md); only Baseline and Slack-Plus are
+		// rendered. Manifests published under 3.x will never carry a Core key.
 		$labels = array(
 			'baseline'   => 'Baseline',
 			'slack_plus' => 'Slack-Plus',
-			'core'       => 'Core',
 		);
 
 		$notes = array(
-			'baseline'   => 'Canonical headline series',
+			'baseline'   => 'Canonical headline series (U-3, headline CPI)',
 			'slack_plus' => 'Uses U-6 instead of U-3',
-			'core'       => 'Excludes food and beverages from inflation',
 		);
 
 		$html  = '<table class="tcw-dmi-spec-table">';
 		$html .= '<thead><tr><th>Specification</th><th>Downloads</th><th>Notes</th></tr></thead><tbody>';
 
-		foreach ( array( 'baseline', 'slack_plus', 'core' ) as $spec_key ) {
+		foreach ( array( 'baseline', 'slack_plus' ) as $spec_key ) {
 			if ( empty( $spec_urls[ $spec_key ] ) || ! is_array( $spec_urls[ $spec_key ] ) ) {
 				continue;
 			}

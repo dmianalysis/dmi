@@ -1,0 +1,5 @@
+{
+  "created_by": "scripts.prepare_deployment",
+  "deterministic": true,
+  "purpose": "Marks this directory as builder-owned staging. scripts.prepare_deployment refuses to delete or rebuild a non-empty directory that lacks this file, unless it is the canonical repository deploy/ target."
+}

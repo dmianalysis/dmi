@@ -8,11 +8,10 @@
   "observations_count": 895,
   "last_updated": "2026-08-15",
   "endpoints": {
-    "dashboard": "/",
-    "timeseries": "/data/outputs/published/dmi_timeseries.json",
+    "dashboard": "/dashboard.html",
     "latest": "/data/outputs/dmi_release_2026-07.json",
-    "latest_u6": "/data/outputs/dmi_release_2026-07_slack_plus.json",
-    "latest_core": "/data/outputs/dmi_release_2026-07_core.json",
-    "latest_slack_plus": "/data/outputs/dmi_release_2026-07_slack_plus.json"
+    "latest_slack_plus": "/data/outputs/dmi_release_2026-07_slack_plus.json",
+    "releases": "/data/outputs/releases.json",
+    "specifications": "/data/outputs/specifications.json"
   }
 }

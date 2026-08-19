@@ -1,237 +1,135 @@
 #!/usr/bin/env python3
-"""
-Backfill releases.json from existing DMI release files.
-Only includes publicly distributed releases (2025-12 and later).
+"""Backfill releases.json/latest.json/health.json/timeseries from raw releases.
+
+Round-3 §9: this script previously duplicated release-manifest construction
+logic (parse, filter, spec-url naming, methodology-version tagging, entry
+assembly) that also lived in ``scripts/rebuild_release_manifests.py``. The
+two implementations drifted:
+
+  - ``backfill_releases.py`` unconditionally emitted the modern
+    ``dmi-YYYY-MM-baseline.{csv,parquet}`` URL pattern for every period,
+    including pre-2026-03 releases (2025-12, 2026-01, 2026-02) which
+    only publish the unsuffixed ``dmi-YYYY-MM.{csv,parquet}`` naming.
+    The result: ``releases.json`` advertised URLs that 404 on the live
+    site — a §3 (historical URL repair) failure.
+  - ``backfill_releases.py`` hard-coded ``"methodology_version": "v0.1.12"``
+    for every release entry, retroactively relabelling historical
+    releases whose raw file lacks the v0.1.12 parameter block.
+    ``rebuild_release_manifests.py`` correctly derives the label per
+    release via ``derive_methodology_version`` (unknown -> ``legacy/unknown``).
+
+Both defects are eliminated by having this script delegate manifest
+assembly to the central helpers in ``rebuild_release_manifests``. This
+module now only owns the side-effects that ``rebuild_release_manifests``
+intentionally leaves out: updating ``web/health.json`` (endpoints sanitised
+via ``sanitize_health_endpoints``) and ``data/outputs/published/dmi_timeseries.json``.
 """
 
-import sys
+from __future__ import annotations
+
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-# Reuse summary helpers from compute_dmi to avoid drift between two implementations.
-from scripts.compute_dmi import build_release_summary
+from scripts.rebuild_release_manifests import (
+    assemble_manifests,
+    discover_releases,
+)
 
 
-def parse_release_id(filename: str) -> tuple:
-    """Parse release_id from filename. Returns (year, month) or None if invalid."""
-    # Format: dmi_release_2026-02.json
-    try:
-        release_id = filename.replace("dmi_release_", "").replace(".json", "")
-        year, month = release_id.split('-')
-        return (int(year), int(month))
-    except:
-        return None
+def backfill_releases(output_dir: str = "data/outputs") -> None:
+    """Rebuild releases.json + latest.json + health.json + timeseries.
 
-def is_public_release(year: int, month: int) -> bool:
-    """Check if release is publicly distributed (2025-12 and later)."""
-    if year < 2025:
-        return False
-    if year == 2025 and month < 12:
-        return False
-    return True
-
-def backfill_releases(output_dir: str = "data/outputs"):
-    """Backfill releases.json from existing dmi_release_*.json files (public releases only)."""
+    Manifest assembly (parsing, filtering to public releases, deriving
+    metrics, choosing correct spec_url naming per period, deriving
+    methodology_version per release) is delegated to
+    ``rebuild_release_manifests`` so the two writers cannot drift.
+    """
     output_path = Path(output_dir)
-    
-    # Find all dmi_release_*.json files
-    release_files = sorted(output_path.glob("dmi_release_*.json"))
-    
-    if not release_files:
-        print("No release files found to backfill")
+
+    # Discover every public release under the same rules the retrofit
+    # tool uses; requested_periods=None -> "all public releases".
+    plans = discover_releases(output_path, requested_periods=None)
+    if not plans:
+        print("No public releases found to backfill.")
         return
-    
-    print(f"Found {len(release_files)} release files, filtering for public releases (2025-12+)")
-    
-    releases = []
-    latest_release = None
-    
-    # Process each release file
-    for release_file in release_files:
-        # Extract release_id from filename (e.g., dmi_release_2026-02.json -> 2026-02)
-        parsed = parse_release_id(release_file.name)
-        if not parsed:
-            continue
-        
-        year, month = parsed
-        release_id = f"{year:04d}-{month:02d}"
-        
-        # Skip non-public releases
-        if not is_public_release(year, month):
-            print(f"  ⊘ {release_id}: Not in public distribution (pre-2025-12)")
-            continue
-        
-        try:
-            with open(release_file, 'r') as f:
-                data = json.load(f)
 
-            # Derive distribution metrics directly from dmi_by_group so output is
-            # consistent regardless of which summary_metrics fields were written
-            # at compute time.
-            dmi_by_group = data['dmi_by_group']
-            dmis = {g['group_id']: g['dmi'] for g in dmi_by_group}
-            max_group = max(dmi_by_group, key=lambda g: g['dmi'])
-            min_group = min(dmi_by_group, key=lambda g: g['dmi'])
-            spread = max_group['dmi'] - min_group['dmi']
-            tilt = dmis['Q1'] - dmis['Q5']
-            unemployment = dmi_by_group[0]['slack']
+    releases_manifest, latest_manifest = assemble_manifests(plans)
 
-            # Convert release_id to data_through_label
-            months = ['January', 'February', 'March', 'April', 'May', 'June',
-                      'July', 'August', 'September', 'October', 'November', 'December']
-            month_name = months[month - 1]
-            data_through_label = f"{month_name} {year}"
-
-            # published_at from metadata when available
-            computed_at = data['metadata']['computed_at']
-            published_at = computed_at.split('T')[0]
-
-            # Only baseline gets a release_note link (see rebuild_release_manifests.py).
-            spec_urls = {
-                "baseline": {
-                    "csv": f"/data/outputs/dmi-{release_id}-baseline.csv",
-                    "parquet": f"/data/outputs/dmi-{release_id}-baseline.parquet",
-                    "release_note": f"/data/outputs/releases/{release_id}.html",
-                },
-                "slack_plus": {
-                    "csv": f"/data/outputs/dmi-{release_id}-slack_plus.csv",
-                    "parquet": f"/data/outputs/dmi-{release_id}-slack_plus.parquet",
-                },
-                "core": {
-                    "csv": f"/data/outputs/dmi-{release_id}-core.csv",
-                    "parquet": f"/data/outputs/dmi-{release_id}-core.parquet",
-                },
-            }
-
-            release = {
-                "release_id": release_id,
-                "data_through_label": data_through_label,
-                "published_at": published_at,
-                "status": "superseded",  # Updated to current for the latest
-                "methodology_version": "v0.1.12",
-                "summary": "Full release data available in the accompanying CSV and Parquet files.",
-                "spec_urls": spec_urls,
-                "metrics": {
-                    "dmi_median": data['summary_metrics']['dmi_median'],
-                    "dmi_stress": data['summary_metrics']['dmi_stress'],
-                    "income_pressure_spread": spread,
-                    "income_pressure_tilt": tilt,
-                    "most_pressured_group": max_group['group_id'],
-                    "least_pressured_group": min_group['group_id'],
-                    "unemployment": unemployment,
-                },
-            }
-
-            releases.append(release)
-            
-            # Generate summary
-            prior_release = releases[-2] if len(releases) > 1 else None
-            summary_facts, summary = build_release_summary(release, prior_release)
-            release['summary'] = summary
-            release['summary_facts'] = summary_facts
-            
-            latest_release = release  # Keep track of the latest
-            
-            print(f"  ✓ {release_id}: {data_through_label}")
-            
-        except Exception as e:
-            print(f"  ✗ Error processing {release_id}: {e}")
-    
-    if not releases:
-        print("No public releases found to save")
-        return
-    
-    # Mark the latest as current
-    if latest_release:
-        latest_release['status'] = 'current'
-        current_release_id = latest_release['release_id']
-    else:
-        current_release_id = releases[0]['release_id']
-    
-    # Sort in reverse chronological order
-    releases.sort(key=lambda x: x['release_id'], reverse=True)
-    
-    # Build the releases.json structure
-    releases_manifest = {
-        "schema_version": "2.0.0",
-        "generated_at": datetime.now().isoformat() + "Z",
-        "current_release_id": current_release_id,
-        "releases": releases
-    }
-
-    # Save releases.json
     releases_path = output_path / "releases.json"
-    with open(releases_path, 'w') as f:
-        json.dump(releases_manifest, f, indent=2)
-
-    print(f"\n✓ Saved {len(releases)} public releases to {releases_path}")
-
-    # Build latest.json with only the current release
-    latest_manifest = {
-        "schema_version": "2.0.0",
-        "generated_at": datetime.now().isoformat() + "Z",
-        "current_release_id": current_release_id,
-        "releases": [latest_release]
-    }
-    
     latest_path = output_path / "latest.json"
-    with open(latest_path, 'w') as f:
-        json.dump(latest_manifest, f, indent=2)
-    
-    print(f"✓ Saved latest release to {latest_path}")
-    
-    # Update health.json
+
+    releases_path.write_text(json.dumps(releases_manifest, indent=2))
+    latest_path.write_text(json.dumps(latest_manifest, indent=2))
+
+    print(
+        f"✓ Wrote {len(releases_manifest['releases'])} public releases to "
+        f"{releases_path}"
+    )
+    print(f"✓ Wrote current release to {latest_path}")
+
+    current_release_id = releases_manifest["current_release_id"]
     update_health_json(current_release_id)
-    
-    # Update timeseries
     update_timeseries_json(current_release_id)
 
 
-def update_health_json(reference_period: str):
-    """Update web/health.json with current release information."""
+def update_health_json(reference_period: str) -> Path:
+    """Update web/health.json with current release information.
+
+    §7/§8: the endpoints block is passed through ``sanitize_health_endpoints``
+    just before writing, so any retired key present on disk
+    (``latest_core``, ``latest_u6``, ``latest_with_ci``, ``timeseries``,
+    ``dmi_timeseries``) is stripped from the manifest. This defeats the
+    round-trip resurrection failure mode where an out-of-date checkout
+    carried a retired endpoint forward across releases.
+    """
+    from scripts.health_endpoints import sanitize_health_endpoints
+
     health_path = Path("web/health.json")
-    
-    # Read current health.json
-    with open(health_path, 'r') as f:
+
+    with health_path.open() as f:
         health = json.load(f)
-    
-    # Update fields
-    health['latest_period'] = reference_period
-    health['last_updated'] = datetime.now().strftime('%Y-%m-%d')
-    health['build_timestamp'] = datetime.now().isoformat() + "Z"
-    health['git_sha'] = "production"  # Will be updated by deployment
-    health['endpoints']['latest'] = f"/data/outputs/dmi_release_{reference_period}.json"
-    
-    # Update observations count if we can determine it
-    if 'observations_count' not in health:
-        health['observations_count'] = 895  # Default based on recent data
-    
-    with open(health_path, 'w') as f:
+
+    health["latest_period"] = reference_period
+    health["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d")
+    health["build_timestamp"] = datetime.utcnow().isoformat() + "Z"
+    health["git_sha"] = "production"  # Overwritten by deployment pipeline.
+    health.setdefault("endpoints", {})
+    health["endpoints"]["latest"] = (
+        f"/data/outputs/dmi_release_{reference_period}.json"
+    )
+    health["endpoints"]["latest_slack_plus"] = (
+        f"/data/outputs/dmi_release_{reference_period}_slack_plus.json"
+    )
+
+    if "observations_count" not in health:
+        health["observations_count"] = 895  # Default based on recent data.
+
+    # §7/§8: strip retired/unknown endpoint keys before writing.
+    sanitize_health_endpoints(health)
+
+    with health_path.open("w") as f:
         json.dump(health, f, indent=2)
-    
+
     print(f"✓ Updated web/health.json with latest period {reference_period}")
     return health_path
 
 
-def update_timeseries_json(reference_period: str):
+def update_timeseries_json(reference_period: str) -> Path:
     """Update dmi_timeseries.json with new release observations."""
     timeseries_path = Path("data/outputs/published/dmi_timeseries.json")
     release_path = Path("data/outputs") / f"dmi_release_{reference_period}.json"
     quintile_order = ["Q1", "Q2", "Q3", "Q4", "Q5"]
-    
-    # Load release file
+
     if not release_path.exists():
         return timeseries_path
-    
-    with open(release_path, 'r') as f:
+
+    with release_path.open() as f:
         release = json.load(f)
-    
-    # Load existing timeseries
-    with open(timeseries_path, 'r') as f:
+
+    with timeseries_path.open() as f:
         timeseries = json.load(f)
-    
-    # Extract observations from release
+
     weights_vintage = release.get("parameters", {}).get("weights_year", 2023)
     new_observations = []
     for group in release["dmi_by_group"]:
@@ -243,31 +141,34 @@ def update_timeseries_json(reference_period: str):
             "slack": group["slack"],
             "weights_vintage": weights_vintage,
         })
-    
-    # Remove existing observations for this period (upsert) and add new ones
-    existing_obs = timeseries["observations"]
-    existing_obs = [o for o in existing_obs if o["period"] != reference_period]
+
+    # Upsert: drop existing observations for this period, add the new ones.
+    existing_obs = [
+        o for o in timeseries["observations"] if o["period"] != reference_period
+    ]
     existing_obs.extend(new_observations)
-    
-    # Sort observations by period, then by quintile order
+
     def sort_key(obs: dict) -> tuple:
-        q_idx = quintile_order.index(obs["group_id"]) if obs["group_id"] in quintile_order else 99
+        q_idx = (
+            quintile_order.index(obs["group_id"])
+            if obs["group_id"] in quintile_order
+            else 99
+        )
         return (obs["period"], q_idx)
-    
+
     existing_obs.sort(key=sort_key)
-    
-    # Update metadata
-    all_periods = sorted(set(o["period"] for o in existing_obs))
+
+    all_periods = sorted({o["period"] for o in existing_obs})
     timeseries["observations"] = existing_obs
     timeseries["observations_count"] = len(existing_obs)
     timeseries["start_period"] = all_periods[0]
     timeseries["end_period"] = all_periods[-1]
-    
-    # Save updated timeseries
-    with open(timeseries_path, 'w') as f:
+
+    with timeseries_path.open("w") as f:
         json.dump(timeseries, f, indent=2)
-    
+
     return timeseries_path
 
 
 if __name__ == "__main__":
+    backfill_releases()

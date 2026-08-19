@@ -1,9 +1,37 @@
 # DMI v0.1 — Product Design Document (PDD)
 
-**Product:** Distributional Misery Index (DMI)  
-**Version:** v0.1  
-**Spec package revision:** v0.1.8  
-**Date:** 2025-12-17  
+**Product:** Distributional Misery Index (DMI)
+**Version:** v0.1
+**Spec package revision:** v0.1.8
+**Date:** 2025-12-17
+
+> ## ⚠️ v0.1.12 STATUS BANNER — READ FIRST (§12)
+>
+> This PDD describes the **v0.1 (spec-package v0.1.8) design intent**,
+> including three operational specifications (Baseline, Slack-Plus,
+> Core). It has NOT been rewritten for v0.1.12.
+>
+> The shipped v0.1.12 reality differs from this document in two
+> load-bearing ways:
+>
+> 1. **Core is withdrawn.** No `dmi_release_*_core.*` artifact is
+>    produced by the v0.1.12 pipeline, and no `latest_core` endpoint
+>    is advertised. The Core-labeled files that existed in prior
+>    versions were byte-identical to the Baseline computation — the
+>    Core-specific calculation described in this PDD was never
+>    implemented. See
+>    [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md).
+> 2. **Two operational specifications only:** Baseline (U-3, headline
+>    CPI) and Slack-Plus (U-6, headline CPI). Consult
+>    [`README.md`](../README.md), [`docs/API.md`](API.md), and
+>    [`CHANGELOG.md`](../CHANGELOG.md) for the current published
+>    contract; consult
+>    [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](repair/V0.1.12_ALIGNMENT_AUDIT.md)
+>    for the evidence trail.
+>
+> Sections below that describe Core (§3.2, §4.0 design patterns,
+> Alternative Specifications) remain for historical design context
+> only; they do NOT describe operational v0.1.12 behaviour.
 
 This PDD complements the implementation spec by describing what DMI v0.1 is, what it produces, and how success is evaluated.
 

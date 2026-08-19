@@ -1,10 +1,32 @@
 # Distributional Misery Index (DMI) v0.1 — Implementation Plan & PDD (Spec Package)
 
-**Status:** Draft for implementation  
-**Version:** v0.1 (spec)  
-**Spec package revision:** v0.1.8  
-**Last updated:** 2025-12-17  
-**Author:** Thomas C. Williams (project owner)  
+**Status:** Draft for implementation
+**Version:** v0.1 (spec)
+**Spec package revision:** v0.1.8
+**Last updated:** 2025-12-17
+**Author:** Thomas C. Williams (project owner)
+
+> ## ⚠️ v0.1.12 STATUS BANNER — READ FIRST (§12)
+>
+> This specification documents the **v0.1 (spec-package v0.1.8) design
+> intent**, including a three-specification architecture. It has NOT
+> been rewritten for v0.1.12. The shipped v0.1.12 pipeline diverges
+> from this spec in two material ways:
+>
+> 1. **Core is withdrawn.** The v0.1.12 pipeline emits Baseline and
+>    Slack-Plus only; Core computation is not implemented. See
+>    [`docs/known-issues/CORE_OUTPUT_WITHDRAWAL.md`](known-issues/CORE_OUTPUT_WITHDRAWAL.md).
+> 2. **Retired endpoints and paths.** The public health manifest no
+>    longer advertises `latest_core`, `latest_u6`, `timeseries`, or
+>    `dmi_timeseries` (§8); the public timeseries at
+>    `data/outputs/published/dmi_timeseries.json` is Baseline-only
+>    (§7).
+>
+> For the current operational surface consult
+> [`README.md`](../README.md),
+> [`docs/API.md`](API.md),
+> [`CHANGELOG.md`](../CHANGELOG.md),
+> and [`docs/repair/V0.1.12_ALIGNMENT_AUDIT.md`](repair/V0.1.12_ALIGNMENT_AUDIT.md).
 
 This document is the *implementation-facing* specification for a **reproducible, auditable** measurement tool that publishes a monthly **Distributed Misery Index** by income group.
 

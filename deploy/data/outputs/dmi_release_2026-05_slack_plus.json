@@ -1,0 +1,260 @@
+{
+  "reference_period": "2026-05",
+  "parameters": {
+    "alpha": 0.5,
+    "scale_factor": 2.0,
+    "weights_year": 2023,
+    "spec_id": "slack_plus",
+    "slack_measure": "u6",
+    "inflation_measure": "HEADLINE_CPI"
+  },
+  "dmi_by_group": [
+    {
+      "group_id": "Q1",
+      "dmi": 12.07962051735674,
+      "inflation": 3.979620517356741,
+      "slack": 8.1
+    },
+    {
+      "group_id": "Q2",
+      "dmi": 12.224097307411522,
+      "inflation": 4.124097307411523,
+      "slack": 8.1
+    },
+    {
+      "group_id": "Q3",
+      "dmi": 12.363655970678014,
+      "inflation": 4.263655970678015,
+      "slack": 8.1
+    },
+    {
+      "group_id": "Q4",
+      "dmi": 12.422421268243891,
+      "inflation": 4.322421268243892,
+      "slack": 8.1
+    },
+    {
+      "group_id": "Q5",
+      "dmi": 12.431538722139871,
+      "inflation": 4.331538722139872,
+      "slack": 8.1
+    }
+  ],
+  "summary_metrics": {
+    "dmi_median": 12.363655970678014,
+    "dmi_stress": 12.431538722139871,
+    "income_pressure_spread": 0.3519182047831304,
+    "most_pressured_group": "Q5",
+    "least_pressured_group": "Q1",
+    "income_pressure_tilt": -0.3519182047831304
+  },
+  "inflation_contributions": [
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_APPAREL",
+      "contribution": 0.10846277293259403
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_EDU_COMM",
+      "contribution": 0.03193471976619652
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_FOOD_BEVERAGES",
+      "contribution": 0.9451831559752419
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_HOUSING",
+      "contribution": 1.2086815182423178
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_MEDICAL_CARE",
+      "contribution": 0.22241721801194597
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_OTHER",
+      "contribution": 0.2062251529165542
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_RECREATION",
+      "contribution": 0.10502261379764843
+    },
+    {
+      "group_id": "Q1",
+      "category_id": "CPI_TRANSPORTATION",
+      "contribution": 1.1516933657142414
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_APPAREL",
+      "contribution": 0.10230716233898732
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_EDU_COMM",
+      "contribution": 0.025669456915056756
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_FOOD_BEVERAGES",
+      "contribution": 0.9177052607870921
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_HOUSING",
+      "contribution": 1.1779589703896582
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_MEDICAL_CARE",
+      "contribution": 0.22154280909962448
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_OTHER",
+      "contribution": 0.2388121973542269
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_RECREATION",
+      "contribution": 0.10642115278068863
+    },
+    {
+      "group_id": "Q2",
+      "category_id": "CPI_TRANSPORTATION",
+      "contribution": 1.3336802977461888
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_APPAREL",
+      "contribution": 0.10610389964642555
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_EDU_COMM",
+      "contribution": 0.02890397278507454
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_FOOD_BEVERAGES",
+      "contribution": 0.9003888292825456
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_HOUSING",
+      "contribution": 1.1094470859510157
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_MEDICAL_CARE",
+      "contribution": 0.20423512833903512
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_OTHER",
+      "contribution": 0.23029410729598268
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_RECREATION",
+      "contribution": 0.115067184827979
+    },
+    {
+      "group_id": "Q3",
+      "category_id": "CPI_TRANSPORTATION",
+      "contribution": 1.5692157625499565
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_APPAREL",
+      "contribution": 0.1249745264671711
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_EDU_COMM",
+      "contribution": 0.02559741164951316
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_FOOD_BEVERAGES",
+      "contribution": 0.8985558556600801
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_HOUSING",
+      "contribution": 1.0723331855304141
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_MEDICAL_CARE",
+      "contribution": 0.19525847307181365
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_OTHER",
+      "contribution": 0.23305008374705172
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_RECREATION",
+      "contribution": 0.130889078130082
+    },
+    {
+      "group_id": "Q4",
+      "category_id": "CPI_TRANSPORTATION",
+      "contribution": 1.6417626539877659
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_APPAREL",
+      "contribution": 0.12529499591808488
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_EDU_COMM",
+      "contribution": 0.038864715952321424
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_FOOD_BEVERAGES",
+      "contribution": 0.8227913170945433
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_HOUSING",
+      "contribution": 1.0631202427975046
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_MEDICAL_CARE",
+      "contribution": 0.16865405425137786
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_OTHER",
+      "contribution": 0.22201816600952531
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_RECREATION",
+      "contribution": 0.1733156601806162
+    },
+    {
+      "group_id": "Q5",
+      "category_id": "CPI_TRANSPORTATION",
+      "contribution": 1.7174795699358982
+    }
+  ],
+  "metadata": {
+    "computed_at": "2026-06-16T14:32:11.996242Z",
+    "num_groups": 5,
+    "num_categories": 8
+  },
+  "specification": "slack_plus",
+  "description": "Companion DMI using broader labor-market slack."
+}

@@ -181,6 +181,40 @@
         }
       },
       "required": []
+    },
+    "subject": {
+      "type": "object",
+      "description": "Binds this report to the exact raw artifact and specification it was computed from (Round-4 \u00a71). A filename is a claim made by whoever named the file; these fields are claims made by the code that ran the checks, and `raw_sha256` ties the report to specific bytes. Optional in the schema so pre-Round-4 reports remain valid; release finalization REQUIRES it for the current operational release (see scripts/release_policy.py).",
+      "additionalProperties": false,
+      "required": [
+        "specification",
+        "reference_period",
+        "raw_artifact",
+        "raw_sha256"
+      ],
+      "properties": {
+        "specification": {
+          "type": "string",
+          "enum": [
+            "baseline",
+            "slack_plus"
+          ],
+          "description": "Operational specification. Core is withdrawn and never valid here."
+        },
+        "reference_period": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        },
+        "raw_artifact": {
+          "type": "string",
+          "description": "Repository-relative path of the raw release JSON these checks ran against."
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the raw artifact bytes at check time."
+        }
+      }
     }
   },
   "required": [

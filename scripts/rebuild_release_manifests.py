@@ -11,7 +11,7 @@ schema/methodology without re-running the full DMI pipeline. It can:
     regenerating ``summary`` / ``summary_facts`` via the canonical
     ``build_release_summary`` helper;
   * with ``--retrofit-raw``, rewrite the raw ``dmi_release_*.json`` files
-    (and their ``_core`` / ``_slack_plus`` / ``_u6`` / ``_with_ci`` variants)
+    (and their ``_slack_plus`` / ``_u6`` / ``_with_ci`` variants)
     so ``summary_metrics`` carries the v2.0.0 fields and the legacy
     ``dmi_income_pressure_gap`` field is removed;
   * with ``--retrofit-specs``, rewrite ``specifications.json`` to replace
@@ -34,6 +34,11 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+from scripts.release_evidence import (  # §5: single authority
+    build_spec_urls,
+    release_note_url,
+)
 from typing import Iterable, Optional
 
 # Reuse the same summary helper used by the live pipeline so wording does not
@@ -46,7 +51,12 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December",
 ]
 
-SCHEMA_VERSION = "2.0.0"
+from scripts.schema_versions import (
+    RELEASES_SCHEMA_VERSION,
+    SPECIFICATIONS_SCHEMA_VERSION,
+)
+
+SCHEMA_VERSION = RELEASES_SCHEMA_VERSION
 DEFAULT_METHODOLOGY_VERSION = "v0.1.12"
 
 
@@ -92,22 +102,14 @@ def derive_metrics(raw_release: dict) -> dict:
     }
 
 
-def build_spec_urls(release_id: str) -> dict:
-    # Only the baseline spec gets a release_note link. slack_plus and core
-    # use the same underlying summary (the distributional pattern is robust
-    # across specs by design), so linking them to the baseline note misled
-    # users into thinking they were spec-specific.
-    base_release_note = f"/data/outputs/releases/{release_id}.html"
-    spec_urls = {}
-    for spec in ("baseline", "slack_plus", "core"):
-        urls = {
-            "csv": f"/data/outputs/dmi-{release_id}-{spec}.csv",
-            "parquet": f"/data/outputs/dmi-{release_id}-{spec}.parquet",
-        }
-        if spec == "baseline":
-            urls["release_note"] = base_release_note
-        spec_urls[spec] = urls
-    return spec_urls
+# §5: URL construction is NOT implemented here. It lives in
+# `scripts/release_evidence.py`, the single authoritative
+# evidence-based writer, and is re-exported below so existing callers
+# keep working. Two modules independently deciding what a manifest
+# advertises is exactly how phantom URLs and existence-only checks
+# arose; there is now one implementation and one set of rules.
+#
+# `build_spec_urls` and `release_note_url` are imported at module top.
 
 
 @dataclass
@@ -118,18 +120,41 @@ class RebuildPlan:
     raw_path: Path
     metrics: dict
     published_at: str
+    output_dir: Path
+    methodology_version: str
+
+
+def derive_methodology_version(
+    raw: dict,
+    default_version: str,
+) -> str:
+    """Return the honest methodology_version label for a raw release.
+
+    Under §3, historical releases whose raw file does not record the
+    v0.1.12 spec metadata (`parameters.spec_id`, `parameters.slack_measure`,
+    `parameters.inflation_measure`) are labelled `legacy/unknown` rather
+    than being retroactively claimed as v0.1.12. Modern releases that do
+    record the full parameter block are labelled with ``default_version``
+    (typically `v0.1.12`).
+    """
+    params = raw.get("parameters", {})
+    required = ("spec_id", "slack_measure", "inflation_measure")
+    if all(k in params for k in required):
+        return default_version
+    return "legacy/unknown"
 
 
 def discover_releases(
     output_dir: Path,
     requested_periods: Optional[set[str]],
+    default_methodology_version: str = DEFAULT_METHODOLOGY_VERSION,
 ) -> list[RebuildPlan]:
     """Find raw release files to process and validate against ``requested_periods``."""
     plans: list[RebuildPlan] = []
     seen: set[str] = set()
 
     for path in sorted(output_dir.glob("dmi_release_*.json")):
-        # Ignore variant files (e.g. _core, _slack_plus, _u6, _with_ci).
+        # Ignore variant files (e.g. _slack_plus, _u6, _with_ci).
         stem = path.stem.replace("dmi_release_", "")
         if "_" in stem:
             continue
@@ -148,6 +173,9 @@ def discover_releases(
             raw = json.load(f)
         metrics = derive_metrics(raw)
         published_at = raw["metadata"]["computed_at"].split("T")[0]
+        methodology_version = derive_methodology_version(
+            raw, default_methodology_version,
+        )
 
         plans.append(RebuildPlan(
             release_id=release_id,
@@ -156,6 +184,8 @@ def discover_releases(
             raw_path=path,
             metrics=metrics,
             published_at=published_at,
+            output_dir=output_dir,
+            methodology_version=methodology_version,
         ))
         seen.add(release_id)
 
@@ -173,10 +203,15 @@ def discover_releases(
 
 def build_release_entry(
     plan: RebuildPlan,
-    methodology_version: str,
     prior: Optional[dict],
 ) -> tuple[dict, dict]:
-    """Build a single release entry and its summary_facts."""
+    """Build a single release entry and its summary_facts.
+
+    Uses the plan's own `methodology_version` (derived from the raw file
+    per §3), not a caller-supplied default. This ensures historical
+    entries whose raw file lacks the v0.1.12 parameter block get
+    `legacy/unknown` and are not retroactively relabelled.
+    """
     release_id = plan.release_id
     label = data_through_label(plan.year, plan.month)
 
@@ -185,10 +220,11 @@ def build_release_entry(
         "data_through_label": label,
         "published_at": plan.published_at,
         "status": "superseded",
-        "methodology_version": methodology_version,
+        "methodology_version": plan.methodology_version,
         "summary": "",
         "summary_facts": {},
-        "spec_urls": build_spec_urls(release_id),
+        "release_note": release_note_url(release_id),
+        "spec_urls": build_spec_urls(release_id, plan.output_dir),
         "metrics": dict(plan.metrics),
     }
 
@@ -256,9 +292,12 @@ def render_diff(old_path: Path, new_obj: dict) -> str:
 
 def assemble_manifests(
     plans: Iterable[RebuildPlan],
-    methodology_version: str,
 ) -> tuple[dict, dict]:
-    """Assemble releases.json and latest.json payloads from plans."""
+    """Assemble releases.json and latest.json payloads from plans.
+
+    Each plan carries its own honest methodology_version (per §3), so no
+    caller-supplied default is threaded through here.
+    """
     plan_list = list(plans)
     if not plan_list:
         raise SystemExit("ERROR: no releases to rebuild")
@@ -266,7 +305,7 @@ def assemble_manifests(
     entries: list[dict] = []
     prior_entry: Optional[dict] = None
     for plan in plan_list:
-        entry, _ = build_release_entry(plan, methodology_version, prior_entry)
+        entry, _ = build_release_entry(plan, prior_entry)
         entries.append(entry)
         prior_entry = entry
 
@@ -309,14 +348,16 @@ def verify_against_raw(plans: list[RebuildPlan], tol: float = 1e-9) -> None:
                 f"ERROR: derived tilt ({derived_tilt}) does not match raw "
                 f"dmi_income_pressure_gap ({raw_gap}) for {plan.release_id}"
             )
-        if plan.metrics["income_pressure_spread"] <= 0:
+        # §9: `income_pressure_spread` is `max(DMI) - min(DMI)`, which is
+        # mathematically nonnegative (see docs/DMI_v0.1.12_Repository_Repair_Prompt
+        # -2026-08-15.md line 41). A spread of exactly zero is legitimate —
+        # it corresponds to perfect equality across the five quintiles.
+        # Only strictly negative values indicate a broken calculation.
+        if plan.metrics["income_pressure_spread"] < 0:
             raise SystemExit(
                 f"ERROR: income_pressure_spread for {plan.release_id} is "
-                f"{plan.metrics['income_pressure_spread']}; expected > 0"
+                f"{plan.metrics['income_pressure_spread']}; expected >= 0"
             )
-
-
-SPECIFICATIONS_SCHEMA_VERSION = "0.2.0"
 
 
 def derive_metrics_for_raw(raw: dict) -> dict:
@@ -515,7 +556,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if not args.skip_manifests:
         print(f"Discovering releases in {output_dir}...")
-        plans = discover_releases(output_dir, requested)
+        plans = discover_releases(
+            output_dir, requested,
+            default_methodology_version=args.methodology_version,
+        )
         if not plans:
             print("No releases matched the requested filter.")
             return 1
@@ -524,18 +568,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         for plan in plans:
             m = plan.metrics
             print(
-                f"  {plan.release_id}: spread={m['income_pressure_spread']:.4f}, "
+                f"  {plan.release_id}: methodology={plan.methodology_version}, "
+                f"spread={m['income_pressure_spread']:.4f}, "
                 f"tilt={m['income_pressure_tilt']:+.4f}, "
                 f"most={m['most_pressured_group']}, least={m['least_pressured_group']}, "
                 f"unemployment={m['unemployment']}"
             )
 
         verify_against_raw(plans)
-        print("Sanity check passed: derived tilt matches raw dmi_income_pressure_gap; spread > 0.")
+        print("Sanity check passed: derived tilt matches raw dmi_income_pressure_gap; spread >= 0.")
 
-        releases_manifest, latest_manifest = assemble_manifests(
-            plans, args.methodology_version
-        )
+        releases_manifest, latest_manifest = assemble_manifests(plans)
 
         releases_path = output_dir / "releases.json"
         latest_path = output_dir / "latest.json"

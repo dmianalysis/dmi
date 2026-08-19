@@ -15,19 +15,19 @@ from datetime import datetime
 from pathlib import Path
 
 from dmi_pipeline.agents.qa_validator import generate_qa_report, print_qa_summary
+# Round-4 §1: this module imports only what COMPUTATION needs. The
+# publication writers (export_csv_parquet, update_releases_json,
+# update_latest_json, update_health_json, update_timeseries_json) are
+# deliberately absent — importing them here is what made it easy to call
+# them mid-computation. They belong to `scripts.finalize_release`.
 from scripts.compute_dmi import (
     build_release_summary,
     compute_dmi_for_period,
-    export_csv_parquet,
     generate_release_note_html,
     load_cpi_data,
     load_slack_data,
     load_weights,
     save_dmi_output,
-    update_health_json,
-    update_latest_json,
-    update_releases_json,
-    update_timeseries_json,
 )
 
 MONTH_NAMES = [
@@ -132,7 +132,10 @@ def generate_release_note_for_period(
     specifications: dict = None,
     output_dir: Path = Path("data/outputs"),
 ):
-    """Render the baseline note after the three-spec manifest is available."""
+    """Render the baseline note once the specifications manifest exists.
+
+    v0.1.12 has two operational specifications (Baseline, Slack-Plus).
+    """
     baseline_path = output_dir / f"dmi_release_{reference_period}.json"
     if not baseline_path.exists():
         raise SystemExit(f"Missing baseline release file: {baseline_path}")
@@ -144,7 +147,7 @@ def generate_release_note_for_period(
         if not specifications_path.exists():
             raise SystemExit(
                 f"Missing specifications manifest: {specifications_path}. "
-                "Compute all three specifications first."
+                "Compute Baseline and Slack-Plus first."
             )
         with open(specifications_path, "r") as f:
             specifications = json.load(f)
@@ -191,7 +194,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
     "--spec",
-    choices=["baseline", "slack_plus", "core"],
+    choices=["baseline", "slack_plus"],
     default="baseline",
     help="Which DMI specification to compute."
     )
@@ -204,7 +207,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--release-note-only",
         action="store_true",
-        help="Generate the baseline release note from completed three-spec outputs.",
+        help=(
+            "Generate the baseline release note from completed "
+            "Baseline + Slack-Plus outputs."
+        ),
     )
     return parser.parse_args()
 
@@ -212,20 +218,9 @@ def output_suffix_for_spec(spec: str) -> str:
     return "" if spec == "baseline" else f"_{spec}"
 
 
-def build_core_weights(weights_df: pd.DataFrame) -> pd.DataFrame:
-    core_weights = weights_df[weights_df["category_id"] != "CPI_FOOD_BEVERAGES"].copy()
-
-    for group_id in core_weights["group_id"].unique():
-        mask = core_weights["group_id"] == group_id
-        total = core_weights.loc[mask, "weight"].sum()
-        core_weights.loc[mask, "weight"] = core_weights.loc[mask, "weight"] / total
-
-    return core_weights
-
-
 def load_slack_for_spec(reference_period: str, spec: str, start_year: int, end_year: int) -> pd.DataFrame:
-    # baseline/core: use staged U-3
-    if spec in ("baseline", "core"):
+    # baseline: use staged U-3
+    if spec == "baseline":
         slack_path = Path(f"data/staging/slack_u3_{start_year}_{end_year}.json")
         if not slack_path.exists():
             raise SystemExit(f"Missing staged U-3 slack file: {slack_path}")
@@ -270,7 +265,6 @@ def spec_description(spec: str) -> str:
     return {
         "baseline": "Headline DMI using current inflation inputs and U-3 unemployment.",
         "slack_plus": "Companion DMI using broader labor-market slack.",
-        "core": "Companion DMI using core inflation inputs."
     }[spec]
 
 
@@ -319,8 +313,8 @@ def main() -> int:
     cpi_df = load_cpi_data(cpi_path)
     print(f"  ✓ CPI data: {len(cpi_df)} periods from {cpi_path.name}")
 
-    # NEW: load slack according to spec (U3 baseline/core, U6 for slack_plus)
-    slack_df = load_slack_for_spec(reference_period, spec, start_year, end_year)   
+    # Load slack according to spec (U-3 for baseline, U-6 for slack_plus).
+    slack_df = load_slack_for_spec(reference_period, spec, start_year, end_year)
     print(f"  ✓ Slack data: {len(slack_df)} periods from {slack_path.name}")
 
     ensure_period_available(reference_period, cpi_df, slack_df)
@@ -342,14 +336,10 @@ def main() -> int:
     results["specification"] = spec
     results["description"] = spec_description(spec)
     results["parameters"]["spec_id"] = spec
-    results["parameters"]["slack_measure"] = slack_measure  #  slack_measure is set earlier based on the spec type
-    
-    if spec == "core":
-        results["parameters"]["inflation_measure"] = "CORE_CPI"
-        results["parameters"]["excluded_categories"] = ["CPI_FOOD_BEVERAGES"]
-    else:
-        results["parameters"]["inflation_measure"] = "HEADLINE_CPI"
-        
+    results["parameters"]["slack_measure"] = slack_measure  # slack_measure is set earlier based on the spec type
+    results["parameters"]["inflation_measure"] = "HEADLINE_CPI"
+
+
     # NEW: write outputs with suffix so specs don't overwrite each other
     suffix = output_suffix_for_spec(spec)
     output_path = Path(f"data/outputs/dmi_release_{reference_period}{suffix}.json")
@@ -364,47 +354,41 @@ def main() -> int:
         weights_data=weights_df,
         slack_data=slack_df,
         output_path=Path(f"data/outputs/qa_report_{reference_period}_{spec}.json"),
+        # Round-4 §1: bind the report to the exact artifact bytes and
+        # specification, so finalization can verify it describes the
+        # release being published rather than trusting the filename.
+        raw_artifact_path=output_path,
+        specification=spec,
     )
     print_qa_summary(qa_report)
 
+    # Round-4 §1: computation STOPS here. It produces exactly two
+    # artifacts — the raw release JSON and its QA report — and mutates
+    # nothing public.
+    #
+    # Previously this function went on to write the CSV/Parquet exports
+    # and, for `--spec baseline`, releases.json, latest.json,
+    # web/health.json and the public timeseries. That published a release
+    # before anyone had looked at its QA outcome, and it published a
+    # Baseline manifest before Slack-Plus had even been computed, so the
+    # public tree passed through a state advertising a release that did
+    # not exist yet.
+    #
+    # All of that now belongs to `scripts.finalize_release`, which runs
+    # the QA-outcome and cross-specification gates first and publishes
+    # the whole set as one transaction:
+    #
+    #     python -m scripts.compute_dmi_release <period> --spec baseline ...
+    #     python -m scripts.compute_dmi_release <period> --spec slack_plus ...
+    #     python -m scripts.finalize_release <period>
     print("\n" + "=" * 80)
-    print("Creating CSV and Parquet files...")
+    print("Computation complete (no public artifact was modified).")
     print("=" * 80)
-    export_csv_parquet(results, reference_period, spec)
+    print(f"  raw release: {output_path}")
+    print(f"  QA report:   data/outputs/qa_report_{reference_period}_{spec}.json")
+    print("  Run `python -m scripts.finalize_release "
+          f"{reference_period}` after BOTH specifications are computed.")
 
-    # Baseline owns manifests + health + timeseries. The release note is
-    # generated separately after all three specs and specifications.json land.
-    if spec == "baseline":
-        year, month = reference_period.split('-')
-        current_release = {
-            'release_id': reference_period,
-            'data_through_label': f"{MONTH_NAMES[int(month) - 1]} {year}",
-            'metrics': build_metrics_payload(results),
-        }
-        prior_release = load_prior_release(reference_period)
-        summary_facts, summary = build_release_summary(current_release, prior_release)
-    
-        print("\n" + "=" * 80)
-        print("Updating release manifests...")
-        print("=" * 80)
-        metrics_payload = build_metrics_payload(results)
-        update_releases_json(
-            reference_period=reference_period,
-            metrics=metrics_payload,
-            summary=summary,
-            summary_facts=summary_facts,
-        )
-        update_latest_json(
-            reference_period=reference_period,
-            metrics=metrics_payload,
-            summary=summary,
-            summary_facts=summary_facts,
-        )
-        update_health_json(reference_period)
-        update_timeseries_json(reference_period)
-    else:
-        print(f"Saved companion specification: {spec} -> {output_path}")
-        
     print("\n" + "=" * 80)
     print("DMI RELEASE SUMMARY")
     print("=" * 80)
