@@ -242,6 +242,11 @@ def _ssh_command(
         "ssh",
         "-i", str(key),
         "-p", port,
+        # Offer ONLY the deployment identity. Without this, ssh also
+        # presents every key in the agent and every default identity it
+        # finds, so an unrelated key could authenticate a destructive
+        # run and the audit trail would name the wrong credential.
+        "-o", "IdentitiesOnly=yes",
         "-o", "StrictHostKeyChecking=yes",
         "-o", f"UserKnownHostsFile={known_hosts}",
         f"{user}@{host}",
@@ -495,8 +500,17 @@ def _remote_delete(ssh_argv: list[str], paths: list[str]) -> None:
     """Delete a list of remote paths in one SSH call.
 
     Uses `rm -- <path>` (no `-r`, no `-f`, one path per invocation)
-    driven by a while-read loop over stdin. `set -e` ensures we abort
-    on the first failure and non-zero exits are propagated.
+    driven by a while-read loop over stdin. `set -e` aborts on the first
+    failure, so a partial deletion is possible: everything before the
+    failing path is already gone.
+
+    That makes the captured stdout the single most important artifact of
+    a failed run — it names exactly which files were removed before the
+    abort. An earlier version discarded it and raised with only stderr,
+    so the one case where evidence matters most produced the least. The
+    removed list is now emitted before raising, and the error states how
+    many were deleted so a partial state is visible in the log rather
+    than reconstructed afterwards.
     """
     if not paths:
         return
@@ -512,12 +526,33 @@ def _remote_delete(ssh_argv: list[str], paths: list[str]) -> None:
         [*ssh_argv, remote_script],
         input=stdin_blob, capture_output=True, text=True,
     )
+
+    # Emit what the remote reported BEFORE deciding whether to raise, so
+    # the deleted set is on the log either way.
+    removed = [
+        line[len("removed "):].strip()
+        for line in proc.stdout.splitlines()
+        if line.startswith("removed ")
+    ]
+    if proc.stdout:
+        sys.stdout.write(proc.stdout)
+        sys.stdout.flush()
+
     if proc.returncode != 0:
+        remaining = [p for p in paths if p not in removed]
         raise SystemExit(
-            f"ERROR: remote deletion failed (rc={proc.returncode}): "
-            f"{proc.stderr.strip()}"
+            f"ERROR: remote deletion failed (rc={proc.returncode}) after "
+            f"deleting {len(removed)} of {len(paths)} file(s). "
+            f"THE OPERATION IS PARTIAL.\n"
+            f"  deleted ({len(removed)}):\n    "
+            + ("\n    ".join(removed) if removed else "<none>")
+            + f"\n  not deleted ({len(remaining)}):\n    "
+            + ("\n    ".join(remaining) if remaining else "<none>")
+            + f"\n  remote stderr: {proc.stderr.strip()}\n"
+            f"  Do not re-run and do not improvise a recovery. The backup "
+            f"artifact and this log are the evidence for a separately "
+            f"authorized decision."
         )
-    sys.stdout.write(proc.stdout)
 
 
 def _remote_existing(ssh_argv: list[str], paths: list[str]) -> list[str]:
