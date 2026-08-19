@@ -143,11 +143,15 @@ lagging and is not scheduled to be renumbered to match the other two.
 
 ## Citation metadata
 
-`CITATION.cff` deliberately carries **no** `doi` and **no**
-`date-released`. The concept note is unpublished and has no DOI to cite,
-and there is no v0.1.12 tag yet — a `date-released` would be asserting a
-release date for something not released. Both are added when a real tag
-is cut, not before.
+`CITATION.cff` deliberately carries **no** `doi`. The concept note is
+unpublished and has no DOI to cite, and no DOI has been minted for the
+v0.1.12 software release; a concept-note DOI is a different object and
+would not be this release's identifier.
+
+`date-released` was held absent while this branch was open, because a
+date would have asserted a release for something not released. It is
+set to the actual release date in the separate release-metadata change
+that finalizes v0.1.12.
 
 ---
 
