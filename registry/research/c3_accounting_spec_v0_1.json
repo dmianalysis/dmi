@@ -1,4 +1,14 @@
 {
+  "amounts_not_in_force": {
+    "all_cu_worked_example": "46,322.000000 published-basis pending, of which 33,702 is non-replacement and 12,620 is the secondary-residence removal side; plus 102,234.815688 secondary-residence pending replacement; equals 148,556.815688. The 910106 withheld amount of 665.471372 sits outside that identity, so the secondary-residence replacement side totals 102,900.287060.",
+    "identity": "pending_total_admitted_amount = pending_source_amount + pending_replacement_amount in every population. Withheld is not part of pending and is never added to it.",
+    "pending_replacement_amount": "a microdata estimate for a replacement concept whose rule is not in force",
+    "pending_source_amount": "published CE expenditure under a rule that is proposed and not in force",
+    "pending_total_admitted_amount": "pending_source_amount + pending_replacement_amount, exactly",
+    "why_decomposed": "A published CE dollar under a proposed rule and a microdata estimate for a concept not in force are different kinds of number. Reporting only their sum invites them to be read as one, and the sum is the figure a reader is most likely to quote.",
+    "withheld_replacement_amount": "a replacement-side estimate that was produced and failed a declared quality gate",
+    "withheld_total_amount": "every withheld amount, whatever its side"
+  },
   "arithmetic_policy": {
     "representation": "decimal.Decimal over the ledger's fixed-point strings",
     "tolerance": "none",
@@ -37,7 +47,10 @@
   "scope": "Research only. Declares how the frozen canonical ledger is aggregated into two accounting systems. It moves no amount, proposes no rule and computes no weight.",
   "shelter_delta_definitions": {
     "delta_scope": "e_cpi - e_source, both recomputed from ledger rows",
-    "delta_shelter": "rental_equivalence_introduced - owner_outlays_removed",
+    "delta_shelter_checkpoint_membership": "rental_equivalence_introduced - owner outlays already REMOVED_OUT_OF_SCOPE at the shelter checkpoint. A historical checkpoint-comparability measure: it reproduces the frozen published value and is not a statement about the current rule state. Emitted as delta_shelter_frozen_membership.",
+    "delta_shelter_current_effective": "rental_equivalence_introduced - every owner outlay that has left the basis under a rule accepted as of this commit, which additionally includes owner maintenance services. Derived from current governing rule state. Emitted as delta_shelter_current_state.",
+    "delta_shelter_general_form": "rental_equivalence_introduced - owner_outlays_removed",
+    "no_unqualified_field_is_emitted": "delta_shelter appears in no artifact as a bare field name. The two readings differ by 199,079 million dollars for All Consumer Units, so an unqualified field would be ambiguous precisely where the distinction matters.",
     "owner_outlay_membership_source": "data/research/detailed_inflation/shelter_2024/shelter_cpi_track_2024.csv",
     "two_readings_reported": {
       "current_state": "every owner outlay that has since left the basis under an accepted rule, which additionally includes owner maintenance services",

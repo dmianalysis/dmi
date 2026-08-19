@@ -48,6 +48,7 @@
     "why": "Ten of the fourteen CE expenditure domains have never been through the mapping, provenance and scope discipline the four audited domains received. They carry roughly a third of published total expenditure. Every one of the fourteen taxonomy nodes that is not fully represented is a node whose expenditure sits in those domains, and Apparel has no canonical representation at all. Whether the current ledger is an adequate normalisation denominator is a judgement for human review; the evidence here does not support calling it sufficient."
   },
   "internal_reconciliation": {
+    "amounts_not_in_force_identity": "pending_total_admitted_amount = pending_source_amount + pending_replacement_amount, exactly, in every population. Withheld is not part of pending: it is an amount that was produced and failed a declared quality gate. For All Consumer Units the identity reads 46,322.000000 + 102,234.815688 = 148,556.815688, and the withheld 665.471372 sits outside it. The secondary-residence replacement side therefore totals 102,900.287060, of which the pending part is admitted as an estimate and the withheld part is not.",
     "e_source_by_population": {
       "ALL_CU": "6836520.000000",
       "Q1": "688872.000000",
@@ -82,7 +83,23 @@
       "Q4": "2767.000000",
       "Q5": "4351.000000"
     },
-    "pending_by_population": {
+    "pending_replacement_amount_by_population": {
+      "ALL_CU": "102234.815688",
+      "Q1": "5644.978548",
+      "Q2": "11114.301339",
+      "Q3": "11083.088795",
+      "Q4": "20948.843428",
+      "Q5": "53443.603579"
+    },
+    "pending_source_amount_by_population": {
+      "ALL_CU": "46322.000000",
+      "Q1": "6322.000000",
+      "Q2": "8082.000000",
+      "Q3": "7908.000000",
+      "Q4": "12236.000000",
+      "Q5": "11776.000000"
+    },
+    "pending_total_admitted_amount_by_population": {
       "ALL_CU": "148556.815688",
       "Q1": "11966.978548",
       "Q2": "19196.301339",
@@ -99,7 +116,15 @@
       "Q5": "0.000000"
     },
     "status": "PASS",
-    "withheld_by_population": {
+    "withheld_replacement_amount_by_population": {
+      "ALL_CU": "665.471372",
+      "Q1": "0.000000",
+      "Q2": "9.807815",
+      "Q3": "99.075314",
+      "Q4": "120.808528",
+      "Q5": "435.779715"
+    },
+    "withheld_total_amount_by_population": {
       "ALL_CU": "665.471372",
       "Q1": "0.000000",
       "Q2": "9.807815",
@@ -144,8 +169,11 @@
     "definition_difference_all_cu": "199079.000000",
     "delta_scope_all_cu": "1287991.812994",
     "delta_shelter_current_state_all_cu": "1402618.812994",
+    "delta_shelter_current_state_interpretation": "CURRENT_GOVERNING_RULE_STATE. Every owner outlay that has left the basis under a rule accepted as of this commit, including owner maintenance services. This is the reading that describes the substrate today.",
     "delta_shelter_frozen_membership_all_cu": "1601697.812994",
+    "delta_shelter_frozen_membership_interpretation": "HISTORICAL_CHECKPOINT_COMPARABILITY. Owner-outlay membership pinned at the shelter checkpoint. Reproduces the frozen published value and is not a statement about the current rule state.",
     "finding": "delta_scope reproduces the frozen shelter checkpoint exactly. delta_shelter reproduces it exactly only under the removal membership frozen at that checkpoint. Owner maintenance services, 199,079 million dollars, was OWNER_OUTLAY and PROPOSED then and is ACCEPTED and out of scope now, so a current-state reading of 'owner outlays removed' gives a delta_shelter smaller by exactly that amount. The residual task recorded delta_shelter as unchanged and justified it by noting that pending and accepted-out-of-scope both sit outside the CPI basis. That argument is sufficient for delta_scope, whose second term is the CPI basis, and it is not sufficient for delta_shelter, whose second term is a removal set. The invariance is real but rests on the membership being pinned at the shelter checkpoint rather than on the bucket-movement argument given. Both readings are reported and neither number is adjusted.",
+    "no_unqualified_delta_shelter_is_published": "Every delta_shelter figure in this summary and in shelter_delta_reconciliation.csv names which removal membership it was computed over. The two differ by 199,079 million dollars, so an unqualified field would be ambiguous in exactly the case where it matters.",
     "reproduced_from_ledger": true
   },
   "source_vintages": {

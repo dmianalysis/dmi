@@ -226,7 +226,19 @@ def load_ledger(path: Path = LEDGER_PATH) -> list[LedgerRow]:
 
 @dataclass(frozen=True)
 class PopulationAccounting:
-    """Both accounting systems for one population, plus their residuals."""
+    """Both accounting systems for one population, plus their residuals.
+
+    Amounts not in force are decomposed by where they came from, because the
+    two halves are different kinds of number and summing them without saying
+    so invites them to be read as one. ``pending_source_amount`` is published
+    CE expenditure under a proposed rule. ``pending_replacement_amount`` is a
+    microdata estimate for a replacement concept that is not in force. They
+    add to ``pending``, and that identity is asserted rather than assumed.
+
+    ``withheld_replacement_amount`` is separated for the same reason: the only
+    withheld amount in the 2024 substrate is a replacement-side estimate that
+    failed a quality gate, and it is not part of pending at all.
+    """
 
     population: str
     source_total: Decimal
@@ -239,8 +251,11 @@ class PopulationAccounting:
     effective_residual: Decimal
     excluded_effective: Decimal
     pending: Decimal
+    pending_source_amount: Decimal
+    pending_replacement_amount: Decimal
     open_: Decimal
     withheld: Decimal
+    withheld_replacement_amount: Decimal
     delta_scope: Decimal
     cells_without_amount: int
     cells_with_amount: int
@@ -292,14 +307,29 @@ def population_accounting(rows: Iterable[LedgerRow]) -> list[PopulationAccountin
         transformed = by_disposition.get("TRANSFORMED", Decimal(0))
         effective_total = retained + replacement + transformed
 
-        def blocked(disposition: str) -> Decimal:
+        def blocked(disposition: str, predicate=None) -> Decimal:
             return sum(
                 (
                     r.bucket_amount
                     for r in scoped
-                    if r.disposition == disposition and r.bucket_amount is not None
+                    if r.disposition == disposition
+                    and r.bucket_amount is not None
+                    and (predicate is None or predicate(r))
                 ),
                 Decimal(0),
+            )
+
+        pending_source = blocked("PENDING", lambda r: r.is_published_basis)
+        pending_replacement = blocked(
+            "PENDING", lambda r: r.replacement_role == "REPLACEMENT"
+        )
+        pending_total = blocked("PENDING")
+        if pending_source + pending_replacement != pending_total:
+            raise C3ReconciliationError(
+                f"{population}: pending decomposes to {pending_source} + "
+                f"{pending_replacement} = {pending_source + pending_replacement}, "
+                f"which is not the pending total {pending_total}. A pending "
+                "amount is neither published basis nor a replacement side."
             )
 
         out.append(
@@ -316,9 +346,14 @@ def population_accounting(rows: Iterable[LedgerRow]) -> list[PopulationAccountin
                     effective_total - (retained + replacement + transformed)
                 ),
                 excluded_effective=blocked("EXCLUDED"),
-                pending=blocked("PENDING"),
+                pending=pending_total,
+                pending_source_amount=pending_source,
+                pending_replacement_amount=pending_replacement,
                 open_=blocked("OPEN"),
                 withheld=blocked("WITHHELD"),
+                withheld_replacement_amount=blocked(
+                    "WITHHELD", lambda r: r.replacement_role == "REPLACEMENT"
+                ),
                 delta_scope=effective_total - source_total,
                 cells_without_amount=sum(
                     1

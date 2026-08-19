@@ -875,6 +875,166 @@ class TestCoverageMutations(UniverseFixture):
 
 
 # ---------------------------------------------------------------------------
+# Group 8b: the two ambiguous words are never published unqualified
+# ---------------------------------------------------------------------------
+
+
+class TestTerminologyIsUnambiguous(LedgerFixture):
+    """Two quantities in C3 have a name each that could mean two things.
+
+    ``delta_shelter`` differs by 199,079 million dollars depending on which
+    owner-outlay membership it is computed over, and ``pending`` mixes
+    published CE expenditure with a microdata estimate. Both are published
+    only under names that say which one they are, and the arithmetic relating
+    the parts to the whole is asserted rather than left to a reader.
+    """
+
+    def test_a_no_artifact_publishes_a_bare_delta_shelter_field(self) -> None:
+        csv_path = C3_DIR / "shelter_delta_reconciliation.csv"
+        with csv_path.open(encoding="utf-8") as handle:
+            columns = next(csv.reader(handle))
+        self.assertNotIn("delta_shelter", columns)
+        self.assertIn("delta_shelter_frozen_membership", columns)
+        self.assertIn("delta_shelter_current_state", columns)
+
+        def keys(node):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    yield key
+                    yield from keys(value)
+            elif isinstance(node, list):
+                for value in node:
+                    yield from keys(value)
+
+        for path in (SUMMARY_PATH, ACCOUNTING_SPEC):
+            with self.subTest(artifact=path.name):
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                self.assertNotIn("delta_shelter", set(keys(payload)))
+
+    def test_b_each_reading_declares_what_it_is_for(self) -> None:
+        rows = list(
+            csv.DictReader(
+                (C3_DIR / "shelter_delta_reconciliation.csv")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+        )
+        self.assertEqual(len(rows), len(rec.POPULATIONS))
+        for row in rows:
+            with self.subTest(population=row["population"]):
+                self.assertIn(
+                    "HISTORICAL_CHECKPOINT_COMPARABILITY",
+                    row["frozen_membership_interpretation"],
+                )
+                self.assertIn(
+                    "CURRENT_GOVERNING_RULE_STATE",
+                    row["current_state_interpretation"],
+                )
+
+    def test_c_the_frozen_reading_still_reproduces_the_frozen_value(self) -> None:
+        """Labelling it must not have changed it."""
+        rows = {
+            r["population"]: r
+            for r in csv.DictReader(
+                (C3_DIR / "shelter_delta_reconciliation.csv")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+        }
+        self.assertEqual(
+            Decimal(rows["ALL_CU"]["delta_shelter_frozen_membership"]),
+            Decimal("1601697.812994"),
+        )
+        self.assertEqual(
+            Decimal(rows["ALL_CU"]["delta_shelter_current_state"]),
+            Decimal("1402618.812994"),
+        )
+
+    def test_d_pending_decomposes_exactly_in_every_population(self) -> None:
+        for entry in self.accounting:
+            with self.subTest(population=entry.population):
+                self.assertEqual(
+                    entry.pending_source_amount + entry.pending_replacement_amount,
+                    entry.pending,
+                )
+
+    def test_e_the_all_cu_relationship_is_the_stated_one(self) -> None:
+        """46,322 source + 102,234.815688 replacement = 148,556.815688.
+
+        The 910106 withheld amount sits outside that identity, which is why
+        the secondary-residence replacement side totals 102,900.287060 while
+        only part of it is admitted as an estimate.
+        """
+        entry = next(a for a in self.accounting if a.population == "ALL_CU")
+        self.assertEqual(entry.pending_source_amount, Decimal("46322.000000"))
+        self.assertEqual(
+            entry.pending_replacement_amount, Decimal("102234.815688")
+        )
+        self.assertEqual(entry.pending, Decimal("148556.815688"))
+        self.assertEqual(entry.withheld_replacement_amount, Decimal("665.471372"))
+        self.assertEqual(entry.withheld, entry.withheld_replacement_amount)
+
+        groups = {
+            g.population: g
+            for g in rec.replacement_groups(self.rows)
+            if g.replacement_group_id == "RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE"
+        }
+        self.assertEqual(
+            groups["ALL_CU"].replacement_side_amount,
+            entry.pending_replacement_amount + entry.withheld_replacement_amount,
+        )
+        self.assertEqual(
+            groups["ALL_CU"].replacement_side_amount, Decimal("102900.287060")
+        )
+
+    def test_f_withheld_is_never_folded_into_pending(self) -> None:
+        for entry in self.accounting:
+            with self.subTest(population=entry.population):
+                self.assertNotIn(
+                    entry.withheld,
+                    (entry.pending_source_amount, entry.pending_replacement_amount),
+                ) if entry.withheld else None
+                self.assertEqual(
+                    entry.pending,
+                    entry.pending_source_amount + entry.pending_replacement_amount,
+                )
+
+    def test_g_the_artifacts_publish_the_decomposition(self) -> None:
+        rows = {
+            r["population"]: r
+            for r in csv.DictReader(
+                (C3_DIR / "population_accounting_reconciliation.csv")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+        }
+        for population, row in rows.items():
+            with self.subTest(population=population):
+                self.assertEqual(
+                    Decimal(row["pending_source_amount"])
+                    + Decimal(row["pending_replacement_amount"]),
+                    Decimal(row["pending_total_admitted_amount"]),
+                )
+                self.assertIn("withheld_replacement_amount", row)
+                self.assertIn("withheld_total_amount", row)
+
+    def test_h_a_pending_row_that_is_neither_side_is_caught(self) -> None:
+        """Non-vacuity: the decomposition is asserted, not merely computed."""
+        i = next(
+            i
+            for i, r in enumerate(self.rows)
+            if r.disposition == "PENDING" and r.bucket_amount is not None
+        )
+        rows = list(self.rows)
+        rows[i] = dataclasses.replace(
+            rows[i], source_class="TRANSFORMATION_DESTINATION",
+            replacement_role="NOT_APPLICABLE",
+        )
+        with self.assertRaises(rec.C3ReconciliationError):
+            rec.population_accounting(rows)
+
+
+# ---------------------------------------------------------------------------
 # Group 9: determinism and serialization
 # ---------------------------------------------------------------------------
 

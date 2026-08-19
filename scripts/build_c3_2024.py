@@ -101,9 +101,12 @@ POPULATION_COLUMNS = (
     "e_track_a_effective",
     "effective_residual",
     "excluded_effective_all_rows",
-    "pending_all_rows",
+    "pending_source_amount",
+    "pending_replacement_amount",
+    "pending_total_admitted_amount",
     "open_all_rows",
-    "withheld_all_rows",
+    "withheld_replacement_amount",
+    "withheld_total_amount",
     "delta_scope",
     "published_basis_cells_with_amount",
     "published_basis_cells_without_amount",
@@ -123,9 +126,12 @@ def render_population(accounting) -> str:
             "e_track_a_effective": _d(a.effective_total),
             "effective_residual": _d(a.effective_residual),
             "excluded_effective_all_rows": _d(a.excluded_effective),
-            "pending_all_rows": _d(a.pending),
+            "pending_source_amount": _d(a.pending_source_amount),
+            "pending_replacement_amount": _d(a.pending_replacement_amount),
+            "pending_total_admitted_amount": _d(a.pending),
             "open_all_rows": _d(a.open_),
-            "withheld_all_rows": _d(a.withheld),
+            "withheld_replacement_amount": _d(a.withheld_replacement_amount),
+            "withheld_total_amount": _d(a.withheld),
             "delta_scope": _d(a.delta_scope),
             "published_basis_cells_with_amount": str(a.cells_with_amount),
             "published_basis_cells_without_amount": str(a.cells_without_amount),
@@ -223,6 +229,23 @@ SHELTER_COLUMNS = (
     "owner_outlays_removed_current_state",
     "delta_shelter_current_state",
     "definition_difference",
+    "frozen_membership_interpretation",
+    "current_state_interpretation",
+)
+
+#: What each of the two delta_shelter readings is *for*. Carried in the
+#: artifact rather than left to the write-up: the two numbers differ by
+#: 199,079 and a consumer holding only the CSV must not have to guess which
+#: one answers which question.
+FROZEN_MEMBERSHIP_INTERPRETATION = (
+    "HISTORICAL_CHECKPOINT_COMPARABILITY. Owner-outlay membership pinned at "
+    "the shelter checkpoint. Reproduces the frozen published value and is not "
+    "a statement about the current rule state."
+)
+CURRENT_STATE_INTERPRETATION = (
+    "CURRENT_GOVERNING_RULE_STATE. Every owner outlay that has left the basis "
+    "under a rule accepted as of this commit, including owner maintenance "
+    "services. This is the reading that describes the substrate today."
 )
 
 
@@ -243,6 +266,8 @@ def render_shelter(deltas) -> str:
             ),
             "delta_shelter_current_state": _d(d.delta_shelter_current_state),
             "definition_difference": _d(d.definition_difference),
+            "frozen_membership_interpretation": FROZEN_MEMBERSHIP_INTERPRETATION,
+            "current_state_interpretation": CURRENT_STATE_INTERPRETATION,
         }
         for d in deltas
     ]
@@ -599,11 +624,33 @@ def build_summary(**kw) -> dict:
             "e_track_a_effective_by_population": {
                 a.population: _d(a.effective_total) for a in accounting
             },
-            "pending_by_population": {a.population: _d(a.pending) for a in accounting},
+            "pending_source_amount_by_population": {
+                a.population: _d(a.pending_source_amount) for a in accounting
+            },
+            "pending_replacement_amount_by_population": {
+                a.population: _d(a.pending_replacement_amount) for a in accounting
+            },
+            "pending_total_admitted_amount_by_population": {
+                a.population: _d(a.pending) for a in accounting
+            },
             "open_by_population": {a.population: _d(a.open_) for a in accounting},
-            "withheld_by_population": {
+            "withheld_replacement_amount_by_population": {
+                a.population: _d(a.withheld_replacement_amount) for a in accounting
+            },
+            "withheld_total_amount_by_population": {
                 a.population: _d(a.withheld) for a in accounting
             },
+            "amounts_not_in_force_identity": (
+                "pending_total_admitted_amount = pending_source_amount + "
+                "pending_replacement_amount, exactly, in every population. "
+                "Withheld is not part of pending: it is an amount that was "
+                "produced and failed a declared quality gate. For All Consumer "
+                "Units the identity reads 46,322.000000 + 102,234.815688 = "
+                "148,556.815688, and the withheld 665.471372 sits outside it. "
+                "The secondary-residence replacement side therefore totals "
+                "102,900.287060, of which the pending part is admitted as an "
+                "estimate and the withheld part is not."
+            ),
             "no_balancing_bucket_exists": True,
             "note": (
                 "Source residuals are exactly zero because every published-basis "
@@ -617,6 +664,17 @@ def build_summary(**kw) -> dict:
             "delta_scope_all_cu": _d(kw["deltas"][0].delta_scope),
             "delta_shelter_frozen_membership_all_cu": _d(
                 kw["deltas"][0].delta_shelter_frozen_membership
+            ),
+            "delta_shelter_frozen_membership_interpretation": (
+                FROZEN_MEMBERSHIP_INTERPRETATION
+            ),
+            "delta_shelter_current_state_interpretation": CURRENT_STATE_INTERPRETATION,
+            "no_unqualified_delta_shelter_is_published": (
+                "Every delta_shelter figure in this summary and in "
+                "shelter_delta_reconciliation.csv names which removal "
+                "membership it was computed over. The two differ by 199,079 "
+                "million dollars, so an unqualified field would be ambiguous "
+                "in exactly the case where it matters."
             ),
             "delta_shelter_current_state_all_cu": _d(
                 kw["deltas"][0].delta_shelter_current_state

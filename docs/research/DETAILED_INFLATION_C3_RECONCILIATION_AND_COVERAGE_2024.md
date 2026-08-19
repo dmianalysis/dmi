@@ -59,9 +59,19 @@ Source buckets, All Consumer Units: retained 5,509,878; excluded 1,148,566;
 transformed 120,803; pending 46,322; open 10,951; removed-for-replacement 0;
 withheld 0.
 
-Amounts not in force, all rows, All Consumer Units: pending 148,557 (of which
-46,322 is published basis and 102,235 is the estimated secondary-residence
-replacement), open 10,951, withheld 665.47.
+Amounts not in force, All Consumer Units, decomposed because the two halves are
+different kinds of number:
+
+```
+pending_source_amount         =  46,322.000000   published CE, rule proposed
+pending_replacement_amount    = 102,234.815688   microdata estimate, rule not in force
+pending_total_admitted_amount = 148,556.815688   exactly the sum
+withheld_replacement_amount   =     665.471372   produced, failed a quality gate
+```
+
+Withheld is **not** part of pending. The secondary-residence replacement side
+therefore totals 102,900.287060, of which the pending part is admitted as an
+estimate and the withheld part is not. Open is 10,951.
 
 ### Why the residual is exactly zero, and why that is not luck
 
@@ -108,8 +118,15 @@ restatement.
 | e_source | 6,836,520.000000 | 6,836,520.000000 |
 | e_cpi | 8,124,511.812994 | 8,124,511.812994 |
 | Δ_scope | 1,287,991.812994 | 1,287,991.812994 |
-| Δ_shelter (frozen membership) | 1,601,697.812994 | 1,601,697.812994 |
-| Δ_shelter (current rule state) | **1,402,618.812994** | — |
+| `delta_shelter_frozen_membership` | 1,601,697.812994 | 1,601,697.812994 |
+| `delta_shelter_current_state` | **1,402,618.812994** | — |
+
+Both readings are published only under those qualified names — no artifact
+emits a bare `delta_shelter` field — and every row carries its own
+interpretation: the frozen reading is labelled
+`HISTORICAL_CHECKPOINT_COMPARABILITY` and reproduces the frozen published
+value; the other is `CURRENT_GOVERNING_RULE_STATE` and is derived from the
+rules accepted as of this commit.
 
 **Classification: `DIFFERENCE_IN_ACCOUNTING_DEFINITION`.**
 
