@@ -349,10 +349,6 @@ class TestDocstringsMatchBehaviour(unittest.TestCase):
         self.assertIn("cache", doc)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestEndToEndUnderUniformBlock(unittest.TestCase):
     """Drive `main()` with every request refused, as on 2026-08-19.
 
@@ -517,3 +513,8 @@ class TestEndToEndUnderUniformBlock(unittest.TestCase):
         self.assertIs(operational["all_healthy"], False)
         self.assertEqual(operational["health_verdict"], "degraded")
         self.assertTrue(operational["degraded"])
+
+
+    if __name__ == "__main__":
+        unittest.main()
+
