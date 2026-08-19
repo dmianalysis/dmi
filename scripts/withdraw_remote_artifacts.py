@@ -242,6 +242,11 @@ def _ssh_command(
         "ssh",
         "-i", str(key),
         "-p", port,
+        # Offer ONLY the deployment identity. Without this, ssh also
+        # presents every key in the agent and every default identity it
+        # finds, so an unrelated key could authenticate a destructive
+        # run and the audit trail would name the wrong credential.
+        "-o", "IdentitiesOnly=yes",
         "-o", "StrictHostKeyChecking=yes",
         "-o", f"UserKnownHostsFile={known_hosts}",
         f"{user}@{host}",

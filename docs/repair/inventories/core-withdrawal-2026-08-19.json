@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-08-19T01:54:14.614094Z",
+  "remote_base": "/home/agiraces/dmianalysis",
+  "remote_outputs": "/home/agiraces/dmianalysis/data/outputs",
+  "patterns": [
+    "dmi_release_*_core.json",
+    "dmi-*-core.csv",
+    "dmi-*-core.parquet",
+    "qa_report_*_core.json"
+  ],
+  "protected_patterns": [
+    "^dmi_release_[0-9]{4}-[0-9]{2}\\.json$",
+    "^dmi_release_[0-9]{4}-[0-9]{2}_slack_plus\\.json$",
+    "^dmi-[0-9]{4}-[0-9]{2}-baseline\\.(csv|parquet)$",
+    "^dmi-[0-9]{4}-[0-9]{2}-slack_plus\\.(csv|parquet)$",
+    "^dmi-[0-9]{4}-[0-9]{2}\\.(csv|parquet)$",
+    "^releases\\.json$",
+    "^latest\\.json$",
+    "^specifications\\.json$",
+    "^health\\.json$",
+    "^[0-9]{4}-[0-9]{2}\\.html$"
+  ],
+  "non_core_patterns": [
+    "_u6\\.(json|csv|parquet)$",
+    "_with_ci\\.(json|csv|parquet)$"
+  ],
+  "core_name_patterns": [
+    "^dmi_release_[0-9]{4}-[0-9]{2}_core\\.json$",
+    "^dmi-[0-9]{4}-[0-9]{2}-core\\.(csv|parquet)$",
+    "^qa_report_[0-9]{4}-[0-9]{2}_core\\.json$"
+  ],
+  "files": [
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.csv",
+      "size": 248,
+      "sha256": "d82174574b3cd6d87487038631d723209053743b618bdd0474cd12bacb83effb"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.parquet",
+      "size": 2847,
+      "sha256": "46d07a36a46a8318c9a1909fadeee36421f7eb786cb868df055d8d112cd3aaed"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.csv",
+      "size": 247,
+      "sha256": "8f2e8ee4d35378e0c16a1ad35fc01f446e18d289d7bffe03c4b0f905ebbb6b3b"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.parquet",
+      "size": 2847,
+      "sha256": "1b041af5d071090c61080129ad0e290ea4ad9caedac3a693a97e06707a66e64c"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.csv",
+      "size": 243,
+      "sha256": "b5dc6bc5820723c8efd926c9ac5c340a11243a65903daeb616a1d3de59f7ca4c"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.parquet",
+      "size": 2847,
+      "sha256": "8e7d8d8bc6f0728b1e0acbb77e6fb8223274f606e6847cd77bd637837ea093d0"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.csv",
+      "size": 245,
+      "sha256": "8852e07a0b2dd3044190902dac7d05459dcbb83ae47f9d4d199d4ae26e44a24e"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.parquet",
+      "size": 2847,
+      "sha256": "540ef4dbac930feb6b1bde0ffde7441a8b6fe5ccc128848b55d9013c71b10420"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.csv",
+      "size": 247,
+      "sha256": "3c43657ccbfc8dc909a345040c549ccd6b23802545f4055b454e37aa260e0f6a"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.parquet",
+      "size": 2847,
+      "sha256": "11ed2ed5b51e59d0c2899f1d672a6453ba996f56ee77f15fe41c735a8ae65957"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2024-11_core.json",
+      "size": 5423,
+      "sha256": "86bd90b24b57134f860172675387bfede861db1447f50ff57c92c3e59ec3cab7"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-03_core.json",
+      "size": 6020,
+      "sha256": "c8df5790e68672449a00fbcabd954cf98425269490bdb2933ee53c52a05f2e6f"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-04_core.json",
+      "size": 6018,
+      "sha256": "a2ca8b00d08f6223ebc4fdb320c3dba5c120404f537dda2ab65cff72385f05da"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-05_core.json",
+      "size": 6123,
+      "sha256": "71d1cb83c086259b893140943d7f636801f53a5e2a495fcc4f3537b33f025c73"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-06_core.json",
+      "size": 6138,
+      "sha256": "b9ef4cde0e02f6785f759738f9f8ddf2b0d4e9f9ed0bce309b49241d57b49022"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-07_core.json",
+      "size": 6128,
+      "sha256": "29c3f27a9c0de1201f6d255007d1d555ade25aabdbc8fcba967742c979efd0e4"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-03_core.json",
+      "size": 2458,
+      "sha256": "3e9bcded421641a775e1051080cf9acd058bd80584c390e7189a695600ec02b0"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-04_core.json",
+      "size": 2457,
+      "sha256": "65d5b924b6d35d5c88431488a29811e9807bbf788c9f43868d0a36804c682554"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-05_core.json",
+      "size": 2455,
+      "sha256": "7bda65a59ba5f613cdad6946b1231f44254013a6ac767fdd1b1bcc036515b3a5"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-06_core.json",
+      "size": 2456,
+      "sha256": "2231a32fd50eb2f9b7f8928a357c9007c44b7df9dfa5d6b41ab495fe3a769eee"
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-07_core.json",
+      "size": 2457,
+      "sha256": "692070ac2f6d5c5ad3f4b1917dd1e886e278392559eb27050eb2cd3bfe0f8abb"
+    }
+  ],
+  "integrity_sha256": "3812991fa2ed52e4e3cfcc543c28c3f1769c20a3033c307abdb8085fd1887fd6"
+}
