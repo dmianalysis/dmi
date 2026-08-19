@@ -17,8 +17,11 @@ carry a v0.1.12 status banner.
 
 from __future__ import annotations
 
+import re
+import subprocess
 import unittest
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -1282,3 +1285,151 @@ class TestWithdrawalDocsDistinguishTheThreeStates(unittest.TestCase):
             for release in manifest["releases"]:
                 with self.subTest(manifest=name, release=release["release_id"]):
                     self.assertNotIn("core", release.get("spec_urls", {}))
+
+
+# --- static status badges -------------------------------------------------
+#
+# A badge that claims a per-run result must be wired to a run. The
+# shields.io ``/badge/`` endpoint is the *static* one: it renders whatever
+# text is in the URL, forever, with no connection to anything. Live badges
+# come from a workflow (``actions/workflows/<file>/badge.svg``) or from a
+# shields *dynamic* endpoint that queries an API.
+
+_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+_STATIC_BADGE = "img.shields.io/badge/"
+
+# Tokens that name a per-run signal. Matched as whole tokens after
+# splitting the badge path, so "ci" cannot match inside "specifications"
+# and "test" cannot match inside "latest".
+_LIVE_SIGNAL_TOKENS = {
+    "test", "tests", "testing", "build", "builds", "ci", "cd",
+    "coverage", "cov", "passing", "failing", "pass", "fail", "broken",
+}
+
+
+def _tracked_markdown():
+    out = subprocess.run(
+        ["git", "ls-files", "-z", "*.md"],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+    for rel in filter(None, out.split("\0")):
+        path = ROOT / rel
+        if "dmi-v0.1.10-deployment" in Path(rel).parts:
+            continue
+        if path.is_file():
+            yield path
+
+
+def _badge_tokens(url: str) -> set:
+    tail = url.split(_STATIC_BADGE, 1)[1]
+    tail = unquote(tail).replace("%20", " ")
+    return {t for t in re.split(r"[-_/ .]+", tail.lower()) if t}
+
+
+def static_status_badges(markdown: str):
+    """Static badges in ``markdown`` that assert a per-run signal.
+
+    Fenced code blocks are removed before scanning, so documentation --
+    including the issue write-up and this repair's own commentary -- stays
+    free to show the forbidden pattern as an example. A rule that cannot be
+    illustrated without tripping itself is a rule that gets deleted.
+    """
+    offenders = []
+    body = _FENCE_RE.sub("", markdown)
+    for lineno, line in enumerate(body.splitlines(), start=1):
+        for label, url in _IMAGE_RE.findall(line):
+            if _STATIC_BADGE not in url:
+                continue                      # live badge, or not a badge
+            hits = _badge_tokens(url) & _LIVE_SIGNAL_TOKENS
+            if hits:
+                offenders.append((lineno, label, url, sorted(hits)))
+    return offenders
+
+
+class TestNoStaticStatusBadges(unittest.TestCase):
+    """A badge claiming a per-run result must be wired to a run.
+
+    ``README.md`` carried
+    ``![Coverage](https://img.shields.io/badge/tests-passing-success)`` --
+    a hardcoded image rendering a green "tests | passing" pill
+    unconditionally. It would have kept rendering it if the suite broke, a
+    test were deleted, or CI stopped running entirely. It was the only
+    test-health signal on the repository's front page and it could not
+    report bad news, which is worse than showing nothing: a reader cannot
+    tell it from a real status.
+
+    Editorial and stable-fact badges are untouched by this rule. ``status``,
+    ``data``, ``python-3.9+`` and ``license-MIT`` do not claim a result
+    that changes from run to run, so a static image states them honestly.
+    """
+
+    def test_no_tracked_markdown_carries_a_static_status_badge(self):
+        found = []
+        for path in _tracked_markdown():
+            rel = path.relative_to(ROOT)
+            for lineno, label, url, hits in static_status_badges(path.read_text()):
+                found.append(f"{rel}:{lineno} [{label}] {url} (claims: {', '.join(hits)})")
+        self.assertEqual(
+            found, [],
+            "A badge asserting a per-run result must come from a workflow "
+            "run (actions/workflows/<file>/badge.svg) or a shields dynamic "
+            "endpoint -- never the static /badge/ endpoint, which renders "
+            "the same text forever. Offenders:\n  " + "\n  ".join(found),
+        )
+
+    def test_readme_is_clean(self):
+        self.assertEqual(static_status_badges((ROOT / "README.md").read_text()), [])
+
+    def test_editorial_badges_are_not_flagged(self):
+        """The rule must not overreach into badges that state stable facts."""
+        keep = (
+            "![Status](https://img.shields.io/badge/status-pre--1.0-yellow)\n"
+            "![Python](https://img.shields.io/badge/python-3.9+-blue)\n"
+            "![License](https://img.shields.io/badge/license-MIT-green)\n"
+            "![Data](https://img.shields.io/badge/data-monthly-blue)\n"
+        )
+        self.assertEqual(static_status_badges(keep), [])
+        # and those four are exactly what README still carries
+        readme = (ROOT / "README.md").read_text()
+        self.assertEqual(readme.count("img.shields.io"), 4)
+
+    def test_live_badges_are_permitted(self):
+        """The fix for a flagged badge is a real one, so real ones must pass."""
+        live = (
+            "![CI](https://github.com/dmianalysis/dmi/actions/workflows/"
+            "pr_ci.yml/badge.svg?branch=main)\n"
+            "![Tests](https://img.shields.io/github/actions/workflow/status/"
+            "dmianalysis/dmi/pr_ci.yml?branch=main)\n"
+        )
+        self.assertEqual(static_status_badges(live), [])
+
+    def test_detector_is_not_vacuous(self):
+        """Guard against passing because the image regex stopped matching."""
+        bad = (
+            "![Coverage](https://img.shields.io/badge/tests-passing-success)\n"
+            "![Build](https://img.shields.io/badge/build-passing-brightgreen)\n"
+            "![Cov](https://img.shields.io/badge/coverage-97%25-green)\n"
+        )
+        offenders = static_status_badges(bad)
+        self.assertEqual(len(offenders), 3, f"detector missed cases: {offenders}")
+        self.assertEqual([o[0] for o in offenders], [1, 2, 3])
+
+    def test_tokens_match_whole_words_only(self):
+        """"ci" must not match inside "specifications", nor "test" in "latest"."""
+        innocuous = (
+            "![Spec](https://img.shields.io/badge/specifications-3.0.0-blue)\n"
+            "![Latest](https://img.shields.io/badge/latest-2026--07-blue)\n"
+        )
+        self.assertEqual(static_status_badges(innocuous), [])
+
+    def test_fenced_examples_are_not_flagged(self):
+        """Docs must be able to show the banned pattern while banning it."""
+        doc = (
+            "Do not do this:\n\n"
+            "```markdown\n"
+            "![Coverage](https://img.shields.io/badge/tests-passing-success)\n"
+            "```\n\n"
+            "Use a workflow badge instead.\n"
+        )
+        self.assertEqual(static_status_badges(doc), [])
