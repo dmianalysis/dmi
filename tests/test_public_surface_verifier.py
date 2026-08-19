@@ -514,7 +514,5 @@ class TestEndToEndUnderUniformBlock(unittest.TestCase):
         self.assertEqual(operational["health_verdict"], "degraded")
         self.assertTrue(operational["degraded"])
 
-
     if __name__ == "__main__":
         unittest.main()
-
