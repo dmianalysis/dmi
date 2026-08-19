@@ -1,6 +1,6 @@
 # Core-Specification Output Withdrawal Record
 
-**Status:** Withdrawn (local repository); remote withdrawal pending explicit authorization
+**Status:** Withdrawn. Local repository cleanup complete; **remote-origin withdrawal completed 2026-08-19** (see §7 and `docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md`)
 **Repair branch:** `repair/v0.1.12-concept-note-alignment`
 **Phase:** 2 (Core removal from operational paths)
 **Record date:** 2026-08-15
@@ -164,7 +164,7 @@ that currently mention Core. They are not per-spec files. Their treatment is:
 ### 3.3 Public/remote surfaces
 
 The following remote surfaces are known or expected to serve Core artifacts and will
-require withdrawal actions. **Remote actions are deferred pending explicit authorization**
+required withdrawal actions. **These were executed on 2026-08-19; see §7.** At the time this section was written they were deferred pending explicit authorization
 per the repair spec's safety rules. This section enumerates the paths so that the
 withdrawal procedure prepared in Phase 7 can act on them:
 
@@ -191,9 +191,9 @@ performed since. The withdrawal tooling now exists as
 with the operator procedure in
 [`docs/repair/REMOTE_WITHDRAWAL.md`](../repair/REMOTE_WITHDRAWAL.md).
 
-**Neither phase has been authorized or executed.** Nothing runs it
-automatically. Local repository cleanup is complete; remote withdrawal is
-a separate decision that has not been taken.
+**Superseded.** At the time this section was written, neither phase had
+been authorized or executed. Both phases have since run: the inventory on
+2026-08-19 and the execution the same day. See §7 for the outcome.
 
 ---
 
@@ -217,7 +217,7 @@ which the plugin points at Core files that no longer exist.
    `specifications.json` under schema-version 3.0.0 (breaking; Core spec is disallowed).
 6. **Public plugin repair** (Phase 6): update `web/wp-plugins/dmi-release-data/dmi_release_data.php`
    to remove Core code paths before any deployment.
-7. **Remote withdrawal** (Phase 7, prepared but not executed): withdrawal script
+7. **Remote withdrawal** (Phase 7 — **executed 2026-08-19**, see §7): withdrawal script
    enumerated in §3.3 for later explicit authorization. No live-server change happens
    inside this repair without that authorization.
 
@@ -244,3 +244,71 @@ would be produced by the corrected code path and published under a new specifica
 in `specifications.json` with schema-version 3.0.0 or later. This record is a permanent
 part of the repository history and is not superseded by a future publication; it should be
 linked from the release notes of the release in which Core is (re)introduced.
+
+---
+
+## 7. Remote-origin withdrawal — EXECUTED 2026-08-19
+
+Remote-origin withdrawal completed successfully. All 21 inventoried Core
+artifacts were verified absent, and all 15 protected operational
+artifacts were verified present. Automated public-HTTP verification from
+the GitHub runner was inconclusive because the verification client
+received uniform HTTP 403 responses across withdrawn and operational
+endpoints. Subsequent normal-browser checks passed. No restoration or CDN
+purge was performed.
+
+### Four distinct events
+
+1. **Repository cleanup / quarantine** — complete (v0.1.12 repair, PR #25).
+2. **Production deployment** of the corrected public surface — complete
+   (`deploy_production.yml`, merge commit `e581689`).
+3. **Remote-origin withdrawal** — **executed 2026-08-19**, run
+   [`32214973867`](https://github.com/dmianalysis/dmi/actions/runs/32214973867).
+4. **CDN / public-cache verification** — verified; **no purge required or
+   performed**.
+
+### What was deleted
+
+The 21 files enumerated by the sealed inventory
+`docs/repair/inventories/core-withdrawal-2026-08-19.json` (file SHA-256
+`ce1e5593…ba84e11c`, seal `3812991f…1887fd6`, 63,598 bytes), under
+`/home/agiraces/dmianalysis/data/outputs`:
+
+- 6 × `dmi_release_{2024-11,2026-03..07}_core.json`
+- 5 × `dmi-{2026-03..07}-core.csv`
+- 5 × `dmi-{2026-03..07}-core.parquet`
+- 5 × `qa_report_{2026-03..07}_core.json`
+
+All 21 were re-hashed and matched the seal before deletion, then verified
+absent afterwards. There was no partial deletion. A verified backup
+(artifact `9352027951`, archive SHA-256 `452a0c2f…9b19c48a`) was taken and
+checked against the inventory before any file was removed.
+
+### What was not touched
+
+`_u6` and `_with_ci` artifacts are **not** Core. They were outside this
+authorization, refused by the tool's scope rules, and remain on the
+server unchanged. Baseline, Slack-Plus, manifests, release notes,
+dashboard, health, timeseries and the historical archive are unaffected —
+all 15 protected paths were verified present after the deletion.
+
+### Public surface
+
+The automated verifier received uniform 403 and its result was therefore
+inconclusive, not a demonstration of either withdrawal or degradation.
+The operator's browser checks passed (operator attestation; no per-URL
+timestamps or headers were captured). Independent read-only
+re-verification on 2026-08-19 with a client the edge serves found all 21
+withdrawn URLs returning 404 and all 11 operational endpoints returning
+200 with valid content, with `current_release_id` `2026-07` and exactly
+`baseline` + `slack_plus` advertised.
+
+### Retirement
+
+The destructive Phase-2 workflow was retired after this run and removed
+from the active Actions surface. Read-only verification remains available
+as `.github/workflows/verify_core_withdrawal_public.yml`.
+
+Full record: `docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md`.
+Machine-readable evidence:
+`docs/repair/evidence/core-withdrawal-2026-08-19/`.

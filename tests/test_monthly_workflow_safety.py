@@ -403,12 +403,12 @@ PR_CI_PATH = WORKFLOWS / "pr_ci.yml"
 #: covered by the repo-wide policy tests below but is NOT a deployment
 #: workflow. Its own structural tests live in test_inventory_workflow.py.
 INVENTORY_PATH = WORKFLOWS / "inventory_withdrawn_core.yml"
-#: Phase-2 Core withdrawal. Manual dispatch only, environment-gated,
-#: holds production SSH secrets and deletes remote files — but it has no
-#: deployment capability, so like the inventory workflow it is covered by
-#: the repo-wide policy tests and is NOT a deployment workflow. Its own
-#: structural tests live in test_phase2_withdrawal.py.
-EXECUTE_WITHDRAWAL_PATH = WORKFLOWS / "execute_withdrawn_core.yml"
+#: Read-only public verification of the completed Core withdrawal. Manual
+#: dispatch only, no secrets, no remote mutation. It replaced the
+#: destructive Phase-2 workflow, which was retired after its successful
+#: run on 2026-08-19; see test_phase2_withdrawal.py for the assertions
+#: that no runnable destructive entry point remains.
+PUBLIC_VERIFY_PATH = WORKFLOWS / "verify_core_withdrawal_public.yml"
 
 #: Every workflow that must obey the deployment-safety policy.
 ALL_WORKFLOWS = (
@@ -418,7 +418,7 @@ ALL_WORKFLOWS = (
     WP_PLUGINS_PATH,
     PR_CI_PATH,
     INVENTORY_PATH,
-    EXECUTE_WITHDRAWAL_PATH,
+    PUBLIC_VERIFY_PATH,
 )
 
 #: Workflows that are allowed to touch production at all.

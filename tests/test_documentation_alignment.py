@@ -969,8 +969,16 @@ class TestPrDraftDescribesTheFinalBranch(unittest.TestCase):
             with self.subTest(stage=stage):
                 self.assertIn(stage, self.lower)
 
-    def test_it_states_withdrawal_is_separately_authorized_and_unexecuted(self):
-        self.assertIn("not authorized, not executed", self.lower)
+    def test_it_records_the_withdrawal_outcome(self):
+        """Superseded expectation.
+
+        This originally required the draft to say the withdrawal was
+        "not authorized, not executed" — true when written, and false
+        since 2026-08-19. The durable requirement is that the draft keeps
+        merge and withdrawal separate and states the withdrawal's actual
+        status rather than a stale one.
+        """
+        self.assertIn("completed 2026-08-19", self.lower)
         self.assertIn(
             "merging this pr does not run it", self.lower,
             "§8: the draft must separate merge from withdrawal.",
@@ -1217,9 +1225,19 @@ class TestWithdrawalDocsDistinguishTheThreeStates(unittest.TestCase):
     RUNBOOK = ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md"
     EVIDENCE = ROOT / "docs" / "known-issues" / "CORE_OUTPUT_WITHDRAWAL.md"
 
-    def test_runbook_states_it_is_unauthorized_and_unexecuted(self):
+    def test_runbook_states_the_withdrawal_was_executed(self):
+        """Superseded expectation.
+
+        The runbook said "NOT AUTHORIZED, NOT EXECUTED" until the
+        procedure actually ran on 2026-08-19. It is now the procedure of
+        record for a completed operation, and must say so rather than
+        read as a pending instruction.
+        """
         lowered = self.RUNBOOK.read_text().lower()
-        self.assertIn("not authorized, not executed", lowered)
+        self.assertIn("executed 2026-08-19", lowered)
+        self.assertIn("procedure of record", lowered)
+        self.assertNotIn("**status**: **not authorized, not executed.**",
+                         lowered)
 
     def test_runbook_separates_the_three_states(self):
         lowered = self.RUNBOOK.read_text().lower()

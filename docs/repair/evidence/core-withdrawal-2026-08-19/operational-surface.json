@@ -1,0 +1,102 @@
+{
+  "all_healthy": false,
+  "checked_at_utc": "2026-08-19T04:14:49Z",
+  "degraded": [
+    {
+      "status": 403,
+      "url": "/dashboard.html"
+    },
+    {
+      "status": 403,
+      "url": "/health.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/releases.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/latest.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/specifications.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07_slack_plus.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-baseline.csv"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-slack_plus.parquet"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/releases/2026-07.html"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/published/dmi_timeseries.json"
+    }
+  ],
+  "endpoints": [
+    {
+      "status": 403,
+      "url": "/dashboard.html"
+    },
+    {
+      "status": 403,
+      "url": "/health.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/releases.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/latest.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/specifications.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07_slack_plus.json"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-baseline.csv"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-slack_plus.parquet"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/releases/2026-07.html"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/published/dmi_timeseries.json"
+    }
+  ],
+  "public_contract": {
+    "error": "HTTP Error 403: Forbidden",
+    "problems": [
+      "could not validate the public contract: HTTP Error 403: Forbidden"
+    ]
+  }
+}

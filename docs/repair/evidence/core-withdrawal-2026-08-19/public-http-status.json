@@ -1,0 +1,307 @@
+{
+  "all_withdrawn_accounted_for": false,
+  "cache_note": "No withdrawn URL returned 200.",
+  "checked_at_utc": "2026-08-19T04:14:49Z",
+  "cloudflare_cache_condition": false,
+  "inconclusive": [
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-03-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-03-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-04-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-04-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-05-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-05-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-06-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-06-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2024-11_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-03_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-04_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-05_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-06_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-03_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-04_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-05_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-06_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-07_core.json",
+      "verdict": "inconclusive_http_403"
+    }
+  ],
+  "origin_absence_confirmed": true,
+  "origin_report_source": "/home/runner/work/_temp/evidence/origin-post-check.json",
+  "withdrawn_returning_200": [],
+  "withdrawn_urls": [
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-03-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-03-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-04-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-04-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-05-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-05-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-06-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-06-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-core.csv",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi-2026-07-core.parquet",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2024-11_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-03_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-04_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-05_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-06_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/dmi_release_2026-07_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-03_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-04_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-05_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-06_core.json",
+      "verdict": "inconclusive_http_403"
+    },
+    {
+      "acceptable": false,
+      "age": null,
+      "cf_cache_status": null,
+      "server": "cloudflare",
+      "status": 403,
+      "url": "/data/outputs/qa_report_2026-07_core.json",
+      "verdict": "inconclusive_http_403"
+    }
+  ]
+}
