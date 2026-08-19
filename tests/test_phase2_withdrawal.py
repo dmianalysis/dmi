@@ -438,10 +438,17 @@ class TestPhase2WorkflowShape(unittest.TestCase):
     def test_ref_guard_is_the_first_step(self):
         self.assertIn("ref", self.names[0].lower())
 
-    def test_checkout_pins_main(self):
+    def test_checkout_pins_the_dispatched_commit(self):
+        """Superseded assertion.
+
+        This originally required `ref: refs/heads/main`, which is the
+        defect: main can advance between dispatch and environment
+        approval, so the reviewer approves one commit and the deletion
+        runs from another. See TestCheckoutPinsTheDispatchedCommit.
+        """
         checkout = next(s for s in self.steps
                         if "actions/checkout" in str(s.get("uses", "")))
-        self.assertEqual(str(checkout["with"]["ref"]), "refs/heads/main")
+        self.assertIn("github.sha", str(checkout["with"]["ref"]))
 
     # -- confirmation ----------------------------------------------------
 
@@ -843,3 +850,292 @@ class TestDocumentationTemplates(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Merge-blocker fixes: pinned checkout, partial-deletion evidence,
+# fail-closed public verification, hardened cleanup.
+# ---------------------------------------------------------------------------
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestCheckoutPinsTheDispatchedCommit(unittest.TestCase):
+    """The destructive run must use the commit that was approved.
+
+    `ref: refs/heads/main` is a moving target. Between dispatch and the
+    environment approval that gates this job, main can advance — so a
+    reviewer would approve one commit and the deletion would run from
+    another, including a different inventory.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.doc = yaml.safe_load(WORKFLOW.read_text())
+        cls.checkout = next(
+            s for s in _steps(cls.doc)
+            if "actions/checkout" in str(s.get("uses", ""))
+        )
+
+    def test_checkout_uses_the_dispatched_sha(self):
+        ref = str(self.checkout["with"]["ref"])
+        self.assertIn("github.sha", ref)
+
+    def test_checkout_does_not_use_a_moving_branch_ref(self):
+        ref = str(self.checkout["with"]["ref"])
+        for moving in ("refs/heads/main", "main", "github.ref"):
+            with self.subTest(ref=moving):
+                self.assertNotEqual(ref.strip(), moving)
+
+    def test_credentials_are_not_persisted(self):
+        self.assertIs(self.checkout["with"].get("persist-credentials"), False)
+
+    def test_ref_guard_still_restricts_dispatch_to_main(self):
+        """Pinning the SHA does not replace the branch restriction."""
+        script = "\n".join(_run_lines(self.doc))
+        self.assertIn("refs/heads/main", script)
+
+
+class TestPartialDeletionPreservesEvidence(unittest.TestCase):
+    """A failed deletion must report exactly what it already removed."""
+
+    def _run_delete(self, returncode: int, stdout: str, stderr: str = "boom"):
+        """Drive `_remote_delete` with a stubbed subprocess result."""
+        import subprocess as sp
+        from scripts import withdraw_remote_artifacts as tool
+
+        paths = [f"/base/data/outputs/f{i}.json" for i in range(5)]
+        completed = sp.CompletedProcess(
+            args=[], returncode=returncode, stdout=stdout, stderr=stderr
+        )
+        original = tool.subprocess.run
+        tool.subprocess.run = lambda *a, **k: completed
+        import io, contextlib
+        buffer = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buffer):
+                try:
+                    tool._remote_delete([], paths)
+                    raised = None
+                except SystemExit as exc:
+                    raised = exc
+        finally:
+            tool.subprocess.run = original
+        return raised, buffer.getvalue(), paths
+
+    def test_partial_failure_reports_what_was_deleted(self):
+        stdout = ("removed /base/data/outputs/f0.json\n"
+                  "removed /base/data/outputs/f1.json\n")
+        raised, printed, _paths = self._run_delete(1, stdout)
+        self.assertIsNotNone(raised, "a failed deletion must raise")
+        message = str(raised)
+        self.assertIn("deleting 2 of 5", message)
+        self.assertIn("THE OPERATION IS PARTIAL", message)
+        self.assertIn("f0.json", message)
+        self.assertIn("f1.json", message)
+
+    def test_partial_failure_reports_what_was_not_deleted(self):
+        stdout = "removed /base/data/outputs/f0.json\n"
+        raised, _printed, _paths = self._run_delete(1, stdout)
+        message = str(raised)
+        self.assertIn("not deleted (4)", message)
+        self.assertIn("f4.json", message)
+
+    def test_removed_list_is_printed_even_on_failure(self):
+        """The captured stdout must reach the log, not be discarded."""
+        stdout = "removed /base/data/outputs/f0.json\n"
+        _raised, printed, _paths = self._run_delete(1, stdout)
+        self.assertIn("removed /base/data/outputs/f0.json", printed)
+
+    def test_failure_tells_the_operator_not_to_improvise(self):
+        raised, _printed, _paths = self._run_delete(1, "")
+        self.assertIn("separately authorized", str(raised))
+        self.assertIn("backup artifact", str(raised))
+
+    def test_success_still_prints_the_removed_list(self):
+        stdout = "".join(
+            f"removed /base/data/outputs/f{i}.json\n" for i in range(5)
+        )
+        raised, printed, _paths = self._run_delete(0, stdout)
+        self.assertIsNone(raised)
+        self.assertIn("f4.json", printed)
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestPostChecksRunAfterAnyAttemptedExecution(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.doc = yaml.safe_load(WORKFLOW.read_text())
+        cls.steps = _steps(cls.doc)
+
+    def _step(self, needle):
+        return next(s for s in self.steps
+                    if needle.lower() in str(s.get("name", "")).lower())
+
+    def test_execute_step_has_an_id(self):
+        self.assertEqual(self._step("Execute the reviewed").get("id"), "execute")
+
+    def test_origin_check_is_not_gated_on_success(self):
+        cond = str(self._step("Verify origin state").get("if", ""))
+        self.assertIn("always()", cond)
+        self.assertNotIn("success()", cond)
+
+    def test_public_check_is_not_gated_on_success(self):
+        cond = str(self._step("Verify the public surface").get("if", ""))
+        self.assertIn("always()", cond)
+        self.assertNotIn("success()", cond)
+
+    def test_post_checks_skip_only_when_execution_never_ran(self):
+        for label in ("Verify origin state", "Verify the public surface"):
+            with self.subTest(step=label):
+                cond = str(self._step(label).get("if", ""))
+                self.assertIn("steps.execute.conclusion", cond)
+                self.assertIn("skipped", cond)
+
+    def test_evidence_upload_always_runs(self):
+        self.assertEqual(
+            str(self._step("Upload execution evidence").get("if", "")).strip(),
+            "always()",
+        )
+
+    def test_public_check_receives_the_origin_report(self):
+        run = str(self._step("Verify the public surface")["run"])
+        self.assertIn("--origin-report", run)
+        self.assertIn("origin-post-check.json", run)
+
+
+class TestPublicVerificationFailsClosed(unittest.TestCase):
+    """"Not 200" is not evidence of removal."""
+
+    def _classify(self, status, origin_absent=False):
+        from scripts.verify_public_surface import classify_withdrawn
+        return classify_withdrawn(status, origin_absent)
+
+    def test_404_and_410_are_the_only_positive_proof(self):
+        for status in (404, 410):
+            with self.subTest(status=status):
+                verdict, ok = self._classify(status)
+                self.assertTrue(ok)
+                self.assertEqual(verdict, "withdrawn")
+
+    def test_network_error_is_not_a_pass(self):
+        verdict, ok = self._classify(0)
+        self.assertFalse(ok, "a network failure must never read as removal")
+        self.assertIn("network", verdict)
+
+    def test_403_and_500_are_not_a_pass(self):
+        for status in (401, 403, 500, 502, 503):
+            with self.subTest(status=status):
+                _verdict, ok = self._classify(status)
+                self.assertFalse(ok)
+
+    def test_redirect_is_not_a_pass(self):
+        for status in (301, 302, 307):
+            with self.subTest(status=status):
+                self.assertFalse(self._classify(status)[1])
+
+    def test_200_without_confirmed_origin_absence_fails(self):
+        verdict, ok = self._classify(200, origin_absent=False)
+        self.assertFalse(ok)
+        self.assertIn("not_confirmed_absent", verdict)
+
+    def test_200_with_confirmed_origin_absence_is_a_cache_condition(self):
+        verdict, ok = self._classify(200, origin_absent=True)
+        self.assertTrue(ok)
+        self.assertEqual(verdict, "cached_after_origin_deletion")
+
+    def test_cache_interpretation_requires_the_origin_report(self):
+        """The inference is only available with independent evidence."""
+        self.assertFalse(self._classify(200, origin_absent=False)[1])
+        self.assertTrue(self._classify(200, origin_absent=True)[1])
+
+    def test_contract_constants_are_pinned(self):
+        from scripts import verify_public_surface as m
+        self.assertEqual(m.EXPECTED_RELEASE_ID, "2026-07")
+        self.assertEqual(set(m.EXPECTED_SPECS), {"baseline", "slack_plus"})
+
+    def test_contract_violations_are_enforced_not_merely_recorded(self):
+        """The exit status must depend on the contract check."""
+        import ast
+        src = (ROOT / "scripts" / "verify_public_surface.py").read_text()
+        func = next(n for n in ast.walk(ast.parse(src))
+                    if isinstance(n, ast.FunctionDef) and n.name == "main")
+        body = ast.get_source_segment(src, func)
+        self.assertIn("contract_problems", body)
+        self.assertIn("if contract_problems:", body)
+        self.assertLess(body.index("if contract_problems:"),
+                        body.index("if failed:"))
+
+    def test_inconclusive_results_fail_the_step(self):
+        import ast
+        src = (ROOT / "scripts" / "verify_public_surface.py").read_text()
+        func = next(n for n in ast.walk(ast.parse(src))
+                    if isinstance(n, ast.FunctionDef) and n.name == "main")
+        body = ast.get_source_segment(src, func)
+        self.assertIn("if inconclusive:", body)
+        self.assertIn("failed = True", body)
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestCredentialCleanupIsRobust(unittest.TestCase):
+    """One file failing to shred must not skip the other."""
+
+    @classmethod
+    def setUpClass(cls):
+        doc = yaml.safe_load(WORKFLOW.read_text())
+        cls.script = str(next(
+            s for s in _steps(doc)
+            if str(s.get("if", "")).strip() == "always()"
+            and "credential" in str(s.get("name", "")).lower()
+        )["run"])
+
+    def test_both_files_are_attempted(self):
+        self.assertIn("dmi_withdrawal_key", self.script)
+        self.assertIn("dmi_known_hosts", self.script)
+
+    def test_shred_is_not_and_chained_to_the_loop_body(self):
+        """`shred -u "$f" && echo` aborts the loop under `set -e`."""
+        for line in self.script.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            if "shred -u" in stripped:
+                self.assertNotIn(
+                    "&&", stripped,
+                    "chaining makes a failed shred skip the remaining file",
+                )
+
+    def test_rm_f_fallback_exists(self):
+        self.assertIn("rm -f", self.script)
+
+    def test_failure_is_reported_not_swallowed(self):
+        self.assertIn("CLEANUP_FAILED", self.script)
+        self.assertIn("exit 1", self.script)
+
+    def test_residual_file_is_detected(self):
+        self.assertIn("still present after cleanup", self.script)
+
+    def test_cleanup_never_touches_the_remote(self):
+        for token in ("ssh", "rsync", "scp", "withdraw_remote_artifacts",
+                      "DMI_REMOTE_HOST"):
+            with self.subTest(token=token):
+                self.assertNotIn(token, self.script)
+
+    def test_cleanup_does_not_use_set_e(self):
+        """`set -e` would abort the loop on the first failure.
+
+        Scoped to executable lines: the step's comment explains why
+        `set -e` is deliberately absent, and a whole-text scan would
+        flag that explanation as the thing it warns against.
+        """
+        code = [ln.strip() for ln in self.script.splitlines()
+                if ln.strip() and not ln.strip().startswith("#")]
+        offenders = [ln for ln in code if "set -e" in ln]
+        self.assertEqual(offenders, [], f"offenders: {offenders}")
+
+    def test_comment_stripping_is_not_vacuous(self):
+        """The scan must still see the cleanup's real code."""
+        code = [ln.strip() for ln in self.script.splitlines()
+                if ln.strip() and not ln.strip().startswith("#")]
+        joined = " ".join(code)
+        self.assertIn("shred -u", joined)
+        self.assertIn("CLEANUP_FAILED", joined)

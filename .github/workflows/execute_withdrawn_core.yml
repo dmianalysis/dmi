@@ -95,10 +95,22 @@ jobs:
           fi
           echo "Confirmation accepted."
 
-      - name: Checkout main
+      - name: Checkout the exact dispatched commit
         uses: actions/checkout@v6
         with:
-          ref: refs/heads/main
+          # `refs/heads/main` is a moving target. Between dispatch and
+          # the environment approval that gates this job, main can
+          # advance — so the reviewer would approve one commit and the
+          # deletion would run from another. `github.sha` is resolved at
+          # dispatch time and pins the run to the commit that was
+          # actually authorized. The ref guard above has already
+          # established that this dispatch came from main.
+          ref: ${{ github.sha }}
+          # No repository token left on disk. This job holds production
+          # SSH credentials and deletes remote files; it has no reason to
+          # be able to push, and an unused credential is one more thing
+          # a later step could misuse.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -232,6 +244,7 @@ jobs:
       # ---------- gate 7: the reviewed destructive operation -------------
 
       - name: Execute the reviewed withdrawal
+        id: execute
         env:
           DMI_REMOTE_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
           DMI_REMOTE_USER: ${{ secrets.IFASTNET_SSH_USER }}
@@ -253,7 +266,18 @@ jobs:
       # ---------- gate 8: post-execution verification --------------------
 
       - name: Verify origin state after deletion
-        if: success()
+        # Runs after every ATTEMPTED execution — success or failure —
+        # and only then. `success()` was wrong: a failed deletion is
+        # exactly when origin state matters most, because `set -e` on the
+        # remote aborts at the first failing path, so some files may
+        # already be gone and skipping this leaves no record of which.
+        #
+        # Bare `always()` would be wrong in the other direction: if the
+        # run failed before the key was installed, this would execute
+        # with no credentials and fail for an unrelated reason, burying
+        # the real error. Gating on the execute step's conclusion runs it
+        # exactly when there is something to check.
+        if: always() && steps.execute.conclusion != 'skipped'
         env:
           DMI_REMOTE_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
           DMI_REMOTE_USER: ${{ secrets.IFASTNET_SSH_USER }}
@@ -266,15 +290,25 @@ jobs:
             --report "${{ runner.temp }}/evidence/origin-post-check.json"
 
       - name: Verify the public surface (cache-busting)
-        if: success()
+        # Same gate: after a partial deletion the public surface is part
+        # of the evidence. It is passed the origin report so a 200 can
+        # only be read as a cache condition when origin absence was
+        # actually confirmed.
+        if: always() && steps.execute.conclusion != 'skipped'
         run: |
-          # Core URLs should 404/410. If they still return 200 while the
-          # origin files are gone, that is a Cloudflare cache condition,
-          # recorded as such — NOT a failed deletion, and NOT a reason to
-          # restore files or purge without separate authorization.
+          # Only 404/410 demonstrates withdrawal. A 200 counts as a
+          # cache condition ONLY when the origin check independently
+          # confirmed the file is absent; a 200 without that means the
+          # deletion did not happen. Anything else — 0 from a network
+          # error, 403, 500 — is inconclusive and fails, because "not
+          # 200" is not evidence of removal.
+          #
+          # A cache condition is NOT a failed deletion and NOT a reason
+          # to restore files. A purge is separately authorized.
           python -m scripts.verify_public_surface \
             --report "${{ runner.temp }}/evidence/public-http-status.json" \
-            --operational-report "${{ runner.temp }}/evidence/operational-surface.json"
+            --operational-report "${{ runner.temp }}/evidence/operational-surface.json" \
+            --origin-report "${{ runner.temp }}/evidence/origin-post-check.json"
 
       - name: Upload execution evidence
         if: always()
@@ -300,10 +334,37 @@ jobs:
         run: |
           # Runner-local only. Opens no connection and deletes nothing
           # on the remote host.
+          #
+          # Deliberately NOT `set -e` and no `&&` chaining: a previous
+          # version used `shred -u "$f" && echo`, which under a failing
+          # shred would abort the loop and silently leave the SECOND
+          # file in place. Each file is attempted independently, `rm -f`
+          # is a fallback if shred is unavailable or fails, and any file
+          # still present at the end is reported and fails the step —
+          # a cleanup that quietly did nothing is worse than none.
+          CLEANUP_FAILED=0
           for f in "${{ runner.temp }}/dmi_withdrawal_key" \
                    "${{ runner.temp }}/dmi_known_hosts"; do
-            if [ -f "$f" ]; then
-              shred -u "$f" && echo "removed $f"
+            if [ ! -e "$f" ]; then
+              echo "absent (nothing to remove): $f"
+              continue
+            fi
+            if shred -u "$f" 2>/dev/null; then
+              echo "shredded: $f"
+            elif rm -f "$f"; then
+              echo "removed via rm -f (shred unavailable or failed): $f"
+            else
+              echo "ERROR: could not remove $f"
+              CLEANUP_FAILED=1
+            fi
+            if [ -e "$f" ]; then
+              echo "ERROR: $f still present after cleanup"
+              CLEANUP_FAILED=1
             fi
           done
+          if [ "$CLEANUP_FAILED" -ne 0 ]; then
+            echo "Credential cleanup did NOT fully succeed. The runner is"
+            echo "ephemeral, but this must not be reported as clean."
+            exit 1
+          fi
           echo "Runner-local credential cleanup complete."
