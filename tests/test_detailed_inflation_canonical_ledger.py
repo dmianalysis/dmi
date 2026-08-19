@@ -35,6 +35,14 @@ introduces its replacement.
 *A superseded rule is gone.* Its UCCs belong to its successors. Re-enabling it
 must fail, and the failure is asserted by re-enabling it.
 
+*Frozen and committed are different words.* Artifacts inherited from the
+checkpoint C1 and C2 started from may not change, because later work has
+already been accepted on top of them. Artifacts this milestone wrote may
+change until this milestone is itself frozen, and one of them already has.
+The two tiers are separated by membership in the checkpoint's tree rather
+than by an exemption list, so the newer artifact is excluded because it was
+not there and not because someone remembered to name it.
+
 *The guards are not vacuous.* Every structural guard is asserted to fire on a
 deliberately broken input before it is asserted not to fire on the real one. A
 guard that has never been seen to fire proves nothing.
@@ -45,6 +53,7 @@ from __future__ import annotations
 import ast
 import copy
 import csv
+import hashlib
 import json
 import re
 import shutil
@@ -278,6 +287,114 @@ def _stale_cross_references(
 
     walk(payload)
     return found
+
+
+# ---------------------------------------------------------------------------
+# Frozen-checkpoint preservation, used by Group 10b
+# ---------------------------------------------------------------------------
+
+#: The checkpoint C1 and C2 started from. Everything under the research trees
+#: at this commit is inherited and frozen. Everything added afterwards belongs
+#: to the milestone in progress and is not.
+FROZEN_CHECKPOINT_TAG = "dmi-detailed-inflation-v0.1-shelter-residuals-2024"
+
+#: Pinned so that repointing the tag is a test failure rather than a silent
+#: relaxation of everything the tag protects.
+FROZEN_CHECKPOINT_COMMIT = "3ee9141e7c186e5cd344de8f87b8a1c3f8cf5326"
+
+#: The trees the inherited set is read from.
+INHERITED_TREES = ("registry/research", "data/research", "docs/research")
+
+#: Pinned for the same reason as the commit. A guard that quietly starts
+#: covering forty files instead of sixty-six still passes.
+INHERITED_FILE_COUNT = 66
+
+
+def _git_blob_id(content: bytes) -> str:
+    """The object name git would store ``content`` under."""
+    header = b"blob %d\0" % len(content)
+    return hashlib.sha1(header + content).hexdigest()  # noqa: S324 - git's format
+
+
+def _as_git_records_it(raw: bytes) -> bytes:
+    """File bytes reduced to the content this repository treats as canonical.
+
+    ``.gitattributes`` declares ``* text=auto``, so git stores text files with
+    LF, and several of the older research CSVs sit on disk with CRLF because
+    they were written before ``lineterminator="\\n"`` became the convention.
+    Comparing raw disk bytes against a stored blob would report twenty
+    untouched files as mutated.
+
+    So the comparison is over recorded content, not disk bytes, and the
+    difference is worth stating rather than glossing: a change that alters
+    only line endings is invisible here. That is this repository's own
+    definition of "no content change" and not a concession made to get a test
+    passing, and ``test_g`` pins the equivalence to ``git hash-object`` so the
+    two definitions cannot drift apart unnoticed.
+    """
+    if b"\0" in raw[:8000]:  # git's own binary heuristic
+        return raw
+    return raw.replace(b"\r\n", b"\n")
+
+
+def _frozen_checkpoint_blobs() -> dict[str, str] | None:
+    """``path -> blob id`` for every research artifact at the checkpoint.
+
+    ``None`` when git or the tag is unavailable, which callers turn into a
+    skip. Nothing here reaches the network: the tag is read out of the local
+    object database.
+
+    Membership in this mapping is what "inherited" means. A file that did not
+    exist at the checkpoint cannot appear in it, so successors written during
+    the milestone in progress are excluded structurally rather than by an
+    exemption list somebody has to remember to maintain.
+    """
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", FROZEN_CHECKPOINT_TAG, "--", *INHERITED_TREES],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    blobs: dict[str, str] = {}
+    for line in result.stdout.splitlines():
+        meta, path = line.split("\t", 1)
+        _mode, kind, object_id = meta.split()
+        if kind == "blob":
+            blobs[path] = object_id
+    return blobs or None
+
+
+def _preservation_drift(
+    expected: dict[str, str], root: Path
+) -> list[tuple[str, str]]:
+    """Inherited artifacts under ``root`` that are missing or changed.
+
+    ``root`` is a parameter so the check can be pointed at an isolated copy
+    and watched to fail. A preservation guard that has only ever been run
+    against an unmutated tree has not been shown to guard anything.
+
+    Returns sorted ``(path, reason)`` pairs.
+    """
+    drift: list[tuple[str, str]] = []
+    for path, object_id in expected.items():
+        candidate = root / path
+        if not candidate.is_file():
+            drift.append((path, "MISSING"))
+        elif _git_blob_id(_as_git_records_it(candidate.read_bytes())) != object_id:
+            drift.append((path, "MODIFIED"))
+    return sorted(drift)
+
+
+def _isolated_checkpoint_copy(expected: dict[str, str]) -> Path:
+    """A scratch tree holding a copy of every inherited artifact."""
+    scratch = Path(tempfile.mkdtemp(prefix="frozen-checkpoint-"))
+    for path in expected:
+        destination = scratch / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(REPO_ROOT / path, destination)
+    return scratch
 
 
 # ---------------------------------------------------------------------------
@@ -1653,11 +1770,28 @@ class TestResearchFirewall(unittest.TestCase):
                     relative,
                 )
 
-    def test_f_no_committed_registry_was_modified_by_this_task(self) -> None:
-        """C1 and C2 read the governing registries and write successors only.
+    def test_f_the_registries_the_build_read_are_the_committed_ones(self) -> None:
+        """No registry under ``registry/research`` has uncommitted edits.
 
-        A canonical layer that edited the registry it derives its authority
-        from would be deciding what governs rather than reporting it.
+        This is a reproducibility check and nothing more. If a registry is
+        dirty then the artifacts sitting in this working tree were built from
+        bytes that are not in the repository, and regenerating from a clean
+        checkout would not reproduce them.
+
+        It is worth being blunt about what it does *not* show, because an
+        earlier version of this test claimed it. It says nothing about whether
+        a committed registry was ever modified. Once an edit is committed the
+        working tree is clean again and this assertion passes, so it cannot
+        distinguish "the registries were never touched" from "the registries
+        were rewritten and the rewrite was committed".
+
+        Nor would the stronger claim be true. C1 and C2 do not only write
+        successors: ``ucc_provenance_classes_v0_5.json`` was created during
+        this milestone and has already been amended in place, deliberately,
+        because a milestone that is still open has nothing to be immutable
+        for. The invariant that actually holds is narrower and is asserted in
+        ``TestFrozenCheckpointPreservation``: what may not change is what was
+        inherited from a checkpoint that is already frozen.
         """
         result = subprocess.run(
             ["git", "status", "--porcelain", "--", "registry/research"],
@@ -1673,6 +1807,155 @@ class TestResearchFirewall(unittest.TestCase):
             if not line.startswith("??")
         ]
         self.assertEqual(touched, [])
+
+
+# ---------------------------------------------------------------------------
+# Group 10b: what is frozen stays frozen, and what is open stays open
+# ---------------------------------------------------------------------------
+
+
+class TestFrozenCheckpointPreservation(unittest.TestCase):
+    """Inherited artifacts are immutable. Artifacts born this milestone are not.
+
+    C1 and C2 started from ``dmi-detailed-inflation-v0.1-shelter-residuals-2024``.
+    Every research artifact in that commit is evidence some later work has
+    already been accepted on top of, so changing one silently rewrites the
+    basis of conclusions that were drawn before the change. That is the thing
+    worth guarding, and it is a narrower claim than "no committed artifact
+    ever changes": the successors this milestone wrote are still open, and
+    freezing them now would freeze their defects with them.
+
+    The two tiers are separated structurally rather than by policy. The
+    inherited set is read out of the tag's tree, so a file that did not exist
+    at the checkpoint cannot be in it. No exclusion list names
+    ``ucc_provenance_classes_v0_5.json``; it is absent because it was not
+    there, and ``test_f`` asserts that its frozen predecessor *is* there so
+    the distinction cannot degrade into a blanket exemption.
+
+    The comparison is against the local object database. Nothing here reaches
+    the network, and it does not consult the BLS or any other upstream source:
+    the question is whether this repository changed, not whether the world
+    did.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.expected = _frozen_checkpoint_blobs()
+
+    def setUp(self) -> None:
+        if self.expected is None:
+            self.skipTest(f"git or {FROZEN_CHECKPOINT_TAG} is unavailable")
+
+    def test_a_the_checkpoint_tag_still_names_the_pinned_commit(self) -> None:
+        """A tag is a movable ref, so its target is pinned in the source.
+
+        Without this, moving the tag forward would quietly redefine every
+        assertion below to compare the branch against itself.
+        """
+        result = subprocess.run(
+            ["git", "rev-parse", f"{FROZEN_CHECKPOINT_TAG}^{{commit}}"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), FROZEN_CHECKPOINT_COMMIT)
+
+    def test_b_the_inherited_set_is_the_size_it_was(self) -> None:
+        """A guard covering a shrinking set of files still passes."""
+        self.assertEqual(len(self.expected), INHERITED_FILE_COUNT)
+        for tree in INHERITED_TREES:
+            with self.subTest(tree=tree):
+                covered = [p for p in self.expected if p.startswith(tree + "/")]
+                self.assertTrue(covered, f"{tree} contributed nothing")
+
+    def test_c_no_inherited_research_artifact_changed(self) -> None:
+        """The invariant itself."""
+        drift = _preservation_drift(self.expected, REPO_ROOT)
+        self.assertEqual(drift, [], f"inherited artifacts changed: {drift}")
+
+    def test_d_the_check_fails_when_an_inherited_artifact_is_edited(self) -> None:
+        """Non-vacuity, on an isolated copy. Nothing in the repository is touched.
+
+        The mutation is a single appended byte inside a JSON registry, which
+        is about as small as a real mutation gets and is exactly the size of
+        edit a reviewer would miss.
+        """
+        target = "registry/research/ucc_provenance_classes_v0_4.json"
+        self.assertIn(target, self.expected)
+        scratch = _isolated_checkpoint_copy(self.expected)
+        try:
+            self.assertEqual(_preservation_drift(self.expected, scratch), [])
+            victim = scratch / target
+            victim.write_bytes(victim.read_bytes() + b" ")
+            self.assertEqual(
+                _preservation_drift(self.expected, scratch),
+                [(target, "MODIFIED")],
+            )
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
+        # and the repository itself is still where it was
+        self.assertEqual(_preservation_drift(self.expected, REPO_ROOT), [])
+
+    def test_e_the_check_fails_when_an_inherited_artifact_is_deleted(self) -> None:
+        """Deletion is the other way an inherited artifact stops being itself."""
+        target = "data/research/detailed_inflation/audit_2024/active_ucc_basis.csv"
+        self.assertIn(target, self.expected)
+        scratch = _isolated_checkpoint_copy(self.expected)
+        try:
+            (scratch / target).unlink()
+            self.assertEqual(
+                _preservation_drift(self.expected, scratch),
+                [(target, "MISSING")],
+            )
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
+
+    def test_f_this_milestones_successors_are_open_and_their_parents_are_not(
+        self,
+    ) -> None:
+        """The two tiers, asserted from both sides.
+
+        v0.4 is inherited and frozen. v0.5 was written during this milestone,
+        is not in the inherited set, and has already been revised twice. If
+        v0.5 ever appears here it means the checkpoint moved, and the failure
+        should be loud rather than a quietly widened guard.
+        """
+        frozen = "registry/research/ucc_provenance_classes_v0_4.json"
+        open_successor = "registry/research/ucc_provenance_classes_v0_5.json"
+        self.assertIn(frozen, self.expected)
+        self.assertNotIn(open_successor, self.expected)
+        # The open successor is not merely unlisted, it is the current head,
+        # so the guard is exempting a live artifact rather than a dead one.
+        self.assertTrue((REPO_ROOT / open_successor).is_file())
+        head = cs.governing_version("ucc_provenance_classes").relative_path
+        self.assertEqual(Path(head).name, Path(open_successor).name)
+
+    def test_g_recorded_content_matches_what_git_hash_object_computes(self) -> None:
+        """Pin the normalisation to git's, so the two cannot diverge.
+
+        ``_as_git_records_it`` reimplements one narrow piece of git: the LF
+        normalisation ``.gitattributes`` asks for. If that reimplementation is
+        wrong the preservation check is comparing something git does not
+        record, and every assertion above becomes an assertion about a hash
+        function rather than about this repository.
+        """
+        paths = sorted(self.expected)
+        result = subprocess.run(
+            ["git", "hash-object", "--stdin-paths"],
+            cwd=REPO_ROOT,
+            input="\n".join(paths) + "\n",
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            self.skipTest("git hash-object is unavailable")
+        computed = result.stdout.split()
+        self.assertEqual(len(computed), len(paths))
+        for path, object_id in zip(paths, computed):
+            with self.subTest(path=path):
+                raw = (REPO_ROOT / path).read_bytes()
+                self.assertEqual(_git_blob_id(_as_git_records_it(raw)), object_id)
 
 
 class TestSchemaAndVocabularies(Built, unittest.TestCase):
