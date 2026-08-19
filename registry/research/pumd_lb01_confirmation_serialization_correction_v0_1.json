@@ -1,0 +1,58 @@
+{
+  "applies_to_artifact": "data/research/detailed_inflation/pumd_confirmation_2024/candidate_universe.csv",
+  "applies_to_spec": "registry/research/pumd_lb01_confirmation_spec_v0_1.json",
+  "applies_to_spec_artifact": "pumd_lb01_confirmation_spec",
+  "applies_to_spec_field": "candidate_universe.ledger_sha256",
+  "artifact_id": "PUMD_LB01_CONFIRMATION_SERIALIZATION_CORRECTION_V0_1",
+  "attribution": {
+    "dmi_research_metadata": "The classification BYTE_REPRESENTATION_DEFECT, the determination that precommitment is intact, and the reading that assigns the pinned digest to pre-ingestion bytes are DMI research metadata. They are judgements made by this program about its own record and are not properties of Python, Git or the BLS source data.",
+    "implementation_behavior": "The CRLF default of Python's csv module and the LF normalization performed by Git under \"* text=auto\" are behaviors of those tools. Neither is a finding about consumer expenditure, and neither was chosen by this research program."
+  },
+  "correction_type": "BYTE_REPRESENTATION_DEFECT",
+  "digests": {
+    "committed_git_normalized_sha256": "377b43b144756cd5a31765ac7e071c8b9e0475ce12d5219e84fb954940d74185",
+    "historical_pre_git_sha256": "1418f76d3faa067b03be4e4e6a72b9d906877cd5f2db38660fbd7ff3f883c4d9",
+    "roster_hash": "3bc3200eb781054f6902ff69966ffba0cd8052331d7b32e87b0056c531125577",
+    "semantic_content_hash": "798767268273c7f9398daa050acf475e63773cb1b3110653e6b52d5707dd83e1"
+  },
+  "evidence": [
+    "Both the frozen CSV and the frozen specification were created by a single commit, d334eb8, and neither has been modified since. `git log --follow` over all refs returns exactly that one commit for each file.",
+    "The results commit edd14d4 is the direct child of d334eb8 with no intervening commits, so the universe was fixed before any comparison existed. The freeze command reads no microdata and refuses to overwrite an existing specification.",
+    "Regenerating the universe from the frozen code and frozen inputs at d334eb8 reproduces 1015 rows in the same order across the same 9 columns with 0 differing cells out of 9135, the same semantic content hash and the same roster hash. Serialized as the frozen writer serialized it, those rows hash to the pinned historical_pre_git_sha256 exactly.",
+    "No object in this repository hashes to the pinned value. All 1413 blobs, reachable and unreachable, were scanned.",
+    "The confirmation run never reads candidate_universe.csv. It rebuilds the universe in memory and gates on the semantic content hash, the roster hash, the frozen benchmark specification digest and the frozen estimator module digests. The raw ledger_sha256 gates nothing.",
+    "Rerunning the confirmation from the frozen methodology and inputs reproduces confirmation_status = PASS over 111 UCCs and 666 comparisons, with confirmation_summary.json byte-identical to the committed artifact."
+  ],
+  "frozen_artifacts_left_unmodified": [
+    "registry/research/pumd_lb01_confirmation_spec_v0_1.json",
+    "data/research/detailed_inflation/pumd_confirmation_2024/candidate_universe.csv",
+    "data/research/detailed_inflation/pumd_confirmation_2024/confirmation_results.csv",
+    "dmi_research/detailed_inflation/pumd_benchmark.py",
+    "dmi_research/detailed_inflation/pumd.py"
+  ],
+  "frozen_commit": "d334eb8b6567a1cbaaa9b67c74f4cebf6719a2f1",
+  "frozen_commit_subject": "freeze the out-of-sample confirmation set before running it",
+  "invariants_checked": {
+    "candidate_universe_content_changed": false,
+    "confirmation_results_changed": false,
+    "precommitment_compromised": false,
+    "roster_changed": false,
+    "thresholds_changed": false
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, post-freeze correction",
+  "prospective_remedy": "New committed research CSVs are written by dmi_research/detailed_inflation/research_csv.py, which names lineterminator=\"\\n\" explicitly, so writer output bytes, the bytes git stores under the current .gitattributes, and the bytes materialized after checkout are the same bytes. scripts/confirm_pumd_2024.py and scripts/benchmark_pumd_2024.py now call it.",
+  "results_commit": "edd14d458cf6ac160f2237c73b43e750f28821e5",
+  "results_commit_subject": "confirmation_status = PASS on 111 unseen UCCs, no threshold moved",
+  "scope": "Research only. This record reinterprets one digest field in a frozen specification. It authorises no figure, revises no estimate, moves no threshold and changes no confirmation outcome.",
+  "serialization": {
+    "cause": "Git text normalization under .gitattributes \"* text=auto\". dmi_research.detailed_inflation.pumd_benchmark.write_csv opened the destination with newline=\"\" and constructed csv.DictWriter without an explicit lineterminator, so Python emitted CRLF. The digest was computed over those CRLF bytes in the same freeze run. Git then normalized the committed text representation to LF, and every checkout since has materialized the file with LF.",
+    "committed_serialization": "LF",
+    "consequence": "The pinned ledger_sha256 describes bytes that were never committed and cannot be recovered from any object in this repository. It is a correct record of a pre-ingestion serialization, not a description of the committed artifact.",
+    "serialization_before_git": "CRLF"
+  },
+  "statement": "The confirmation universe was precommitted semantically and chronologically. The raw-byte digest discrepancy arose solely because Git normalized the frozen CSV's line endings after the digest was computed.",
+  "status": "RESEARCH_ONLY",
+  "version": "0.1",
+  "what_this_is_not": "This is not a replacement confirmation specification and does not supersede PUMD_LB01_CONFIRMATION_SPEC_V0_1. That specification remains the governing frozen precommitment for the 2024 LB01 out-of-sample confirmation. This record sits beside it and says how one of its fields must be read.",
+  "why_the_defective_writer_was_not_edited": "pumd_benchmark.write_csv is where the CRLF came from, and it is the obvious place to add the argument. It was left alone on purpose: this specification pins the sha256 of dmi_research/detailed_inflation/pumd_benchmark.py as the frozen estimator, and the confirmation refuses to run against a module whose digest has moved. Editing it would have broken the control that makes the frozen result meaningful in order to fix a serialization bug that changed no number. The corrected writer therefore lives in a new module and the frozen one keeps its digest, which is the same discipline that left the frozen CSV unrewritten."
+}

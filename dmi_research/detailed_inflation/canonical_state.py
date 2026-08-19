@@ -911,7 +911,45 @@ KNOWN_INTERNAL_INCONSISTENCIES: tuple[Mapping[str, str | None], ...] = (
         ),
         "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
     },
+    {
+        "artifact_id": "PUMD_LB01_CONFIRMATION_SPEC_V0_1",
+        "location": "candidate_universe.ledger_sha256",
+        "prose_claim": (
+            "The field sits beside the path of the committed candidate-universe "
+            "ledger and is named for a raw file digest, so a reader takes it "
+            "for the sha256 of that committed file. It is not: the committed "
+            "file hashes to "
+            "377b43b144756cd5a31765ac7e071c8b9e0475ce12d5219e84fb954940d74185."
+        ),
+        "structured_claim": (
+            "The pinned value "
+            "1418f76d3faa067b03be4e4e6a72b9d906877cd5f2db38660fbd7ff3f883c4d9 "
+            "is the sha256 of the CRLF bytes the writer emitted during the "
+            "freeze run, before git normalized the text to LF under "
+            "\"* text=auto\". The semantic ledger_content_hash in the same "
+            "block, which is what the confirmation actually gates on, matches "
+            "the committed file exactly."
+        ),
+        "resolution_in_this_manifest": (
+            "The semantic hash governs, and always did: the confirmation "
+            "rebuilds the universe in memory and never reads the CSV, so the "
+            "raw digest gated nothing. Both values stay recorded because the "
+            "pinned one is a true statement about bytes that were never "
+            "committed, and deleting it would hide that the freeze and the "
+            "repository disagree about what serialization means."
+        ),
+        "repaired_in": "PUMD_LB01_CONFIRMATION_SERIALIZATION_CORRECTION_V0_1",
+    },
 )
+
+#: Where each ``repaired_in`` artifact lives, so a reader holding only the
+#: manifest can reach the successor without guessing a filename.
+INCONSISTENCY_REPAIR_PATHS: Mapping[str, str] = {
+    "UCC_PROVENANCE_CLASSES_V0_5": "registry/research/ucc_provenance_classes_v0_5.json",
+    "PUMD_LB01_CONFIRMATION_SERIALIZATION_CORRECTION_V0_1": (
+        "registry/research/pumd_lb01_confirmation_serialization_correction_v0_1.json"
+    ),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -1008,7 +1046,9 @@ def build_manifest(registry_dir: Path = REGISTRY_DIR) -> dict:
         },
         "governing_registry_families": families,
         "known_internal_inconsistencies": [
-            dict(entry) for entry in KNOWN_INTERNAL_INCONSISTENCIES
+            dict(entry)
+            | {"repaired_in_path": INCONSISTENCY_REPAIR_PATHS.get(entry["repaired_in"])}
+            for entry in KNOWN_INTERNAL_INCONSISTENCIES
         ],
         "milestone": "Detailed Inflation Substrate v0.1, task C1",
         "pinned_bls_sources": [
@@ -1119,6 +1159,7 @@ __all__ = [
     "CanonicalStateError",
     "Checkpoint",
     "CheckpointRole",
+    "INCONSISTENCY_REPAIR_PATHS",
     "KNOWN_INTERNAL_INCONSISTENCIES",
     "MANIFEST_PATH",
     "POPULATIONS",

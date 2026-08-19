@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import csv
 import dataclasses
+import hashlib
 import json
 import subprocess
 import sys
@@ -51,6 +52,10 @@ from dmi_research.detailed_inflation import pumd_confirmation as confirm  # noqa
 
 FROZEN_SPEC_PATH = REPO_ROOT / "registry/research/pumd_lb01_benchmark_spec_v0_1.json"
 CONFIRM_SPEC_PATH = REPO_ROOT / "registry/research/pumd_lb01_confirmation_spec_v0_1.json"
+CORRECTION_PATH = (
+    REPO_ROOT
+    / "registry/research/pumd_lb01_confirmation_serialization_correction_v0_1.json"
+)
 OUTPUT_DIR = REPO_ROOT / "data/research/detailed_inflation/pumd_confirmation_2024"
 UNIVERSE_PATH = OUTPUT_DIR / "candidate_universe.csv"
 BENCHMARK_DIR = REPO_ROOT / "data/research/detailed_inflation/pumd_benchmark_2024"
@@ -422,11 +427,37 @@ class TestFrozenConfirmationArtifacts(unittest.TestCase):
             registry["archives"]["INTRVW24"]["sha256"],
         )
 
-    def test_f_the_universe_ledger_matches_the_digest_the_spec_pins(self):
+    def test_f_the_pinned_ledger_digest_is_of_the_pre_git_serialization(self):
+        """The spec's ``ledger_sha256`` does not describe the committed file.
+
+        It describes the CRLF bytes the writer emitted during the freeze run,
+        before git normalised the text to LF under ``* text=auto``. This test
+        used to compare it against the committed file and passed only because
+        nobody had checked out the repository twice; it is the assertion that
+        was wrong, not the artifact.
+
+        Both serialisations are asserted here, against two independent
+        sources each, so the failure cannot be made to go away by editing one
+        number. The full boundary, including the correction record and the
+        chronology, is in
+        :class:`TestFrozenConfirmationSerializationBoundary`.
+        """
         self.assertTrue(UNIVERSE_PATH.exists())
-        self.assertEqual(
+        raw = UNIVERSE_PATH.read_bytes()
+        self.assertNotIn(b"\r\n", raw, "the committed ledger should be LF")
+
+        pinned = self.payload["candidate_universe"]["ledger_sha256"]
+        self.assertNotEqual(
             confirm.file_digest(UNIVERSE_PATH),
-            self.payload["candidate_universe"]["ledger_sha256"],
+            pinned,
+            "if these now agree the frozen artifact or the frozen spec was "
+            "edited, which is exactly what must not happen",
+        )
+        self.assertEqual(
+            hashlib.sha256(raw.replace(b"\n", b"\r\n")).hexdigest(),
+            pinned,
+            "re-serialising the committed rows as the frozen writer wrote "
+            "them must reproduce the pinned digest exactly",
         )
 
     def test_g_the_ledger_accounts_for_every_ucc_exactly_once(self):

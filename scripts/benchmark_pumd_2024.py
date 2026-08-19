@@ -30,7 +30,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from dmi_research.detailed_inflation import pumd, pumd_benchmark as bench  # noqa: E402
+from dmi_research.detailed_inflation import (  # noqa: E402
+    pumd,
+    pumd_benchmark as bench,
+    research_csv,
+)
 
 MILESTONE_1 = REPO_ROOT / "data/research/detailed_inflation/audit_2024"
 MILESTONE_2 = REPO_ROOT / "data/research/detailed_inflation/milestone_2"
@@ -71,7 +75,7 @@ def main() -> int:
     roster = bench.select_roster(
         provenance, basis, exceptions, interview_stub, integrated_stub
     )
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "benchmark_roster.csv",
         bench.ROSTER_COLUMNS,
         bench.roster_rows(roster),
@@ -99,7 +103,7 @@ def main() -> int:
         targets["published_targets_2024_consumer_units_thousands"],
         targets["published_mean_income_before_taxes_2024"],
     )
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "population_validation.csv",
         tuple(asdict(comparisons[0])),
         [asdict(row) for row in comparisons],
@@ -112,7 +116,7 @@ def main() -> int:
         )
 
     boundaries = bench.reconstruct_boundaries(units)
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "quintile_reconstruction.csv",
         tuple(asdict(boundaries[0])),
         [asdict(row) for row in boundaries],
@@ -120,7 +124,7 @@ def main() -> int:
 
     # -- Stage D: the expenditure benchmark --------------------------------
     results, _ = bench.run_benchmark(roster, units, records, basis, spec)
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "benchmark_results.csv",
         tuple(asdict(results[0])),
         [_result_row(result) for result in results],

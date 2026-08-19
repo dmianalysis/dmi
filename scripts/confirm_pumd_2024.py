@@ -41,6 +41,7 @@ from dmi_research.detailed_inflation import (  # noqa: E402
     pumd,
     pumd_benchmark as bench,
     pumd_confirmation as confirm,
+    research_csv,
 )
 
 MILESTONE_1 = REPO_ROOT / "data/research/detailed_inflation/audit_2024"
@@ -99,7 +100,7 @@ def freeze(stub_dir: Path) -> int:
     frozen = bench.BenchmarkSpec.from_json(FROZEN_SPEC_PATH)
     spec = confirm.confirmation_spec(frozen, roster)
 
-    bench.write_csv(UNIVERSE_PATH, confirm.UNIVERSE_COLUMNS, confirm.universe_rows(universe))
+    research_csv.write_csv(UNIVERSE_PATH, confirm.UNIVERSE_COLUMNS, confirm.universe_rows(universe))
     source = json.loads(SOURCE_REGISTRY.read_text(encoding="utf-8"))
     archive = source["archives"]["INTRVW24"]
 
@@ -350,7 +351,7 @@ def run(stub_dir: Path, pumd_dir: str | None, allow_uncommitted: bool) -> int:
         targets["published_targets_2024_consumer_units_thousands"],
         targets["published_mean_income_before_taxes_2024"],
     )
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "population_validation.csv",
         tuple(asdict(comparisons[0])),
         [asdict(row) for row in comparisons],
@@ -358,7 +359,7 @@ def run(stub_dir: Path, pumd_dir: str | None, allow_uncommitted: bool) -> int:
 
     basis = read_csv(MILESTONE_1 / "active_ucc_basis.csv")
     results, _ = bench.run_benchmark(roster, units, records, basis, spec)
-    bench.write_csv(
+    research_csv.write_csv(
         OUTPUT_DIR / "confirmation_results.csv",
         tuple(asdict(results[0])),
         [_result_row(result) for result in results],

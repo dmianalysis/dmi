@@ -103,6 +103,7 @@
       "location": "classes.CONCORDANCE_ONLY_UCC.expenditure_note",
       "prose_claim": "pumd_quantitative_usability is NOT_ESTABLISHED for all 17 concordance-only UCCs.",
       "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
+      "repaired_in_path": "registry/research/ucc_provenance_classes_v0_5.json",
       "resolution_in_this_manifest": "The structured field governs, and always did: no amount, grade or disposition anywhere in this substrate was ever read from the prose. Both readings stay recorded so a consumer who read the sentence can see why the number differed.",
       "structured_claim": "usability_transitions_from_v0_1 in the same file records 910104, 910105 and 910107 moving from NOT_ESTABLISHED to BENCHMARKED, and the roster grades those three BENCHMARKED per UCC."
     },
@@ -111,6 +112,7 @@
       "location": "pumd_observations.CE_2024_INTERVIEW_MTBI_SHELTER_RENTAL_EQUIVALENCE.what_this_does_not_establish",
       "prose_claim": "pumd_quantitative_usability remains NOT_ESTABLISHED for all four rental-equivalence UCCs.",
       "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
+      "repaired_in_path": "registry/research/ucc_provenance_classes_v0_5.json",
       "resolution_in_this_manifest": "The structured field governs. This third instance of the same defect was found by the sweep the repair added, not by the reading that commissioned it, which is the argument for the sweep: two of these were noticed by eye and the third was not.",
       "structured_claim": "Three of the four are BENCHMARKED per usability_transitions_from_v0_1."
     },
@@ -119,8 +121,18 @@
       "location": "shelter_rental_equivalence_correspondence.normative_input_rationale",
       "prose_claim": "pumd_quantitative_usability is NOT_ESTABLISHED for all four rental-equivalence UCCs and the Track-A shelter rule remains PENDING.",
       "repaired_in": "UCC_PROVENANCE_CLASSES_V0_5",
+      "repaired_in_path": "registry/research/ucc_provenance_classes_v0_5.json",
       "resolution_in_this_manifest": "The structured fields govern, in both registries. The successor corrects both halves and stops restating another registry's rule state, which is what let the second half go stale unnoticed.",
       "structured_claim": "Three of the four are BENCHMARKED per usability_transitions_from_v0_1. The second half of the sentence is still correct for the secondary rule and no longer correct for the primary one, which is ACCEPTED and EFFECTIVE in CE_CPI_SCOPE_RULES_V0_3."
+    },
+    {
+      "artifact_id": "PUMD_LB01_CONFIRMATION_SPEC_V0_1",
+      "location": "candidate_universe.ledger_sha256",
+      "prose_claim": "The field sits beside the path of the committed candidate-universe ledger and is named for a raw file digest, so a reader takes it for the sha256 of that committed file. It is not: the committed file hashes to 377b43b144756cd5a31765ac7e071c8b9e0475ce12d5219e84fb954940d74185.",
+      "repaired_in": "PUMD_LB01_CONFIRMATION_SERIALIZATION_CORRECTION_V0_1",
+      "repaired_in_path": "registry/research/pumd_lb01_confirmation_serialization_correction_v0_1.json",
+      "resolution_in_this_manifest": "The semantic hash governs, and always did: the confirmation rebuilds the universe in memory and never reads the CSV, so the raw digest gated nothing. Both values stay recorded because the pinned one is a true statement about bytes that were never committed, and deleting it would hide that the freeze and the repository disagree about what serialization means.",
+      "structured_claim": "The pinned value 1418f76d3faa067b03be4e4e6a72b9d906877cd5f2db38660fbd7ff3f883c4d9 is the sha256 of the CRLF bytes the writer emitted during the freeze run, before git normalized the text to LF under \"* text=auto\". The semantic ledger_content_hash in the same block, which is what the confirmation actually gates on, matches the committed file exactly."
     }
   ],
   "milestone": "Detailed Inflation Substrate v0.1, task C1",

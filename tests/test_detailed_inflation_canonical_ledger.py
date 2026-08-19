@@ -663,6 +663,14 @@ class TestProseAgreesWithStructuredState(unittest.TestCase):
         A consumer holding an older ledger has to be able to find out why the
         prose they read no longer matches the file, which deleting the entry
         would take away from them.
+
+        This test named ``UCC_PROVENANCE_CLASSES_V0_5`` directly until a
+        second kind of defect was recorded: the frozen 2024 confirmation spec
+        pins a raw digest of the pre-normalisation CRLF bytes of its candidate
+        universe, which no committed object has. That is closed by a
+        serialisation-correction record rather than by a successor registry,
+        so what is required of ``repaired_in`` is now that it names a
+        successor this module can locate, not that it names one specific file.
         """
         self.assertGreater(len(cs.KNOWN_INTERNAL_INCONSISTENCIES), 0)
         for entry in cs.KNOWN_INTERNAL_INCONSISTENCIES:
@@ -671,18 +679,41 @@ class TestProseAgreesWithStructuredState(unittest.TestCase):
                 repaired = entry["repaired_in"]
                 if repaired is None:
                     continue
-                self.assertEqual(repaired, "UCC_PROVENANCE_CLASSES_V0_5")
                 self.assertNotEqual(repaired, entry["artifact_id"])
+                self.assertIn(repaired, cs.INCONSISTENCY_REPAIR_PATHS)
+                successor = REPO_ROOT / cs.INCONSISTENCY_REPAIR_PATHS[repaired]
+                self.assertTrue(successor.is_file(), f"{successor} is missing")
 
     def test_h_the_repair_is_reachable_from_the_manifest(self) -> None:
+        """Every closed entry can be followed from the manifest to a real file.
+
+        The path is asserted, not just the id. An id alone leaves a reader
+        guessing a filename, which is the failure mode this whole block of
+        the manifest exists to avoid.
+        """
         manifest = json.loads(cs.MANIFEST_PATH.read_text(encoding="utf-8"))
         family = manifest["governing_registry_families"]["ucc_provenance_classes"]
         head = [v for v in family if v["role"] == "CURRENT_GOVERNING_INPUT"]
         self.assertEqual([v["artifact_id"] for v in head], ["UCC_PROVENANCE_CLASSES_V0_5"])
+
         recorded = manifest["known_internal_inconsistencies"]
-        self.assertEqual(len(recorded), 3)
-        self.assertTrue(
-            all(e["repaired_in"] == "UCC_PROVENANCE_CLASSES_V0_5" for e in recorded)
+        self.assertEqual(len(recorded), len(cs.KNOWN_INTERNAL_INCONSISTENCIES))
+        for entry in recorded:
+            with self.subTest(location=entry["location"]):
+                self.assertIsNotNone(entry["repaired_in"])
+                self.assertTrue((REPO_ROOT / entry["repaired_in_path"]).is_file())
+
+        by_repair = {e["repaired_in"] for e in recorded}
+        self.assertIn("UCC_PROVENANCE_CLASSES_V0_5", by_repair)
+        self.assertEqual(
+            len([e for e in recorded if e["repaired_in"] == "UCC_PROVENANCE_CLASSES_V0_5"]),
+            3,
+            "the three prose contradictions the v0.5 correction closed",
+        )
+        self.assertIn(
+            "PUMD_LB01_CONFIRMATION_SERIALIZATION_CORRECTION_V0_1",
+            by_repair,
+            "the frozen confirmation's raw-digest defect must stay recorded",
         )
 
 
