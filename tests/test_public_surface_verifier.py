@@ -351,3 +351,169 @@ class TestDocstringsMatchBehaviour(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEndToEndUnderUniformBlock(unittest.TestCase):
+    """Drive `main()` with every request refused, as on 2026-08-19.
+
+    The classifier is unit-tested above, but the reporting consequence is
+    what actually went wrong in the real run: the verdict was correct and
+    the *report* still asserted a health judgement it had no basis for.
+    That only shows up end to end, so this drives the real `main()` with
+    a stubbed transport and asserts on the files it writes.
+    """
+
+    ORIGIN = {
+        "all_withdrawn_absent": True,
+        "all_operational_present": True,
+        "withdrawn_expected_absent": 21,
+        "withdrawn_still_present": [],
+    }
+
+    def _run_with_uniform_status(self, status: int, body: bytes = b"blocked"):
+        """Run main() with every HTTP request answered identically."""
+        import tempfile
+        from scripts import verify_public_surface as module
+
+        calls: list[str] = []
+
+        def stub(path_or_url, bust=True):
+            calls.append(path_or_url)
+            return module.Response(
+                status,
+                {"Server": "cloudflare", "CF-Ray": "test-ray"},
+                body,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            origin = tmp_path / "origin.json"
+            origin.write_text(json.dumps(self.ORIGIN))
+            report = tmp_path / "public.json"
+            operational = tmp_path / "operational.json"
+
+            real = module.http_get
+            module.http_get = stub
+            try:
+                rc = module.main([
+                    "--report", str(report),
+                    "--operational-report", str(operational),
+                    "--origin-report", str(origin),
+                ])
+            finally:
+                module.http_get = real
+
+            return (rc,
+                    json.loads(report.read_text()),
+                    json.loads(operational.read_text()),
+                    calls)
+
+    def test_exit_code_is_one(self):
+        rc, _r, _o, _c = self._run_with_uniform_status(403)
+        self.assertEqual(rc, 1, "an inconclusive run must fail")
+
+    def test_verifier_client_is_marked_blocked(self):
+        _rc, report, operational, _c = self._run_with_uniform_status(403)
+        self.assertTrue(report["verifier_client"]["blocked"])
+        self.assertTrue(operational["verifier_client"]["blocked"])
+        self.assertEqual(report["verifier_client"]["status"], 403)
+
+    def test_no_health_verdict_is_asserted(self):
+        _rc, _r, operational, _c = self._run_with_uniform_status(403)
+        self.assertIsNone(
+            operational["all_healthy"],
+            "all_healthy must be null — unknown, not false",
+        )
+        self.assertEqual(operational["health_verdict"], "unknown")
+
+    def test_degraded_is_not_populated(self):
+        _rc, _r, operational, _c = self._run_with_uniform_status(403)
+        self.assertEqual(
+            operational["degraded"], [],
+            "a blocked client must not report endpoints as degraded",
+        )
+
+    def test_observations_are_recorded_as_unassessed(self):
+        _rc, _r, operational, _c = self._run_with_uniform_status(403)
+        unassessed = operational["unassessed_due_to_client_block"]
+        self.assertEqual(len(unassessed), len(OPERATIONAL_ENDPOINTS))
+        for row in unassessed:
+            with self.subTest(url=row["url"]):
+                self.assertEqual(row["status"], 403)
+                self.assertIn("describes the client", row["note"])
+
+    def test_contract_evaluation_is_skipped(self):
+        _rc, _r, operational, _c = self._run_with_uniform_status(403)
+        contract = operational["public_contract"]
+        self.assertIn("skipped", contract)
+        self.assertEqual(
+            contract["problems"], [],
+            "a contract failure measured through a refusal describes the "
+            "client, so none should be recorded",
+        )
+        for field in ("current_release_id", "latest_spec_urls",
+                      "specification_ids"):
+            with self.subTest(field=field):
+                self.assertNotIn(field, contract)
+
+    def test_no_contract_requests_are_made_when_blocked(self):
+        _rc, _r, _o, calls = self._run_with_uniform_status(403)
+        followups = [c for c in calls if c.endswith("latest.json")
+                     or c.endswith("specifications.json")]
+        # latest.json and specifications.json appear once each as
+        # operational controls; the contract fetch would add more.
+        self.assertLessEqual(
+            len(followups), 2,
+            f"contract fetches were attempted despite the block: {calls}",
+        )
+
+    def test_withdrawal_is_not_claimed(self):
+        _rc, report, _o, _c = self._run_with_uniform_status(403)
+        self.assertEqual(report["withdrawal_verdict"], "unknown")
+        self.assertEqual(report["withdrawn_demonstrated"], [])
+        self.assertFalse(report["all_withdrawn_accounted_for"])
+        self.assertEqual(len(report["inconclusive"]), 21)
+
+    def test_no_cache_condition_is_inferred(self):
+        _rc, report, _o, _c = self._run_with_uniform_status(403)
+        self.assertFalse(report["cloudflare_cache_condition"])
+        self.assertEqual(report["withdrawn_returning_200"], [])
+
+    def test_diagnostic_headers_are_retained(self):
+        _rc, report, _o, _c = self._run_with_uniform_status(403)
+        row = report["withdrawn_urls"][0]
+        self.assertEqual(row["headers"].get("Server"), "cloudflare")
+        self.assertEqual(row["headers"].get("CF-Ray"), "test-ray")
+
+    def test_no_response_body_is_written_to_either_report(self):
+        _rc, report, operational, _c = self._run_with_uniform_status(
+            403, body=b"SENTINEL-BLOCK-PAGE"
+        )
+        for name, doc in (("public", report), ("operational", operational)):
+            with self.subTest(report=name):
+                self.assertNotIn("SENTINEL-BLOCK-PAGE", json.dumps(doc))
+
+    def test_a_healthy_run_still_asserts_a_verdict(self):
+        """Non-vacuity: the null verdict is specific to being blocked."""
+        rc, report, operational, _c = self._run_with_uniform_status(
+            404, body=b"not found"
+        )
+        self.assertFalse(operational["verifier_client"]["blocked"])
+        self.assertIsNotNone(
+            operational["all_healthy"],
+            "an unblocked run must still reach a health verdict",
+        )
+        # 404 on the operational controls IS genuine degradation.
+        self.assertFalse(operational["all_healthy"])
+        self.assertEqual(operational["health_verdict"], "degraded")
+        self.assertTrue(operational["degraded"])
+        self.assertNotIn("unassessed_due_to_client_block", operational)
+        self.assertEqual(rc, 1)
+
+    def test_uniform_500_is_degradation_not_a_block(self):
+        """A site erroring everywhere is an outage; do not mask it."""
+        _rc, _r, operational, _c = self._run_with_uniform_status(500)
+        self.assertFalse(operational["verifier_client"]["blocked"])
+        self.assertIs(operational["all_healthy"], False)
+        self.assertEqual(operational["health_verdict"], "degraded")
+        self.assertTrue(operational["degraded"])

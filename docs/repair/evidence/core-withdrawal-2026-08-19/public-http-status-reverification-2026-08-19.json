@@ -6,7 +6,7 @@
   "inconclusive": [],
   "origin_withdrawal": {
     "absence_confirmed": true,
-    "source": "/private/tmp/claude-502/-Users-tcw-dev-dmi/7d676590-48d0-48f5-b962-7f2fea839745/scratchpad/withdrawal-artifacts/core-withdrawal-evidence/_temp/evidence/origin-post-check.json"
+    "source": "docs/repair/evidence/core-withdrawal-2026-08-19/origin-post-check.json"
   },
   "user_agent": "dmi-public-verifier/1.0 (+https://github.com/dmianalysis/dmi)",
   "verifier_client": {

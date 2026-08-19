@@ -170,8 +170,9 @@ Evidence: `public-http-status-reverification-2026-08-19.json`,
 
 ### Cache status
 
-No withdrawn URL returned 200 at any point, so **no CDN-cache condition
-arose and no Cloudflare purge was required or performed.**
+**No recorded verification observed a withdrawn URL returning 200**, so
+no CDN-cache condition was observed and no Cloudflare purge was
+required or performed. (The automated run could not observe anything: its requests were refused. This states what the records show, not that every possible request at every moment was checked.)
 
 ---
 

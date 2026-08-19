@@ -924,3 +924,132 @@ class TestDurableRecordsAreUpdated(unittest.TestCase):
     def test_audit_has_a_terminal_status_section(self):
         text = (ROOT / "docs" / "repair" / "V0.1.12_ALIGNMENT_AUDIT.md").read_text()
         self.assertIn("Remote-origin withdrawal — executed 2026-08-19", text)
+
+
+class TestEvidencePathsArePortable(unittest.TestCase):
+    """Committed evidence must not cite an author's workstation.
+
+    Two kinds of absolute path appear in this evidence set, and only one
+    is a defect:
+
+    * A path under a local scratch directory (`/private/tmp/...`,
+      `/Users/...`) was introduced while assembling a report on one
+      laptop. It points at nothing any reader can reach and nothing any
+      run recorded. That is noise, and it is replaced with the
+      repository-relative path to the same content.
+
+    * A path under `/home/runner/...` is what the GitHub Actions run
+      itself wrote down about where it read and wrote files. It is that
+      run's own record. Rewriting it would improve the appearance of the
+      evidence by falsifying it, so it is left exactly as emitted, and
+      the committed counterpart is asserted to exist instead.
+    """
+
+    WORKSTATION_MARKERS = ("/private/tmp", "/var/folders", "/Users/",
+                           "C:\\Users")
+
+    def test_no_evidence_file_cites_an_author_workstation(self):
+        offenders = []
+        for path in sorted(EVIDENCE_DIR.iterdir()):
+            text = path.read_text(errors="ignore")
+            for marker in self.WORKSTATION_MARKERS:
+                if marker in text:
+                    offenders.append(f"{path.name}: {marker}")
+        self.assertEqual(
+            offenders, [],
+            f"committed evidence cites a local workstation: {offenders}",
+        )
+
+    def test_reverification_cites_the_committed_origin_report(self):
+        doc = json.loads(
+            (EVIDENCE_DIR
+             / "public-http-status-reverification-2026-08-19.json").read_text()
+        )
+        source = doc["origin_withdrawal"]["source"]
+        self.assertEqual(
+            source,
+            "docs/repair/evidence/core-withdrawal-2026-08-19/"
+            "origin-post-check.json",
+        )
+        self.assertTrue(
+            (ROOT / source).is_file(),
+            "the cited evidence path must resolve inside the repository",
+        )
+
+    def test_runner_paths_are_retained_with_committed_counterparts(self):
+        """Kept verbatim as run provenance -- but each must be followable."""
+        cases = [
+            ("pre-execution-verification.json", "inventory_path",
+             "docs/repair/inventories/core-withdrawal-2026-08-19.json"),
+            ("public-http-status.json", "origin_report_source",
+             "docs/repair/evidence/core-withdrawal-2026-08-19/"
+             "origin-post-check.json"),
+        ]
+        for filename, key, counterpart in cases:
+            with self.subTest(filename=filename):
+                doc = json.loads((EVIDENCE_DIR / filename).read_text())
+                self.assertTrue(
+                    doc[key].startswith("/home/runner/"),
+                    "run-emitted path must not be rewritten",
+                )
+                self.assertTrue(
+                    (ROOT / counterpart).is_file(),
+                    f"{filename} cites a runner path whose content is not "
+                    f"committed at {counterpart}",
+                )
+                self.assertTrue(
+                    doc[key].endswith(Path(counterpart).name),
+                    "the runner path and its committed counterpart must "
+                    "refer to the same file",
+                )
+
+    def test_reverification_records_the_expected_outcome(self):
+        doc = json.loads(
+            (EVIDENCE_DIR
+             / "public-http-status-reverification-2026-08-19.json").read_text()
+        )
+        self.assertTrue(doc["origin_withdrawal"]["absence_confirmed"])
+        self.assertEqual(len(doc["withdrawn_demonstrated"]), 21)
+        self.assertEqual(doc["inconclusive"], [])
+
+
+class TestCacheWordingIsEvidenceBounded(unittest.TestCase):
+    """The log may claim what the records show, not universal absence."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.flat = " ".join(WITHDRAWAL_LOG.read_text().lower().split())
+
+    def test_claim_is_scoped_to_recorded_verifications(self):
+        self.assertIn(
+            "no recorded verification observed a withdrawn url returning 200",
+            self.flat,
+        )
+
+    def test_it_does_not_claim_universal_absence(self):
+        """"At any point" asserts more than any record can support."""
+        self.assertNotIn(
+            "no withdrawn url returned 200 at any point", self.flat,
+        )
+
+    def test_it_acknowledges_the_blocked_run_observed_nothing(self):
+        self.assertIn("its requests were refused", self.flat)
+
+    def test_purge_status_is_still_recorded(self):
+        self.assertIn("no cloudflare purge", self.flat)
+        self.assertIn("no purge was required or performed", self.flat)
+
+
+class TestNoEdgeAllowlistIsRequested(unittest.TestCase):
+    """The corrected client reaches the site; no special treatment is asked."""
+
+    def test_verifier_does_not_request_an_allowlist(self):
+        src = (ROOT / "scripts" / "verify_public_surface.py").read_text()
+        self.assertIn("No edge allowlist is\nrequired or requested", src)
+
+    def test_verifier_does_not_depend_on_being_allowlisted(self):
+        src = (ROOT / "scripts" / "verify_public_surface.py").read_text().lower()
+        for claim in ("must be allowlisted", "requires an allowlist",
+                      "add to the allowlist"):
+            with self.subTest(claim=claim):
+                self.assertNotIn(claim, src)

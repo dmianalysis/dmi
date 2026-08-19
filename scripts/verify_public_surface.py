@@ -37,10 +37,11 @@ On identifying honestly
 -----------------------
 The client sends a stable, truthful project User-Agent. That is not an
 attempt to look like a browser: it says what the request is, so an
-operator reading server logs can recognise it, and so an allowlist can be
-written for it deliberately. Working around a block by impersonating a
-consumer browser, disabling TLS verification, or accepting 403 as
-success would defeat the check rather than fix it.
+operator reading server logs can recognise it. No edge allowlist is
+required or requested — the corrected client reaches the site as it
+stands. Working around a block by impersonating a consumer browser,
+disabling TLS verification, or accepting 403 as success would defeat the
+check rather than fix it.
 """
 
 from __future__ import annotations
@@ -57,8 +58,9 @@ from typing import Optional
 
 BASE = "https://dmianalysis.org"
 
-#: Truthful identification. Stable so it can be allowlisted or found in
-#: logs; project-specific so it is never confused with a real visitor.
+#: Truthful identification. Stable so it is recognisable in server logs;
+#: project-specific so it is never confused with a real visitor. It is
+#: not a request for special treatment at the edge.
 USER_AGENT = "dmi-public-verifier/1.0 (+https://github.com/dmianalysis/dmi)"
 
 #: The public contract this withdrawal must not disturb.
@@ -436,6 +438,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         "cloudflare_cache_condition": cache_condition,
         # (4) could this client see anything
         "verifier_client": accessibility,
+        "withdrawal_verdict": (
+            "unknown" if accessibility["blocked"]
+            else ("demonstrated" if not inconclusive else "not_demonstrated")
+        ),
         "cache_note": (
             "Withdrawn URLs returning 200 while the origin files are "
             "confirmed absent indicates a CDN serving cached copies of "
@@ -447,15 +453,38 @@ def main(argv: Optional[list[str]] = None) -> int:
     }
     Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 
+    # When the client was blocked, the operational observations describe
+    # the client, not the site. Reporting them as `degraded` would assert
+    # a health verdict this run is not entitled to make — which is the
+    # exact error the 2026-08-19 report made. `all_healthy` is null
+    # (unknown, as distinct from true or false), `degraded` stays empty,
+    # and the observations move to a field whose name says what they are.
+    blocked = accessibility["blocked"]
     operational = {
         "checked_at_utc": now,
         "user_agent": USER_AGENT,
         "endpoints": operational_rows,
-        "degraded": degraded,
-        "all_healthy": not degraded,
+        "degraded": [] if blocked else degraded,
+        "all_healthy": None if blocked else not degraded,
         "verifier_client": accessibility,
         "public_contract": contract,
     }
+    if blocked:
+        operational["unassessed_due_to_client_block"] = [
+            {
+                "url": row["url"],
+                "status": row["status"],
+                "note": (
+                    "not assessed: the verification client was refused, so "
+                    "this observation describes the client rather than the "
+                    "endpoint"
+                ),
+            }
+            for row in operational_rows
+        ]
+        operational["health_verdict"] = "unknown"
+    else:
+        operational["health_verdict"] = "healthy" if not degraded else "degraded"
     Path(args.operational_report).write_text(
         json.dumps(operational, indent=2, sort_keys=True) + "\n"
     )
@@ -465,9 +494,16 @@ def main(argv: Optional[list[str]] = None) -> int:
     failed = False
 
     if accessibility["blocked"]:
+        # Return here deliberately, before any of the degradation or
+        # contract reporting below. Those paths would describe the
+        # client, and a run that cannot see the site must not emit a
+        # verdict about the site's health.
         print("VERIFICATION CLIENT BLOCKED — result inconclusive.",
               file=sys.stderr)
         print(f"  {accessibility['reason']}", file=sys.stderr)
+        print(f"  {len(operational_rows)} operational endpoint(s) recorded "
+              f"as unassessed; no health verdict is asserted.",
+              file=sys.stderr)
         print("  This is NOT evidence of withdrawal and NOT an outage. "
               "Re-run from a client the edge will serve, or verify "
               "manually.", file=sys.stderr)
