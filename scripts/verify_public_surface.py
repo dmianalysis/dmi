@@ -79,7 +79,7 @@ def classify_withdrawn(status: int, origin_absent: bool) -> tuple[str, bool]:
     demonstrate that anything was removed — they demonstrate only that
     this particular request did not return the file.
 
-    Three outcomes, and only the first is a pass:
+    Three outcomes, and the first two are acceptable:
 
     - **404/410** — the resource is gone. Withdrawal demonstrated.
     - **200 with the origin file confirmed absent** — the origin was
