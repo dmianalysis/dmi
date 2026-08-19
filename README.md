@@ -285,7 +285,8 @@ This is a measurement tool under active development. Contributions should:
 ```
 **Published concept note**
 
-For the conceptual framework, specification architecture, interpretation guidance, and limitations, read The Distributional Misery Index (DMI): Making the Five Economies Visible, v0.4.6 (2026).
+For the conceptual framework, specification architecture, interpretation guidance, and limitations, read:  
+The Distributional Misery Index (DMI): Making the Five Economies Visible, v0.4.6 (2026).  
 **[Read and cite the concept note](https://doi.org/10.5281/zenodo.21881670)**
 
 ---
