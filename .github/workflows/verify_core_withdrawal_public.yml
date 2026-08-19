@@ -1,0 +1,80 @@
+name: Verify Core Withdrawal (public, read-only)
+
+# Read-only public verification of the completed Core withdrawal.
+#
+# The destructive Phase-2 workflow was retired after its successful run on
+# 2026-08-19 (run 32214973867). This replaces the only reason anyone would
+# have wanted to re-run it: re-checking the public surface. It cannot
+# delete, restore, deploy or purge anything.
+#
+# It holds no secrets and needs none. Every request is an anonymous HTTPS
+# GET of an already-public URL, so there is nothing here that a passer-by
+# could not do with curl — the value is that it does it consistently and
+# records the result.
+#
+# Note on failure: this workflow exits non-zero when the result is
+# INCONCLUSIVE as well as when it is bad. A verification client that is
+# blocked at the edge has proved nothing, and reporting that as success
+# would be worse than reporting nothing.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One verification at a time. Cancelling a half-finished check would
+# leave a partial report, so queue instead.
+concurrency:
+  group: verify-core-withdrawal-public
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Deliberately NO `environment:`. Naming one would associate this
+    # read-only job with the production credential scope for no reason.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify the public surface
+        run: |
+          # Fixed invocation. No input can change the URLs, the evidence
+          # paths, or the command. The withdrawn URL list comes from the
+          # sealed inventory committed in the repository.
+          mkdir -p "${{ runner.temp }}/public-verification"
+          python -m scripts.verify_public_surface \
+            --report "${{ runner.temp }}/public-verification/public-http-status.json" \
+            --operational-report "${{ runner.temp }}/public-verification/operational-surface.json" \
+            --origin-report docs/repair/evidence/core-withdrawal-2026-08-19/origin-post-check.json
+
+      - name: Upload verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-verification-reports
+          # Two explicitly named files. No globbing.
+          path: |
+            ${{ runner.temp }}/public-verification/public-http-status.json
+            ${{ runner.temp }}/public-verification/operational-surface.json
+          if-no-files-found: error
+          retention-days: 30
