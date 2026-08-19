@@ -1,0 +1,161 @@
+{
+  "artifact_id": "C3_SUMMARY_2024_V0_1",
+  "checkpoint": {
+    "canonical_ledger_sha256": "451e915e2f8879f35e61c3dd5c3d0b1f312dfc5636890713ae853ea2361786dc",
+    "canonical_manifest_sha256": "727b5dba93c1b6edb9b6d2663c70f77edb1c527de8ca8569e54a149bd6083256",
+    "commit": "47ff8513205635851fc5979f7a771003c9295bc9",
+    "tag": "dmi-detailed-inflation-v0.1-canonical-ledger-2024"
+  },
+  "coverage": {
+    "audited_ce_domains": [
+      "ALCBEVG",
+      "FOODTOTL",
+      "HOUSING",
+      "TRANS"
+    ],
+    "canonical_published_basis_ucc_count": 337,
+    "covered_share_of_consumption_universe_all_cu": "0.758447",
+    "covered_share_of_universe_all_cu": "0.641623",
+    "full_universe_additivity_established": true,
+    "full_universe_ucc_count": 581,
+    "nodes_not_fully_represented": [
+      "APPAREL",
+      "MEDICAL_CARE",
+      "RECREATION",
+      "EDUCATION_COMMUNICATION",
+      "OTHER_GOODS_SERVICES"
+    ],
+    "omission_classification_counts": {
+      "NONCONSUMPTION_OR_SCOPE_REVIEW_REQUIRED": 16,
+      "OUTSIDE_M1_AUDIT_SCOPE": 228
+    },
+    "omitted_expenditure_all_cu": "3818516",
+    "omitted_ucc_count": 244,
+    "status": "MATERIAL_EXPANSION_REQUIRED",
+    "structural_ucc_coverage": "0.580034",
+    "unaudited_ce_domains": [
+      "APPAREL",
+      "CASHCONT",
+      "EDUCATN",
+      "ENTRTAIN",
+      "HEALTH",
+      "INSPENSN",
+      "MISC",
+      "PERSCARE",
+      "READING",
+      "TOBACCO"
+    ],
+    "why": "Ten of the fourteen CE expenditure domains have never been through the mapping, provenance and scope discipline the four audited domains received. They carry roughly a third of published total expenditure. Every one of the fourteen taxonomy nodes that is not fully represented is a node whose expenditure sits in those domains, and Apparel has no canonical representation at all. Whether the current ledger is an adequate normalisation denominator is a judgement for human review; the evidence here does not support calling it sufficient."
+  },
+  "internal_reconciliation": {
+    "e_source_by_population": {
+      "ALL_CU": "6836520.000000",
+      "Q1": "688872.000000",
+      "Q2": "959951.000000",
+      "Q3": "1223874.000000",
+      "Q4": "1572916.000000",
+      "Q5": "2390913.000000"
+    },
+    "e_track_a_effective_by_population": {
+      "ALL_CU": "8124511.812994",
+      "Q1": "854361.442108",
+      "Q2": "1182887.881735",
+      "Q3": "1438790.013756",
+      "Q4": "1857768.947078",
+      "Q5": "2790707.528318"
+    },
+    "effective_residual_by_population": {
+      "ALL_CU": "0.000000",
+      "Q1": "0.000000",
+      "Q2": "0.000000",
+      "Q3": "0.000000",
+      "Q4": "0.000000",
+      "Q5": "0.000000"
+    },
+    "no_balancing_bucket_exists": true,
+    "note": "Source residuals are exactly zero because every published-basis row sits in exactly one disposition bucket carrying its own source amount. That is a property of the C2 construction, asserted cell by cell rather than assumed.",
+    "open_by_population": {
+      "ALL_CU": "10951.000000",
+      "Q1": "822.000000",
+      "Q2": "1192.000000",
+      "Q3": "1819.000000",
+      "Q4": "2767.000000",
+      "Q5": "4351.000000"
+    },
+    "pending_by_population": {
+      "ALL_CU": "148556.815688",
+      "Q1": "11966.978548",
+      "Q2": "19196.301339",
+      "Q3": "18991.088795",
+      "Q4": "33184.843428",
+      "Q5": "65219.603579"
+    },
+    "source_residual_by_population": {
+      "ALL_CU": "0.000000",
+      "Q1": "0.000000",
+      "Q2": "0.000000",
+      "Q3": "0.000000",
+      "Q4": "0.000000",
+      "Q5": "0.000000"
+    },
+    "status": "PASS",
+    "withheld_by_population": {
+      "ALL_CU": "665.471372",
+      "Q1": "0.000000",
+      "Q2": "9.807815",
+      "Q3": "99.075314",
+      "Q4": "120.808528",
+      "Q5": "435.779715"
+    }
+  },
+  "methodology": {
+    "arithmetic_policy": "Ledger amounts are fixed-point decimal strings read as decimal.Decimal, so C3-A sums are exact and its residuals are exactly zero. No tolerance is used or offered in C3-A.",
+    "candidate_node_attribution": "Omitted UCCs carry a candidate DMI node derived from their CE domain. It is a diagnostic convenience so omitted dollars can be reported by node, not a mapping decision. Every omitted UCC is flagged requires_scope_adjudication.",
+    "coverage_tolerance_policy": "The universe comparison is against BLS figures published rounded to whole millions, so a residual of at most 0.5 * (leaves + 1) is admitted. The bound is derived from the publication rounding rule, not tuned to the data.",
+    "full_universe_construction_rule": "Numeric six-digit item codes of series with category_code EXPEND, demographics_code LB01, characteristics_code in the six Income-Quintile populations, and begin_year <= 2024 <= end_year. Derived from cx.series metadata; no UCC list is written down.",
+    "full_universe_inclusion_exclusion": [
+      "Included: every 2024-active numeric UCC in an EXPEND subcategory, across all fourteen CE domains.",
+      "Excluded: non-numeric item codes, which are published roll-ups of the numeric leaves and would double count.",
+      "Excluded: ADDENDA, INCOME and CUCHARS categories, which are not expenditure.",
+      "Excluded: series not active in 2024, which is why 581 of the 998 numeric codes in cx.item are in the universe.",
+      "TOTALEXP is the published grand-total root and is used only as the parent in the additivity check, never as a domain."
+    ],
+    "node_taxonomy_version": "0.1.0",
+    "population_order": [
+      "ALL_CU",
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q5"
+    ]
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, task C3",
+  "non_goals_observed": [
+    "No normalised weight is computed anywhere in C3.",
+    "No CPI price index is acquired.",
+    "No inflation figure is calculated.",
+    "No omitted UCC receives a Track-A rule, disposition or node adjudication.",
+    "The frozen C1+C2 artifacts are read and never written."
+  ],
+  "scope": "Research only. C3 reconciles the frozen canonical ledger against itself and measures its coverage of the published expenditure universe. It normalises nothing, prices nothing, adjudicates no omitted UCC and assigns no Track-A treatment.",
+  "shelter_deltas": {
+    "classification": "DIFFERENCE_IN_ACCOUNTING_DEFINITION",
+    "definition_difference_all_cu": "199079.000000",
+    "delta_scope_all_cu": "1287991.812994",
+    "delta_shelter_current_state_all_cu": "1402618.812994",
+    "delta_shelter_frozen_membership_all_cu": "1601697.812994",
+    "finding": "delta_scope reproduces the frozen shelter checkpoint exactly. delta_shelter reproduces it exactly only under the removal membership frozen at that checkpoint. Owner maintenance services, 199,079 million dollars, was OWNER_OUTLAY and PROPOSED then and is ACCEPTED and out of scope now, so a current-state reading of 'owner outlays removed' gives a delta_shelter smaller by exactly that amount. The residual task recorded delta_shelter as unchanged and justified it by noting that pending and accepted-out-of-scope both sit outside the CPI basis. That argument is sufficient for delta_scope, whose second term is the CPI basis, and it is not sufficient for delta_shelter, whose second term is a removal set. The invariance is real but rests on the membership being pinned at the shelter checkpoint rather than on the bucket-movement argument given. Both readings are reported and neither number is adjusted.",
+    "reproduced_from_ledger": true
+  },
+  "source_vintages": {
+    "ce_demographics_code": "LB01",
+    "ce_labstat_year": 2024,
+    "ce_period": "A01",
+    "cx_aspect_sha256": "0628a1616cfa2dc237dbd7abe7946d7a44aa372add31c9467b5e9f36048519b7",
+    "cx_item_sha256": "6c2bcd8c37c8de2f2092376c6a3501e707c0b251c064ffc51485edd298a32e98",
+    "cx_series_sha256": "9755a92a6605d05bae92ca34080b4214500603dd487c37090e0e1ed95b8432f2"
+  },
+  "status": "RESEARCH_ONLY",
+  "version": "0.1"
+}

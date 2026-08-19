@@ -1,0 +1,82 @@
+{
+  "a_node_is_not_covered_because_one_ucc_maps_to_it": "Recreation carries one canonical UCC and ninety-one omitted published UCCs worth 489,524 million dollars for All Consumer Units. Calling it covered would be false.",
+  "additivity_validation": {
+    "bound": "0.5 * (leaves_with_amount + 1) published units",
+    "bound_is_derived_not_tuned": "BLS publishes these aggregates rounded to whole millions, so each figure carries at most half a unit of error. A double count of even the smallest leaf exceeds the bound by orders of magnitude.",
+    "domain_test": "sum of a domain's numeric leaves against its published domain-root aggregate",
+    "grand_total_test": "sum of the fourteen domain roots against published TOTALEXP, which catches a domain that is itself a child of another",
+    "on_failure": "If any domain or the grand total fails, no expenditure ratio is produced and full_universe_coverage_status is BLOCKED. Structural UCC counts are still reported, because counting needs no additivity.",
+    "why_required": "Milestone 1 established empirically that numeric UCCs behave as leaves, on four domains. That result does not transfer to ten domains nobody has checked, and summing a nested code would inflate the denominator silently."
+  },
+  "artifact_id": "C3_COVERAGE_SPEC_V0_1",
+  "candidate_node_attribution": {
+    "every_row_flagged": "requires_scope_adjudication = true",
+    "purpose": "so omitted expenditure can be reported by DMI node",
+    "rule": {
+      "APPAREL": "APPAREL",
+      "CASHCONT": null,
+      "EDUCATN": "EDUCATION_COMMUNICATION",
+      "ENTRTAIN": "RECREATION",
+      "HEALTH": "MEDICAL_CARE",
+      "INSPENSN": null,
+      "MISC": "OTHER_GOODS_SERVICES",
+      "PERSCARE": "OTHER_GOODS_SERVICES",
+      "READING": "EDUCATION_COMMUNICATION",
+      "TOBACCO": "OTHER_GOODS_SERVICES"
+    },
+    "status": "DIAGNOSTIC_ONLY",
+    "warning": "A candidate node is not a mapping decision. Reading it as one would adjudicate 244 UCCs that have had no mapping, provenance or scope work done on them."
+  },
+  "concordance_is_not_exclusion_evidence": "Absence from the 2024 CE-to-CPI concordance is recorded on every omitted row as a fact and is never used as the reason for omission. Milestone 2 established that a UCC missing from the concordance is not thereby out of CPI scope, and re-importing that inference here would adjudicate by accident.",
+  "coverage_layers": {
+    "consumption_variant": "the same ratio against a denominator excluding CASHCONT and INSPENSN. Both are reported. Choosing between them is a scope judgement C3 does not make.",
+    "never_conflated": "UCC coverage and expenditure coverage are separate quantities and are never substituted for one another.",
+    "published_expenditure_coverage": "canonical source expenditure / universe expenditure, by population",
+    "structural_ucc_coverage": "canonical published UCC count / universe UCC count; a count diagnostic only"
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, task C3-B",
+  "node_coverage_states": [
+    "AUDITED_AND_REPRESENTED",
+    "PARTIALLY_REPRESENTED",
+    "STRUCTURALLY_REPRESENTED_BUT_UNAUDITED",
+    "ABSENT_FROM_CANONICAL_BASIS",
+    "BLOCKED"
+  ],
+  "nonconsumption_domains": {
+    "domains": [
+      "CASHCONT",
+      "INSPENSN"
+    ],
+    "treatment": "Labelled, not removed. Cash contributions are transfers and personal insurance and pensions are saving and risk transfer; both are inside CE total expenditures and outside household consumption. Removing them silently would be a scope adjudication."
+  },
+  "omission_classifications": [
+    "OUTSIDE_M1_AUDIT_SCOPE",
+    "NONCONSUMPTION_OR_SCOPE_REVIEW_REQUIRED",
+    "NOT_YET_TAXONOMY_RESOLVED",
+    "PUBLISHED_BUT_NOT_CONCORDANCE_MAPPED",
+    "INACTIVE_OR_VINTAGE_INAPPLICABLE",
+    "DUPLICATE_OR_NONADDITIVE"
+  ],
+  "scope": "Research only. Declares how the published expenditure universe is constructed and how coverage of it is measured. It adjudicates no UCC, assigns no Track-A treatment and selects no normalisation denominator.",
+  "status": "RESEARCH_ONLY",
+  "universe_construction_rule": {
+    "derived_from": [
+      "cx.series",
+      "cx.item",
+      "cx.aspect"
+    ],
+    "inclusion_exclusion": [
+      "Excluded: non-numeric item codes, which are published roll-ups of the numeric leaves.",
+      "Excluded: the ADDENDA, INCOME and CUCHARS categories, which are not expenditure.",
+      "Excluded: series not active in 2024. This is why 581 of the 998 numeric codes in cx.item are in the universe and 417 are not.",
+      "TOTALEXP is the published grand-total root. It is the parent in the additivity check and never a domain."
+    ],
+    "no_hand_entered_lists": "No UCC list appears in the coverage module. Membership is a consequence of the predicate, so a UCC cannot be added or dropped by editing code.",
+    "predicate": "category_code == EXPEND and demographics_code == LB01 and characteristics_code in the six Income-Quintile populations and begin_year <= 2024 <= end_year and item_code matches ^[0-9]{6}$"
+  },
+  "verdict_rule": {
+    "default": "MATERIAL_EXPANSION_REQUIRED when material expenditure domains have not had the mapping and scope discipline the audited domains received, unless the evidence strongly supports otherwise.",
+    "not_a_percentage_threshold": "No percentage decides the verdict. The diagnostics are reported and the recommendation is reasoned."
+  },
+  "version": "0.1"
+}

@@ -1,0 +1,13 @@
+replacement_group_id,population,source_side_amount,replacement_side_amount,source_side_state,replacement_side_state,removed_for_replacement_effective,replacement_effective,delta_replacement,delta_is_applicable,note
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,ALL_CU,,2493830.812994,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,2493830.812994,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,Q1,,238213.442108,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,238213.442108,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,Q2,,348688.881735,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,348688.881735,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,Q3,,409607.013756,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,409607.013756,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,Q4,,565762.947078,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,565762.947078,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE,Q5,,931558.528318,NO_REMOVAL_SIDE_DECLARED,CURRENT_EFFECTIVE,,931558.528318,,false,"no removal side is declared for this group, so no delta is defined; the displaced outlays leave under their own rules"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,ALL_CU,12620.000000,102900.287060,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,Q1,451.000000,5644.978548,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,Q2,1221.000000,11124.109154,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,Q3,1314.000000,11182.164109,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,Q4,5347.000000,21069.651956,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"
+RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE,Q5,4291.000000,53879.383294,CURRENT_PENDING,CURRENT_PENDING,,,,false,"at least one side is not in force, so no delta is defined"

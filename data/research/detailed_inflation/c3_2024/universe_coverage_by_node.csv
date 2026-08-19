@@ -1,0 +1,15 @@
+dmi_node,coverage_state,canonical_ucc_count,canonical_source_all_cu,omitted_candidate_ucc_count,omitted_candidate_all_cu,audited_domain_origin,note
+FOOD,AUDITED_AND_REPRESENTED,78,1298548.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+ALCOHOLIC_BEVERAGES,AUDITED_AND_REPRESENTED,4,74093.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+SHELTER,AUDITED_AND_REPRESENTED,6,1000279.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+HOUSEHOLD_ENERGY,AUDITED_AND_REPRESENTED,20,332718.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+WATER_SEWER_TRASH,AUDITED_AND_REPRESENTED,8,110963.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+HOUSEHOLD_FURNISHINGS_OPERATIONS,AUDITED_AND_REPRESENTED,95,528979.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+APPAREL,ABSENT_FROM_CANONICAL_BASIS,0,,49,270861,false,Entirely absent from the canonical basis. Its candidate expenditure sits in a CE domain that has never been audited.
+TRANSPORT_COMMODITIES_EX_MOTOR_FUEL,AUDITED_AND_REPRESENTED,15,760787.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+MOTOR_FUEL,AUDITED_AND_REPRESENTED,3,357741.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+TRANSPORT_SERVICES,AUDITED_AND_REPRESENTED,26,602554.000000,0,0,true,"Every published UCC carrying this node is in the canonical basis, which was audited by Milestone 1."
+MEDICAL_CARE,PARTIALLY_REPRESENTED,2,10409.000000,41,841186,true,Present in the canonical basis and materially incomplete: published expenditure with this candidate node sits outside the audited domains.
+RECREATION,PARTIALLY_REPRESENTED,1,671.000000,91,489524,true,Present in the canonical basis and materially incomplete: published expenditure with this candidate node sits outside the audited domains.
+EDUCATION_COMMUNICATION,PARTIALLY_REPRESENTED,16,412574.000000,15,230038,true,Present in the canonical basis and materially incomplete: published expenditure with this candidate node sits outside the audited domains.
+OTHER_GOODS_SERVICES,PARTIALLY_REPRESENTED,5,19562.000000,32,345706,true,Present in the canonical basis and materially incomplete: published expenditure with this candidate node sits outside the audited domains.

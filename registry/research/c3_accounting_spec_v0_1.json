@@ -1,0 +1,68 @@
+{
+  "arithmetic_policy": {
+    "representation": "decimal.Decimal over the ledger's fixed-point strings",
+    "tolerance": "none",
+    "why_no_tolerance": "C2 moves amounts between buckets and never rescales them, so every sum is a sum of the same decimal literals the ledger carries. A residual here is a defect, not a rounding artifact, and offering a tolerance would let a real one hide inside it."
+  },
+  "artifact_id": "C3_ACCOUNTING_SPEC_V0_1",
+  "input_checkpoint": {
+    "commit": "47ff8513205635851fc5979f7a771003c9295bc9",
+    "ledger": "data/research/detailed_inflation/canonical_substrate_2024/ucc_population_accounting_ledger.csv",
+    "schema": "registry/research/canonical_ledger_schema_v0_1.json",
+    "tag": "dmi-detailed-inflation-v0.1-canonical-ledger-2024"
+  },
+  "milestone": "Detailed Inflation Substrate v0.1, task C3-A",
+  "population_order": [
+    "ALL_CU",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "Q5"
+  ],
+  "prohibited": [
+    "residual-balancing categories",
+    "rescaling",
+    "renormalisation",
+    "redistributing pending, open or withheld amounts",
+    "altering any row-level ledger value"
+  ],
+  "replacement_accounting": {
+    "applicability": "Defined only where both sides carry an effective amount. Where a group declares no removal side, no delta is defined and the row says so rather than substituting zero.",
+    "delta_definition": "Delta_replacement = replacement_effective - removed_for_replacement_effective",
+    "delta_is_not_required_to_be_zero": true,
+    "primary_residence_note": "RG_PRIMARY_RESIDENCE_RENTAL_EQUIVALENCE declares no removal side. The registry states the rule removes nothing and that the outlays it displaces leave under their own out-of-scope rules with no arithmetic depending on their amounts. Subtracting those outlays here would invent the linkage the registry declines to make.",
+    "secondary_residence_note": "RG_SECONDARY_RESIDENCE_RENTAL_EQUIVALENCE remains PENDING on both sides. Neither side is in force and no delta is defined."
+  },
+  "scope": "Research only. Declares how the frozen canonical ledger is aggregated into two accounting systems. It moves no amount, proposes no rule and computes no weight.",
+  "shelter_delta_definitions": {
+    "delta_scope": "e_cpi - e_source, both recomputed from ledger rows",
+    "delta_shelter": "rental_equivalence_introduced - owner_outlays_removed",
+    "owner_outlay_membership_source": "data/research/detailed_inflation/shelter_2024/shelter_cpi_track_2024.csv",
+    "two_readings_reported": {
+      "current_state": "every owner outlay that has since left the basis under an accepted rule, which additionally includes owner maintenance services",
+      "frozen_membership": "owner outlays already REMOVED_OUT_OF_SCOPE at the shelter checkpoint, which is the membership the frozen delta_shelter was computed over"
+    },
+    "why_both": "The two differ by 199,079 million dollars for All Consumer Units. Reporting one alone would either contradict the frozen checkpoint or hide that the governing rule state has moved since it was frozen."
+  },
+  "source_side_identity": {
+    "double_counting_control": "Each ledger row populates exactly one amount column, and that column is the one its disposition maps to. The loader asserts this per row and refuses to proceed otherwise, so a bucket cannot receive an amount twice.",
+    "restricted_to_source_class": "PUBLISHED_CE_BASIS",
+    "statement": "E_source = retained + excluded_effective + removed_for_replacement + transformed + pending + open + withheld",
+    "why_restricted": "The identity is about published CE dollars. A replacement-side amount estimated from microdata never was one, and inserting it would make the source side count a dollar BLS never published. Addenda are held outside the basis by construction and transformation destinations carry no amount of their own."
+  },
+  "status": "RESEARCH_ONLY",
+  "track_a_effective_identity": {
+    "blank_is_not_zero": "A RETAINED row whose amount BLS suppressed contributes nothing and is not zero. Such cells are counted and reported separately from amounts.",
+    "effective_test": "track_a_disposition in (RETAINED, REPLACEMENT, TRANSFORMED) and normalization_state == ELIGIBLE and an amount is present",
+    "separately_reported_and_never_folded_in": [
+      "excluded_effective",
+      "pending",
+      "open",
+      "withheld"
+    ],
+    "statement": "E_track_a_effective = retained_effective + replacement_effective + transformed_effective",
+    "why_normalization_state_governs": "effective_track_a_status describes what a rule proposes to do to a row, not whether the row's amount is in the basis. UCC 220121 is RETAINED and ELIGIBLE while a PENDING transformation rule proposes to split it; its amount is in force and the proposal is not."
+  },
+  "version": "0.1"
+}
