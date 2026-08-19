@@ -2,8 +2,14 @@
 """Phase-2 Core withdrawal: the only workflow that destroys data.
 
 The interesting question is not whether it works but what the worst
-outcome of a dispatch is. The answer must be: delete exactly the 21
-reviewed files, after a verified backup, or delete nothing.
+outcome of a dispatch is. 
+The answer should be: delete exactly the 21 reviewed files, after a verified backup,
+or provide a recoverable state.
+
+Pre-deletion failures delete nothing. Once deletion begins, an interruption 
+can leave partial state; the workflow records the deleted and surviving sets, 
+runs post-state verification, and preserves the verified backup for a
+separately authorized recovery decision.
 
 That is a structural property. It comes from the inventory path, hashes,
 count, remote base and subcommand all being constants rather than inputs,
