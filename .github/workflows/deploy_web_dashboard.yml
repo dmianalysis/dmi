@@ -131,9 +131,14 @@ jobs:
           python -m scripts.install_known_hosts \
             --host "$IFASTNET_SSH_HOST" --port 1394 \
             --known-hosts "$HOME/.ssh/dmi_known_hosts"
-          mkdir -p ~/.ssh
-          printf '%s' "$IFASTNET_SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          # HOTFIX: key installation goes through the single canonical
+          # helper. It was previously written inline with
+          # `printf '%s'`, which drops the terminal newline OpenSSH
+          # requires and made the runner fail with
+          # "Load key ...: error in libcrypto" before any upload.
+          # The helper adds the newline, normalises CRLF, sets modes,
+          # and validates the key with ssh-keygen before we connect.
+          bash scripts/install_deploy_key.sh "$HOME/.ssh/deploy_key"
 
       - name: Deploy dashboard shell to iFastNet (pinned host key)
         if: steps.mode.outputs.production == 'true'
@@ -141,7 +146,7 @@ jobs:
           IFASTNET_SSH_USER: ${{ secrets.IFASTNET_SSH_USER }}
           IFASTNET_SSH_HOST: ${{ secrets.IFASTNET_SSH_HOST }}
         run: |
-          SSH_CMD="ssh -i ~/.ssh/deploy_key -p 1394 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts"
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -p 1394 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/dmi_known_hosts"
 
           rsync -avz --progress -e "$SSH_CMD" \
             ./deploy/dashboard.html \
