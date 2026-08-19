@@ -1,0 +1,124 @@
+{
+  "archive": {
+    "bytes": 9020,
+    "deterministic": true,
+    "name": "core-withdrawal-backup.tar.gz",
+    "sha256": "452a0c2f8d816f2b8fd427bceb9da18f72782a36e23b07e10e4e33a19b19c48a"
+  },
+  "created_at_utc": "2026-08-19T04:14:41Z",
+  "files": [
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.csv",
+      "sha256": "d82174574b3cd6d87487038631d723209053743b618bdd0474cd12bacb83effb",
+      "size": 248
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.parquet",
+      "sha256": "46d07a36a46a8318c9a1909fadeee36421f7eb786cb868df055d8d112cd3aaed",
+      "size": 2847
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.csv",
+      "sha256": "8f2e8ee4d35378e0c16a1ad35fc01f446e18d289d7bffe03c4b0f905ebbb6b3b",
+      "size": 247
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.parquet",
+      "sha256": "1b041af5d071090c61080129ad0e290ea4ad9caedac3a693a97e06707a66e64c",
+      "size": 2847
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.csv",
+      "sha256": "b5dc6bc5820723c8efd926c9ac5c340a11243a65903daeb616a1d3de59f7ca4c",
+      "size": 243
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.parquet",
+      "sha256": "8e7d8d8bc6f0728b1e0acbb77e6fb8223274f606e6847cd77bd637837ea093d0",
+      "size": 2847
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.csv",
+      "sha256": "8852e07a0b2dd3044190902dac7d05459dcbb83ae47f9d4d199d4ae26e44a24e",
+      "size": 245
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.parquet",
+      "sha256": "540ef4dbac930feb6b1bde0ffde7441a8b6fe5ccc128848b55d9013c71b10420",
+      "size": 2847
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.csv",
+      "sha256": "3c43657ccbfc8dc909a345040c549ccd6b23802545f4055b454e37aa260e0f6a",
+      "size": 247
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.parquet",
+      "sha256": "11ed2ed5b51e59d0c2899f1d672a6453ba996f56ee77f15fe41c735a8ae65957",
+      "size": 2847
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2024-11_core.json",
+      "sha256": "86bd90b24b57134f860172675387bfede861db1447f50ff57c92c3e59ec3cab7",
+      "size": 5423
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-03_core.json",
+      "sha256": "c8df5790e68672449a00fbcabd954cf98425269490bdb2933ee53c52a05f2e6f",
+      "size": 6020
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-04_core.json",
+      "sha256": "a2ca8b00d08f6223ebc4fdb320c3dba5c120404f537dda2ab65cff72385f05da",
+      "size": 6018
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-05_core.json",
+      "sha256": "71d1cb83c086259b893140943d7f636801f53a5e2a495fcc4f3537b33f025c73",
+      "size": 6123
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-06_core.json",
+      "sha256": "b9ef4cde0e02f6785f759738f9f8ddf2b0d4e9f9ed0bce309b49241d57b49022",
+      "size": 6138
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/dmi_release_2026-07_core.json",
+      "sha256": "29c3f27a9c0de1201f6d255007d1d555ade25aabdbc8fcba967742c979efd0e4",
+      "size": 6128
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-03_core.json",
+      "sha256": "3e9bcded421641a775e1051080cf9acd058bd80584c390e7189a695600ec02b0",
+      "size": 2458
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-04_core.json",
+      "sha256": "65d5b924b6d35d5c88431488a29811e9807bbf788c9f43868d0a36804c682554",
+      "size": 2457
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-05_core.json",
+      "sha256": "7bda65a59ba5f613cdad6946b1231f44254013a6ac767fdd1b1bcc036515b3a5",
+      "size": 2455
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-06_core.json",
+      "sha256": "2231a32fd50eb2f9b7f8928a357c9007c44b7df9dfa5d6b41ab495fe3a769eee",
+      "size": 2456
+    },
+    {
+      "path": "/home/agiraces/dmianalysis/data/outputs/qa_report_2026-07_core.json",
+      "sha256": "692070ac2f6d5c5ad3f4b1917dd1e886e278392559eb27050eb2cd3bfe0f8abb",
+      "size": 2457
+    }
+  ],
+  "purpose": "Pre-deletion backup of the Core artifacts named by the sealed withdrawal inventory. Contains no credentials: these files were already public, and are withdrawn because they are invalid, not because they are sensitive.",
+  "schema_version": "1.0.0",
+  "source_inventory": {
+    "file_count": 21,
+    "integrity_sha256": "3812991fa2ed52e4e3cfcc543c28c3f1769c20a3033c307abdb8085fd1887fd6",
+    "remote_base": "/home/agiraces/dmianalysis",
+    "remote_outputs": "/home/agiraces/dmianalysis/data/outputs"
+  }
+}

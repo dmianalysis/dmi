@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-"""Phase-2 Core withdrawal: the only workflow that destroys data.
+"""Phase-2 Core withdrawal — executed 2026-08-19, workflow since retired.
+
+The destructive workflow ran successfully on 2026-08-19 (run
+32214973867) and was then removed from `.github/workflows`. What remains
+testable, and what this module now covers, is:
+
+- the sealed inventory that controlled the operation, and the verifier
+  that gated it — both still in the repository and still the record of
+  what was authorized;
+- the backup verification logic and the partial-deletion evidence path in
+  the withdrawal tool, which stay useful and must not silently rot;
+- the durable evidence of the completed run;
+- the *absence* of any runnable destructive entry point.
+
+The structural tests that inspected the workflow file were removed with
+the workflow. Keeping them would have meant either resurrecting a
+destructive workflow to satisfy tests, or tests asserting about a file
+that does not exist.
+
 
 The interesting question is not whether it works but what the worst
 outcome of a dispatch is.  The answer should be: delete exactly the 21 reviewed files,
@@ -38,7 +56,6 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 ROOT = Path(__file__).resolve().parent.parent
-WORKFLOW = ROOT / ".github" / "workflows" / "execute_withdrawn_core.yml"
 INVENTORY = ROOT / "docs" / "repair" / "inventories" / "core-withdrawal-2026-08-19.json"
 
 EXPECTED_FILE_SHA = "ce1e55939c2c10c04c18cb96b2457db802241f9bdfcdf484438f5250ba84e11c"
@@ -389,322 +406,6 @@ class TestVerifierRejectsTamperedInventories(unittest.TestCase):
 # The workflow
 # ---------------------------------------------------------------------------
 
-@unittest.skipIf(yaml is None, "PyYAML not available")
-class TestPhase2WorkflowShape(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.raw = WORKFLOW.read_text()
-        cls.doc = yaml.safe_load(cls.raw)
-        cls.lines = _run_lines(cls.doc)
-        cls.script = "\n".join(cls.lines)
-        cls.steps = _steps(cls.doc)
-        cls.names = [str(s.get("name", "")) for s in cls.steps]
-
-    # -- triggers --------------------------------------------------------
-
-    def test_workflow_dispatch_is_the_only_trigger(self):
-        self.assertEqual(sorted(_on_block(self.doc).keys()),
-                         ["workflow_dispatch"])
-
-    def test_no_automatic_or_callable_trigger(self):
-        on = _on_block(self.doc)
-        for trigger in ("push", "pull_request", "pull_request_target",
-                        "schedule", "workflow_call", "release",
-                        "repository_dispatch", "workflow_run"):
-            with self.subTest(trigger=trigger):
-                self.assertNotIn(trigger, on)
-
-    def test_merging_the_pr_does_nothing(self):
-        """No trigger fires on merge."""
-        on = _on_block(self.doc)
-        self.assertNotIn("push", on)
-
-    # -- permissions -----------------------------------------------------
-
-    def test_permissions_read_only(self):
-        self.assertEqual(self.doc.get("permissions"), {"contents": "read"})
-
-    def test_no_job_or_step_widens_permissions(self):
-        for name, job in self.doc["jobs"].items():
-            with self.subTest(job=name):
-                self.assertNotIn("permissions", job)
-        for step in self.steps:
-            with self.subTest(step=step.get("name")):
-                self.assertNotIn("permissions", step)
-
-    # -- ref restriction -------------------------------------------------
-
-    def test_only_main_may_run(self):
-        self.assertIn("refs/heads/main", self.script)
-        guard = next(ln for ln in self.lines if "GITHUB_REF" in ln)
-        self.assertIn("refs/heads/main", guard)
-
-    def test_ref_guard_is_the_first_step(self):
-        self.assertIn("ref", self.names[0].lower())
-
-    def test_checkout_pins_the_dispatched_commit(self):
-        """Superseded assertion.
-
-        This originally required `ref: refs/heads/main`, which is the
-        defect: main can advance between dispatch and environment
-        approval, so the reviewer approves one commit and the deletion
-        runs from another. See TestCheckoutPinsTheDispatchedCommit.
-        """
-        checkout = next(s for s in self.steps
-                        if "actions/checkout" in str(s.get("uses", "")))
-        self.assertIn("github.sha", str(checkout["with"]["ref"]))
-
-    # -- confirmation ----------------------------------------------------
-
-    def test_confirmation_input_is_required(self):
-        inputs = _on_block(self.doc)["workflow_dispatch"]["inputs"]
-        self.assertIn("confirmation", inputs)
-        self.assertTrue(inputs["confirmation"]["required"])
-
-    def test_confirmation_phrase_is_exact(self):
-        self.assertEqual(self.doc["env"]["CONFIRMATION_PHRASE"], CONFIRMATION)
-        self.assertIn(CONFIRMATION, self.raw)
-
-    def test_confirmation_is_the_only_input(self):
-        inputs = _on_block(self.doc)["workflow_dispatch"]["inputs"]
-        self.assertEqual(sorted(inputs.keys()), ["confirmation"])
-
-    def test_confirmation_cannot_select_anything(self):
-        """It must never appear in a path, command or inventory position."""
-        for line in self.lines:
-            if "inputs.confirmation" not in line and "SUPPLIED" not in line:
-                continue
-            with self.subTest(line=line[:60]):
-                for token in ("--inventory", "python -m", "scripts/",
-                              "docs/repair", "rm ", "ssh "):
-                    self.assertNotIn(token, line)
-
-    # -- pinned constants ------------------------------------------------
-
-    def test_constants_are_pinned_in_the_workflow(self):
-        env = self.doc["env"]
-        self.assertEqual(env["EXPECTED_FILE_SHA256"], EXPECTED_FILE_SHA)
-        self.assertEqual(env["EXPECTED_INTEGRITY_SHA256"], EXPECTED_SEAL)
-        self.assertEqual(str(env["EXPECTED_COUNT"]), "21")
-        self.assertEqual(env["EXPECTED_REMOTE_BASE"],
-                         "/home/agiraces/dmianalysis")
-        self.assertIn("core-withdrawal-2026-08-19.json", env["INVENTORY_PATH"])
-
-    def test_workflow_constants_match_the_verifier_module(self):
-        from scripts import verify_withdrawal_inventory as v
-        env = self.doc["env"]
-        self.assertEqual(v.EXPECTED_FILE_SHA256, env["EXPECTED_FILE_SHA256"])
-        self.assertEqual(v.EXPECTED_INTEGRITY_SHA256,
-                         env["EXPECTED_INTEGRITY_SHA256"])
-        self.assertEqual(str(v.EXPECTED_COUNT), str(env["EXPECTED_COUNT"]))
-        self.assertEqual(v.EXPECTED_REMOTE_BASE, env["EXPECTED_REMOTE_BASE"])
-        self.assertEqual(v.INVENTORY_PATH, env["INVENTORY_PATH"])
-
-    def test_no_input_can_choose_a_path_or_subcommand(self):
-        for line in self.lines:
-            if "github.event.inputs" not in line:
-                continue
-            with self.subTest(line=line[:60]):
-                self.assertIn("SUPPLIED", line)
-
-    # -- the command -----------------------------------------------------
-
-    def test_execute_appears_exactly_once(self):
-        calls = [ln for ln in self.lines
-                 if "scripts.withdraw_remote_artifacts" in ln]
-        self.assertEqual(len(calls), 1, f"expected one call, got {calls}")
-        self.assertIn("execute", calls[0])
-
-    def test_the_command_is_exactly_the_reviewed_one(self):
-        idx = next(i for i, ln in enumerate(self.lines)
-                   if "scripts.withdraw_remote_artifacts" in ln)
-        joined = " ".join(self.lines[idx:idx + 3])
-        self.assertIn("execute", joined)
-        self.assertIn(
-            "--inventory docs/repair/inventories/core-withdrawal-2026-08-19.json",
-            joined,
-        )
-        self.assertIn("--confirm", joined)
-
-    def test_inventory_and_reseal_are_not_executable_paths(self):
-        for forbidden in ("withdraw_remote_artifacts inventory",
-                          "withdraw_remote_artifacts reseal"):
-            offenders = [ln for ln in self.lines if forbidden in ln]
-            with self.subTest(token=forbidden):
-                self.assertEqual(offenders, [])
-
-    def test_no_remote_rediscovery(self):
-        offenders = [ln for ln in self.lines
-                     if "find " in ln and "-name" in ln]
-        self.assertEqual(offenders, [])
-
-    # -- ordering: backup before delete ----------------------------------
-
-    def _index(self, needle: str) -> int:
-        return next(i for i, n in enumerate(self.names)
-                    if needle.lower() in n.lower())
-
-    def test_verification_precedes_credentials(self):
-        self.assertLess(self._index("Verify the sealed inventory"),
-                        self._index("Install deployment key"))
-
-    def test_backup_precedes_execute(self):
-        self.assertLess(self._index("Back up exactly"),
-                        self._index("Execute the reviewed withdrawal"))
-
-    def test_backup_upload_precedes_execute(self):
-        self.assertLess(self._index("Upload the verified backup"),
-                        self._index("Execute the reviewed withdrawal"))
-
-    def test_upload_success_is_asserted_before_execute(self):
-        self.assertLess(self._index("Assert the backup upload succeeded"),
-                        self._index("Execute the reviewed withdrawal"))
-        guard = next(s for s in self.steps
-                     if "Assert the backup upload" in str(s.get("name")))
-        self.assertIn("artifact-id", str(guard["run"]))
-        self.assertIn("exit 1", str(guard["run"]))
-
-    def test_backup_upload_fails_the_job_if_no_files(self):
-        upload = next(s for s in self.steps
-                      if str(s.get("name", "")).startswith("Upload the verified backup"))
-        self.assertEqual(upload["with"]["if-no-files-found"], "error")
-        self.assertGreaterEqual(int(upload["with"]["retention-days"]), 30)
-
-    def test_execute_step_has_no_continue_on_error(self):
-        step = next(s for s in self.steps
-                    if "Execute the reviewed withdrawal" in str(s.get("name")))
-        self.assertNotIn("continue-on-error", step)
-
-    def test_post_checks_follow_execute(self):
-        for label in ("Verify origin state", "Verify the public surface"):
-            with self.subTest(step=label):
-                self.assertGreater(self._index(label),
-                                   self._index("Execute the reviewed withdrawal"))
-
-    # -- SSH posture -----------------------------------------------------
-
-    def test_key_installed_via_canonical_helper(self):
-        self.assertIn("scripts/install_deploy_key.sh", self.script)
-
-    def test_pinned_host_material_is_installed(self):
-        self.assertIn("scripts.install_known_hosts", self.script)
-
-    def test_no_ssh_keyscan(self):
-        self.assertEqual([ln for ln in self.lines if "ssh-keyscan" in ln], [])
-
-    def test_no_key_written_inline(self):
-        offenders = [ln for ln in self.lines
-                     if "IFASTNET_SSH_KEY" in ln and (">" in ln or "tee" in ln)]
-        self.assertEqual(offenders, [])
-
-    def test_runner_temp_used_not_workspace(self):
-        self.assertIn("runner.temp", self.raw)
-        for line in self.lines:
-            if "dmi_withdrawal_key" in line or "dmi_known_hosts" in line:
-                with self.subTest(line=line[:60]):
-                    self.assertNotIn("$GITHUB_WORKSPACE", line)
-
-    def test_tool_enforces_identities_only_strict_and_pinned_hosts(self):
-        src = (ROOT / "scripts" / "withdraw_remote_artifacts.py").read_text()
-        self.assertIn('"IdentitiesOnly=yes"', src)
-        self.assertIn('"StrictHostKeyChecking=yes"', src)
-        self.assertIn("UserKnownHostsFile=", src)
-        self.assertNotIn("StrictHostKeyChecking=no", src)
-
-    def test_ssh_argv_order_and_content(self):
-        """Behavioural: build the real argv."""
-        from scripts.withdraw_remote_artifacts import _ssh_command
-        with tempfile.TemporaryDirectory() as tmp:
-            key = Path(tmp) / "k"
-            key.write_text("x")
-            argv = _ssh_command("h", "u", "1394", key, Path(tmp) / "kh")
-        self.assertIn("IdentitiesOnly=yes", argv)
-        self.assertIn("StrictHostKeyChecking=yes", argv)
-        self.assertTrue(any(a.startswith("UserKnownHostsFile=") for a in argv))
-
-    # -- artifacts and secrets -------------------------------------------
-
-    def test_uploads_name_explicit_files_only(self):
-        for step in self.steps:
-            if "upload-artifact" not in str(step.get("uses", "")):
-                continue
-            paths = [p.strip() for p in str(step["with"]["path"]).splitlines()
-                     if p.strip()]
-            with self.subTest(step=step.get("name")):
-                self.assertTrue(paths)
-                for path in paths:
-                    self.assertNotIn("*", path)
-                    self.assertNotIn("dmi_withdrawal_key", path)
-                    self.assertNotIn("dmi_known_hosts", path)
-                    self.assertNotEqual(path.rstrip("/"), "${{ runner.temp }}")
-
-    def test_evidence_artifact_contents_are_the_named_set(self):
-        upload = next(s for s in self.steps
-                      if "core-withdrawal-evidence" in str(s.get("with", {}).get("name", "")))
-        paths = str(upload["with"]["path"])
-        for required in ("core-withdrawal-2026-08-19.json",
-                         "backup-manifest.json",
-                         "pre-execution-verification.json",
-                         "execution-log.txt",
-                         "origin-post-check.json",
-                         "public-http-status.json",
-                         "operational-surface.json"):
-            with self.subTest(item=required):
-                self.assertIn(required, paths)
-
-    def test_no_secret_is_echoed(self):
-        offenders = []
-        for line in self.lines:
-            if not re.search(r"\b(echo|printf|cat)\b", line):
-                continue
-            if re.search(r"secrets\.|IFASTNET_SSH_KEY|IFASTNET_KNOWN_HOSTS"
-                         r"|DMI_KNOWN_HOSTS_DATA", line):
-                offenders.append(line)
-        self.assertEqual(offenders, [])
-
-    def test_secrets_scoped_to_steps(self):
-        self.assertNotIn("secrets.", str(self.doc.get("env", {})))
-        for name, job in self.doc["jobs"].items():
-            with self.subTest(job=name):
-                self.assertNotIn("secrets.", str(job.get("env", {})))
-
-    def test_private_key_reaches_exactly_one_step(self):
-        exposing = [str(s.get("name")) for s in self.steps
-                    if "IFASTNET_SSH_KEY" in str(s.get("env", {}))]
-        self.assertEqual(len(exposing), 1, exposing)
-
-    # -- guards ----------------------------------------------------------
-
-    def test_concurrency_does_not_cancel(self):
-        conc = self.doc["concurrency"]
-        self.assertIs(conc["cancel-in-progress"], False)
-        self.assertTrue(conc["group"])
-
-    def test_short_timeout(self):
-        for name, job in self.doc["jobs"].items():
-            with self.subTest(job=name):
-                self.assertLessEqual(job["timeout-minutes"], 20)
-
-    def test_environment_is_referenced(self):
-        job = self.doc["jobs"]["execute-withdrawal"]
-        self.assertEqual(job.get("environment"), "core-withdrawal")
-
-    def test_environment_naming_is_documented_as_insufficient(self):
-        """Naming an environment does not itself require a reviewer."""
-        self.assertIn("does NOT by itself require a reviewer", self.raw)
-
-    def test_cleanup_always_runs_and_is_local(self):
-        cleanup = [s for s in self.steps
-                   if str(s.get("if", "")).strip() == "always()"
-                   and "credential" in str(s.get("name", "")).lower()]
-        self.assertTrue(cleanup)
-        script = str(cleanup[0]["run"])
-        self.assertIn("shred -u", script)
-        for token in ("ssh", "rsync", "scp", "withdraw_remote_artifacts"):
-            with self.subTest(token=token):
-                self.assertNotIn(token, script)
-
 
 # ---------------------------------------------------------------------------
 # Backup behaviour
@@ -797,61 +498,6 @@ class TestBackupVerification(unittest.TestCase):
 # Documentation templates
 # ---------------------------------------------------------------------------
 
-class TestDocumentationTemplates(unittest.TestCase):
-
-    TEMPLATES = ROOT / "docs" / "repair" / "templates"
-
-    def test_templates_exist(self):
-        self.assertTrue((self.TEMPLATES / "REMOTE_WITHDRAWAL_LOG_TEMPLATE.md").is_file())
-        self.assertTrue((self.TEMPLATES / "CORE_OUTPUT_WITHDRAWAL_UPDATE_TEMPLATE.md").is_file())
-
-    def test_templates_do_not_claim_execution(self):
-        for path in self.TEMPLATES.glob("*.md"):
-            text = path.read_text()
-            with self.subTest(template=path.name):
-                self.assertIn("TEMPLATE", text)
-                self.assertIn("<", text, "placeholders must remain unfilled")
-
-    def test_templates_distinguish_the_four_states(self):
-        text = (self.TEMPLATES / "REMOTE_WITHDRAWAL_LOG_TEMPLATE.md").read_text().lower()
-        for stage in ("repository cleanup", "production deployment",
-                      "remote-origin withdrawal", "cdn-cache removal"):
-            with self.subTest(stage=stage):
-                self.assertIn(stage, text)
-
-    def test_template_records_the_required_facts(self):
-        text = (self.TEMPLATES / "REMOTE_WITHDRAWAL_LOG_TEMPLATE.md").read_text()
-        self.assertIn(EXPECTED_SEAL, text)
-        self.assertIn(EXPECTED_FILE_SHA, text)
-        self.assertIn("core-withdrawal-backup", text)
-        self.assertIn("Cloudflare", text)
-
-    def test_evidence_record_still_says_unexecuted(self):
-        """Until a real run, the durable record must not claim otherwise."""
-        text = (ROOT / "docs" / "known-issues"
-                / "CORE_OUTPUT_WITHDRAWAL.md").read_text().lower()
-        self.assertIn("neither phase has been authorized or executed", text)
-        self.assertIn("remote withdrawal pending explicit authorization", text)
-
-    def test_no_document_yet_claims_the_withdrawal_happened(self):
-        """This PR adds capability, not a completed operation."""
-        for path in (ROOT / "docs" / "known-issues" / "CORE_OUTPUT_WITHDRAWAL.md",
-                     ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md"):
-            lowered = path.read_text().lower()
-            with self.subTest(doc=path.name):
-                for claim in ("withdrawal complete",
-                              "core artifacts were deleted",
-                              "withdrawal has been executed"):
-                    self.assertNotIn(claim, lowered)
-
-    def test_no_withdrawal_log_has_been_created(self):
-        """A log file would imply a run happened."""
-        logs = list((ROOT / "docs" / "repair").glob("REMOTE_WITHDRAWAL_LOG_*.md"))
-        self.assertEqual(
-            logs, [],
-            f"a withdrawal log exists but no run has occurred: {logs}",
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
@@ -861,42 +507,6 @@ if __name__ == "__main__":
 # Merge-blocker fixes: pinned checkout, partial-deletion evidence,
 # fail-closed public verification, hardened cleanup.
 # ---------------------------------------------------------------------------
-
-@unittest.skipIf(yaml is None, "PyYAML not available")
-class TestCheckoutPinsTheDispatchedCommit(unittest.TestCase):
-    """The destructive run must use the commit that was approved.
-
-    `ref: refs/heads/main` is a moving target. Between dispatch and the
-    environment approval that gates this job, main can advance — so a
-    reviewer would approve one commit and the deletion would run from
-    another, including a different inventory.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.doc = yaml.safe_load(WORKFLOW.read_text())
-        cls.checkout = next(
-            s for s in _steps(cls.doc)
-            if "actions/checkout" in str(s.get("uses", ""))
-        )
-
-    def test_checkout_uses_the_dispatched_sha(self):
-        ref = str(self.checkout["with"]["ref"])
-        self.assertIn("github.sha", ref)
-
-    def test_checkout_does_not_use_a_moving_branch_ref(self):
-        ref = str(self.checkout["with"]["ref"])
-        for moving in ("refs/heads/main", "main", "github.ref"):
-            with self.subTest(ref=moving):
-                self.assertNotEqual(ref.strip(), moving)
-
-    def test_credentials_are_not_persisted(self):
-        self.assertIs(self.checkout["with"].get("persist-credentials"), False)
-
-    def test_ref_guard_still_restricts_dispatch_to_main(self):
-        """Pinning the SHA does not replace the branch restriction."""
-        script = "\n".join(_run_lines(self.doc))
-        self.assertIn("refs/heads/main", script)
 
 
 class TestPartialDeletionPreservesEvidence(unittest.TestCase):
@@ -964,183 +574,353 @@ class TestPartialDeletionPreservesEvidence(unittest.TestCase):
         self.assertIn("f4.json", printed)
 
 
-@unittest.skipIf(yaml is None, "PyYAML not available")
-class TestPostChecksRunAfterAnyAttemptedExecution(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.doc = yaml.safe_load(WORKFLOW.read_text())
-        cls.steps = _steps(cls.doc)
 
-    def _step(self, needle):
-        return next(s for s in self.steps
-                    if needle.lower() in str(s.get("name", "")).lower())
+# ---------------------------------------------------------------------------
+# Retirement: no runnable destructive entry point may remain.
+# ---------------------------------------------------------------------------
 
-    def test_execute_step_has_an_id(self):
-        self.assertEqual(self._step("Execute the reviewed").get("id"), "execute")
+WORKFLOWS_DIR = ROOT / ".github" / "workflows"
+EVIDENCE_DIR = ROOT / "docs" / "repair" / "evidence" / "core-withdrawal-2026-08-19"
+WITHDRAWAL_LOG = ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL_LOG_2026-08-19.md"
 
-    def test_origin_check_is_not_gated_on_success(self):
-        cond = str(self._step("Verify origin state").get("if", ""))
-        self.assertIn("always()", cond)
-        self.assertNotIn("success()", cond)
 
-    def test_public_check_is_not_gated_on_success(self):
-        cond = str(self._step("Verify the public surface").get("if", ""))
-        self.assertIn("always()", cond)
-        self.assertNotIn("success()", cond)
+class TestPhase2IsRetired(unittest.TestCase):
+    """The withdrawal is done; the destructive path must not be dispatchable.
 
-    def test_post_checks_skip_only_when_execution_never_ran(self):
-        for label in ("Verify origin state", "Verify the public surface"):
-            with self.subTest(step=label):
-                cond = str(self._step(label).get("if", ""))
-                self.assertIn("steps.execute.conclusion", cond)
-                self.assertIn("skipped", cond)
+    Retirement is a property of the Actions surface, not of intent. A
+    workflow file present in `.github/workflows` is offered in the
+    Actions UI whether or not anyone means to use it, so the test is that
+    no such file exists — not that it is disabled or commented out.
+    """
 
-    def test_evidence_upload_always_runs(self):
-        self.assertEqual(
-            str(self._step("Upload execution evidence").get("if", "")).strip(),
-            "always()",
+    def test_the_destructive_workflow_file_is_gone(self):
+        self.assertFalse(
+            (WORKFLOWS_DIR / "execute_withdrawn_core.yml").exists(),
+            "the Phase-2 destructive workflow must not remain dispatchable",
         )
 
-    def test_public_check_receives_the_origin_report(self):
-        run = str(self._step("Verify the public surface")["run"])
-        self.assertIn("--origin-report", run)
-        self.assertIn("origin-post-check.json", run)
+    def test_no_workflow_invokes_the_execute_subcommand(self):
+        import yaml as _yaml
+        offenders = []
+        for path in sorted(WORKFLOWS_DIR.glob("*.yml")):
+            doc = _yaml.safe_load(path.read_text())
+            for job in (doc.get("jobs") or {}).values():
+                for step in (job.get("steps") or []):
+                    for line in str(step.get("run", "")).splitlines():
+                        stripped = line.strip()
+                        if stripped.startswith("#"):
+                            continue
+                        if "withdraw_remote_artifacts" in stripped and \
+                                "execute" in stripped:
+                            offenders.append(f"{path.name}: {stripped}")
+        self.assertEqual(
+            offenders, [],
+            f"no workflow may invoke the destructive subcommand: {offenders}",
+        )
+
+    def test_no_workflow_uses_the_confirmation_phrase(self):
+        """The phrase existed only to authorize the destructive run."""
+        offenders = [
+            path.name for path in sorted(WORKFLOWS_DIR.glob("*.yml"))
+            if CONFIRMATION in path.read_text()
+        ]
+        self.assertEqual(offenders, [], f"offenders: {offenders}")
+
+    def test_no_workflow_can_delete_or_restore_remote_files(self):
+        import yaml as _yaml
+        offenders = []
+        for path in sorted(WORKFLOWS_DIR.glob("*.yml")):
+            doc = _yaml.safe_load(path.read_text())
+            for job in (doc.get("jobs") or {}).values():
+                for step in (job.get("steps") or []):
+                    for line in str(step.get("run", "")).splitlines():
+                        stripped = line.strip()
+                        if stripped.startswith("#") or "ssh" not in stripped:
+                            continue
+                        if " rm " in stripped or stripped.endswith(" rm"):
+                            offenders.append(f"{path.name}: {stripped}")
+        self.assertEqual(offenders, [], f"offenders: {offenders}")
+
+    def test_the_tool_itself_is_retained_for_audit(self):
+        """Retiring the workflow must not delete the audited implementation."""
+        self.assertTrue(
+            (ROOT / "scripts" / "withdraw_remote_artifacts.py").is_file(),
+            "the tool is the record of what ran; keep it",
+        )
+
+    def test_read_only_verification_remains_available(self):
+        self.assertTrue(
+            (WORKFLOWS_DIR / "verify_core_withdrawal_public.yml").is_file(),
+            "retiring the destructive path must not remove read-only "
+            "verification",
+        )
+
+    def test_inventory_workflow_remains_available(self):
+        self.assertTrue((WORKFLOWS_DIR / "inventory_withdrawn_core.yml").is_file())
 
 
-class TestPublicVerificationFailsClosed(unittest.TestCase):
-    """"Not 200" is not evidence of removal."""
+class TestDurableEvidenceOfTheCompletedRun(unittest.TestCase):
+    """The evidence must record what actually happened, including the 403."""
 
-    def _classify(self, status, origin_absent=False):
-        from scripts.verify_public_surface import classify_withdrawn
-        return classify_withdrawn(status, origin_absent)
+    EXPECTED_FILES = (
+        "pre-execution-verification.json",
+        "backup-artifact.json",
+        "backup-manifest.json",
+        "execution-log.txt",
+        "origin-post-check.json",
+        "public-http-status.json",
+        "operational-surface.json",
+    )
 
-    def test_404_and_410_are_the_only_positive_proof(self):
-        for status in (404, 410):
-            with self.subTest(status=status):
-                verdict, ok = self._classify(status)
-                self.assertTrue(ok)
-                self.assertEqual(verdict, "withdrawn")
+    def test_evidence_directory_exists(self):
+        self.assertTrue(EVIDENCE_DIR.is_dir())
 
-    def test_network_error_is_not_a_pass(self):
-        verdict, ok = self._classify(0)
-        self.assertFalse(ok, "a network failure must never read as removal")
-        self.assertIn("network", verdict)
+    def test_every_expected_evidence_file_is_committed(self):
+        missing = [f for f in self.EXPECTED_FILES
+                   if not (EVIDENCE_DIR / f).is_file()]
+        self.assertEqual(missing, [], f"missing evidence: {missing}")
 
-    def test_403_and_500_are_not_a_pass(self):
-        for status in (401, 403, 500, 502, 503):
-            with self.subTest(status=status):
-                _verdict, ok = self._classify(status)
-                self.assertFalse(ok)
+    def test_pre_execution_verification_passed(self):
+        doc = json.loads((EVIDENCE_DIR / "pre-execution-verification.json").read_text())
+        self.assertTrue(doc["verified"])
+        self.assertEqual(doc["problems"], [])
+        self.assertEqual(doc["file_sha256"], EXPECTED_FILE_SHA)
+        self.assertEqual(doc["integrity_sha256"], EXPECTED_SEAL)
+        self.assertEqual(doc["integrity_sha256_recomputed"], EXPECTED_SEAL)
+        self.assertEqual(doc["file_count"], 21)
+        self.assertEqual(doc["total_bytes"], 63_598)
 
-    def test_redirect_is_not_a_pass(self):
-        for status in (301, 302, 307):
-            with self.subTest(status=status):
-                self.assertFalse(self._classify(status)[1])
+    def test_origin_post_check_shows_a_complete_withdrawal(self):
+        doc = json.loads((EVIDENCE_DIR / "origin-post-check.json").read_text())
+        self.assertTrue(doc["all_withdrawn_absent"])
+        self.assertTrue(doc["all_operational_present"])
+        self.assertEqual(doc["withdrawn_expected_absent"], 21)
+        self.assertEqual(doc["withdrawn_still_present"], [])
+        self.assertEqual(doc["operational_expected_present"], 15)
+        self.assertEqual(doc["operational_missing"], [])
+        self.assertEqual(doc["checked_at_utc"], "2026-08-19T04:14:49Z")
 
-    def test_200_without_confirmed_origin_absence_fails(self):
-        verdict, ok = self._classify(200, origin_absent=False)
-        self.assertFalse(ok)
-        self.assertIn("not_confirmed_absent", verdict)
+    def test_execution_log_records_21_removals(self):
+        text = (EVIDENCE_DIR / "execution-log.txt").read_text()
+        removed = [ln for ln in text.splitlines() if ln.startswith("removed ")]
+        self.assertEqual(len(removed), 21)
+        self.assertIn("All 21 sha256 digests verified", text)
+        self.assertIn("verified absent", text)
 
-    def test_200_with_confirmed_origin_absence_is_a_cache_condition(self):
-        verdict, ok = self._classify(200, origin_absent=True)
-        self.assertTrue(ok)
-        self.assertEqual(verdict, "cached_after_origin_deletion")
+    def test_backup_identity_is_recorded(self):
+        doc = json.loads((EVIDENCE_DIR / "backup-artifact.json").read_text())
+        self.assertEqual(doc["artifact_id"], "9352027951")
+        self.assertEqual(
+            doc["archive_sha256"],
+            "452a0c2f8d816f2b8fd427bceb9da18f72782a36e23b07e10e4e33a19b19c48a",
+        )
+        self.assertEqual(
+            doc["artifact_digest"],
+            "30f35c1e491990db114413f6f05c92894b6a937b8071610eefbb101bbe752d8c",
+        )
 
-    def test_cache_interpretation_requires_the_origin_report(self):
-        """The inference is only available with independent evidence."""
-        self.assertFalse(self._classify(200, origin_absent=False)[1])
-        self.assertTrue(self._classify(200, origin_absent=True)[1])
+    def test_backup_manifest_covers_the_21_inventoried_files(self):
+        man = json.loads((EVIDENCE_DIR / "backup-manifest.json").read_text())
+        inv = json.loads(INVENTORY.read_text())
+        self.assertEqual(len(man["files"]), 21)
+        self.assertEqual(
+            {f["path"] for f in man["files"]},
+            {f["path"] for f in inv["files"]},
+        )
+        for m, i in zip(sorted(man["files"], key=lambda r: r["path"]),
+                        sorted(inv["files"], key=lambda r: r["path"])):
+            with self.subTest(path=m["path"]):
+                self.assertEqual(m["size"], i["size"])
+                self.assertEqual(m["sha256"], i["sha256"])
 
-    def test_contract_constants_are_pinned(self):
-        from scripts import verify_public_surface as m
-        self.assertEqual(m.EXPECTED_RELEASE_ID, "2026-07")
-        self.assertEqual(set(m.EXPECTED_SPECS), {"baseline", "slack_plus"})
+    def test_public_report_records_the_uniform_403(self):
+        doc = json.loads((EVIDENCE_DIR / "public-http-status.json").read_text())
+        statuses = {row["status"] for row in doc["withdrawn_urls"]}
+        self.assertEqual(statuses, {403})
+        self.assertEqual(len(doc["inconclusive"]), 21)
+        self.assertTrue(doc["origin_absence_confirmed"])
 
-    def test_contract_violations_are_enforced_not_merely_recorded(self):
-        """The exit status must depend on the contract check."""
-        import ast
-        src = (ROOT / "scripts" / "verify_public_surface.py").read_text()
-        func = next(n for n in ast.walk(ast.parse(src))
-                    if isinstance(n, ast.FunctionDef) and n.name == "main")
-        body = ast.get_source_segment(src, func)
-        self.assertIn("contract_problems", body)
-        self.assertIn("if contract_problems:", body)
-        self.assertLess(body.index("if contract_problems:"),
-                        body.index("if failed:"))
+    def test_evidence_contains_no_secret_material(self):
+        patterns = ("BEGIN OPENSSH PRIVATE KEY", "BEGIN RSA PRIVATE KEY",
+                    "ssh-ed25519 AAAA", "ssh-rsa AAAA",
+                    "IFASTNET_SSH_KEY", "IFASTNET_KNOWN_HOSTS")
+        for path in sorted(EVIDENCE_DIR.iterdir()):
+            text = path.read_text(errors="ignore")
+            for pattern in patterns:
+                with self.subTest(file=path.name, pattern=pattern):
+                    self.assertNotIn(pattern, text)
 
-    def test_inconclusive_results_fail_the_step(self):
-        import ast
-        src = (ROOT / "scripts" / "verify_public_surface.py").read_text()
-        func = next(n for n in ast.walk(ast.parse(src))
-                    if isinstance(n, ast.FunctionDef) and n.name == "main")
-        body = ast.get_source_segment(src, func)
-        self.assertIn("if inconclusive:", body)
-        self.assertIn("failed = True", body)
+    def test_no_backup_archive_or_core_file_is_committed(self):
+        """The backup contains the withdrawn artifacts; it stays in the run."""
+        import subprocess
+        tracked = subprocess.run(
+            ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True
+        ).stdout.split()
+        offenders = [
+            f for f in tracked
+            if f.endswith("core-withdrawal-backup.tar.gz")
+            or f.endswith("core-withdrawal-backup.zip")
+            or f.endswith("core-withdrawal-evidence.zip")
+        ]
+        self.assertEqual(offenders, [], f"backup payload committed: {offenders}")
+
+    def test_no_withdrawn_core_artifact_is_committed(self):
+        import re as _re
+        import subprocess
+        tracked = subprocess.run(
+            ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True
+        ).stdout.split()
+        core = _re.compile(
+            r"(^|/)(dmi_release_\d{4}-\d{2}_core\.json"
+            r"|dmi-\d{4}-\d{2}-core\.(csv|parquet)"
+            r"|qa_report_\d{4}-\d{2}_core\.json)$"
+        )
+        offenders = [
+            f for f in tracked
+            if core.search(f) and not f.startswith("dmi-v0.1.1")
+        ]
+        self.assertEqual(offenders, [], f"withdrawn Core file committed: {offenders}")
 
 
-@unittest.skipIf(yaml is None, "PyYAML not available")
-class TestCredentialCleanupIsRobust(unittest.TestCase):
-    """One file failing to shred must not skip the other."""
+class TestWithdrawalLogIsAccurate(unittest.TestCase):
+    """The durable log must state what happened, including the failure."""
 
     @classmethod
     def setUpClass(cls):
-        doc = yaml.safe_load(WORKFLOW.read_text())
-        cls.script = str(next(
-            s for s in _steps(doc)
-            if str(s.get("if", "")).strip() == "always()"
-            and "credential" in str(s.get("name", "")).lower()
-        )["run"])
+        cls.text = WITHDRAWAL_LOG.read_text()
+        cls.flat = " ".join(cls.text.lower().split())
 
-    def test_both_files_are_attempted(self):
-        self.assertIn("dmi_withdrawal_key", self.script)
-        self.assertIn("dmi_known_hosts", self.script)
+    def test_log_exists(self):
+        self.assertTrue(WITHDRAWAL_LOG.is_file())
 
-    def test_shred_is_not_and_chained_to_the_loop_body(self):
-        """`shred -u "$f" && echo` aborts the loop under `set -e`."""
-        for line in self.script.splitlines():
-            stripped = line.strip()
-            if stripped.startswith("#"):
-                continue
-            if "shred -u" in stripped:
-                self.assertNotIn(
-                    "&&", stripped,
-                    "chaining makes a failed shred skip the remaining file",
-                )
+    def test_states_the_withdrawal_completed(self):
+        self.assertIn("remote-origin withdrawal completed successfully", self.flat)
 
-    def test_rm_f_fallback_exists(self):
-        self.assertIn("rm -f", self.script)
+    def test_records_the_run_id_and_url(self):
+        self.assertIn("32214973867", self.text)
+        self.assertIn(
+            "https://github.com/dmianalysis/dmi/actions/runs/32214973867",
+            self.text,
+        )
 
-    def test_failure_is_reported_not_swallowed(self):
-        self.assertIn("CLEANUP_FAILED", self.script)
-        self.assertIn("exit 1", self.script)
+    def test_records_the_origin_check_timestamp(self):
+        self.assertIn("2026-08-19T04:14:49Z", self.text)
 
-    def test_residual_file_is_detected(self):
-        self.assertIn("still present after cleanup", self.script)
+    def test_records_the_inventory_identity(self):
+        self.assertIn(EXPECTED_FILE_SHA, self.text)
+        self.assertIn(EXPECTED_SEAL, self.text)
+        self.assertIn("63,598", self.text)
+        self.assertIn("core-withdrawal-2026-08-19.json", self.text)
 
-    def test_cleanup_never_touches_the_remote(self):
-        for token in ("ssh", "rsync", "scp", "withdraw_remote_artifacts",
-                      "DMI_REMOTE_HOST"):
-            with self.subTest(token=token):
-                self.assertNotIn(token, self.script)
+    def test_records_the_backup_identity_and_hashes(self):
+        for value in (
+            "9352027951",
+            "30f35c1e491990db114413f6f05c92894b6a937b8071610eefbb101bbe752d8c",
+            "452a0c2f8d816f2b8fd427bceb9da18f72782a36e23b07e10e4e33a19b19c48a",
+            "8777454ad92e244cb24939bde9386c5d1cd1f7159f4d42d530bc52572b67a022",
+        ):
+            with self.subTest(value=value[:16]):
+                self.assertIn(value, self.text)
 
-    def test_cleanup_does_not_use_set_e(self):
-        """`set -e` would abort the loop on the first failure.
+    def test_records_the_exact_deletion_and_protection_result(self):
+        self.assertIn("21", self.text)
+        self.assertIn("15 protected operational", self.flat)
+        self.assertIn("no partial deletion", self.flat)
 
-        Scoped to executable lines: the step's comment explains why
-        `set -e` is deliberately absent, and a whole-text scan would
-        flag that explanation as the thing it warns against.
-        """
-        code = [ln.strip() for ln in self.script.splitlines()
-                if ln.strip() and not ln.strip().startswith("#")]
-        offenders = [ln for ln in code if "set -e" in ln]
-        self.assertEqual(offenders, [], f"offenders: {offenders}")
+    def test_does_not_claim_automated_http_verification_succeeded(self):
+        """The single most important honesty constraint in this log."""
+        for claim in ("automated public-http verification passed",
+                      "automated verification succeeded",
+                      "public verification passed during the run",
+                      "http verification succeeded"):
+            with self.subTest(claim=claim):
+                self.assertNotIn(claim, self.flat)
+        self.assertIn("inconclusive", self.flat)
+        self.assertIn("uniform http 403", self.flat)
 
-    def test_comment_stripping_is_not_vacuous(self):
-        """The scan must still see the cleanup's real code."""
-        code = [ln.strip() for ln in self.script.splitlines()
-                if ln.strip() and not ln.strip().startswith("#")]
-        joined = " ".join(code)
-        self.assertIn("shred -u", joined)
-        self.assertIn("CLEANUP_FAILED", joined)
+    def test_attributes_the_browser_check_to_the_operator(self):
+        self.assertIn("operator attestation", self.flat)
+        self.assertIn("normal-browser checks passed", self.flat)
+
+    def test_does_not_invent_browser_check_details(self):
+        """No fabricated per-URL timestamps or headers for the browser pass."""
+        self.assertIn(
+            "no per-url timestamps or response headers were captured",
+            self.flat,
+        )
+
+    def test_records_that_no_restore_or_purge_occurred(self):
+        self.assertIn("no restoration", self.flat)
+        self.assertIn("no withdrawn core file was restored", self.flat)
+        self.assertIn("no cloudflare purge", self.flat)
+        self.assertIn("no purge was required or performed", self.flat)
+
+    def test_records_no_core_implementation(self):
+        self.assertIn("unimplemented", self.flat)
+        self.assertIn("baseline and slack-plus remained the only operational",
+                      self.flat)
+
+    def test_records_the_retirement(self):
+        self.assertIn("retired", self.flat)
+        self.assertIn("execute_withdrawn_core.yml", self.text)
+
+    def test_distinguishes_the_four_events(self):
+        for stage in ("repository cleanup", "production deployment",
+                      "remote-origin withdrawal", "cdn / public-cache"):
+            with self.subTest(stage=stage):
+                self.assertIn(stage, self.flat)
+
+    def test_explains_why_the_run_is_red(self):
+        self.assertIn("does not indicate a failed, partial, or unsafe withdrawal",
+                      self.flat)
+
+
+class TestDurableRecordsAreUpdated(unittest.TestCase):
+    """No durable document may still say the withdrawal is pending."""
+
+    DOCS = (
+        ROOT / "docs" / "known-issues" / "CORE_OUTPUT_WITHDRAWAL.md",
+        ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md",
+        ROOT / "docs" / "repair" / "V0.1.12_ALIGNMENT_AUDIT.md",
+    )
+
+    def test_no_document_presents_the_withdrawal_as_pending(self):
+        for path in self.DOCS:
+            flat = " ".join(path.read_text().lower().split())
+            for phrase in ("neither phase has been authorized or executed",
+                           "not authorized, not executed",
+                           "remote withdrawal pending explicit authorization"):
+                with self.subTest(doc=path.name, phrase=phrase):
+                    if phrase not in flat:
+                        continue
+                    # Permitted only when explicitly marked historical.
+                    idx = flat.index(phrase)
+                    window = flat[max(0, idx - 260): idx + 260]
+                    self.assertTrue(
+                        any(m in window for m in
+                            ("superseded", "at the time", "previously",
+                             "was written")),
+                        f"{path.name} still presents the withdrawal as "
+                        f"pending: …{window[:220]}…",
+                    )
+
+    def test_each_document_records_the_completion(self):
+        for path in self.DOCS:
+            with self.subTest(doc=path.name):
+                self.assertIn("2026-08-19", path.read_text())
+
+    def test_known_issue_record_has_the_executed_section(self):
+        text = (ROOT / "docs" / "known-issues"
+                / "CORE_OUTPUT_WITHDRAWAL.md").read_text()
+        self.assertIn("EXECUTED 2026-08-19", text)
+        self.assertIn("32214973867", text)
+
+    def test_runbook_marks_itself_as_the_procedure_of_record(self):
+        text = (ROOT / "docs" / "repair" / "REMOTE_WITHDRAWAL.md").read_text()
+        self.assertIn("EXECUTED 2026-08-19", text)
+        self.assertIn("procedure of record", text)
+
+    def test_audit_has_a_terminal_status_section(self):
+        text = (ROOT / "docs" / "repair" / "V0.1.12_ALIGNMENT_AUDIT.md").read_text()
+        self.assertIn("Remote-origin withdrawal — executed 2026-08-19", text)

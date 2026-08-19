@@ -1,0 +1,134 @@
+{
+  "all_healthy": true,
+  "checked_at_utc": "2026-08-19T04:37:08Z",
+  "degraded": [],
+  "endpoints": [
+    {
+      "content_ok": true,
+      "expected_kind": "html",
+      "headers": {
+        "Content-Type": "text/html",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/dashboard.html"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/health.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/releases.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/latest.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/specifications.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/dmi_release_2026-07.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/dmi_release_2026-07_slack_plus.json"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "text",
+      "headers": {
+        "Content-Type": "text/csv",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/dmi-2026-07-baseline.csv"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "binary",
+      "headers": {
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/dmi-2026-07-slack_plus.parquet"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "html",
+      "headers": {
+        "Content-Type": "text/html",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/releases/2026-07.html"
+    },
+    {
+      "content_ok": true,
+      "expected_kind": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Server": "cloudflare"
+      },
+      "status": 200,
+      "url": "/data/outputs/published/dmi_timeseries.json"
+    }
+  ],
+  "public_contract": {
+    "current_is_expected": true,
+    "current_release_id": "2026-07",
+    "latest_spec_urls": [
+      "baseline",
+      "slack_plus"
+    ],
+    "problems": [],
+    "specification_ids": [
+      "baseline",
+      "slack_plus"
+    ]
+  },
+  "user_agent": "dmi-public-verifier/1.0 (+https://github.com/dmianalysis/dmi)",
+  "verifier_client": {
+    "blocked": false,
+    "reason": "operational controls were reachable"
+  }
+}

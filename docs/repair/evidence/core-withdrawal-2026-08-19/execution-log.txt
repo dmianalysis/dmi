@@ -1,0 +1,25 @@
+Re-hashing 21 file(s) on remote ...
+All 21 sha256 digests verified; proceeding with deletion.
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.csv
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-03-core.parquet
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.csv
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-04-core.parquet
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.csv
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-05-core.parquet
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.csv
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-06-core.parquet
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.csv
+removed /home/agiraces/dmianalysis/data/outputs/dmi-2026-07-core.parquet
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2024-11_core.json
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2026-03_core.json
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2026-04_core.json
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2026-05_core.json
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2026-06_core.json
+removed /home/agiraces/dmianalysis/data/outputs/dmi_release_2026-07_core.json
+removed /home/agiraces/dmianalysis/data/outputs/qa_report_2026-03_core.json
+removed /home/agiraces/dmianalysis/data/outputs/qa_report_2026-04_core.json
+removed /home/agiraces/dmianalysis/data/outputs/qa_report_2026-05_core.json
+removed /home/agiraces/dmianalysis/data/outputs/qa_report_2026-06_core.json
+removed /home/agiraces/dmianalysis/data/outputs/qa_report_2026-07_core.json
+Withdrawal complete: all 21 inventoried path(s) verified absent on the remote.
+Run the verification block in docs/repair/REMOTE_WITHDRAWAL.md for the public-surface checks.

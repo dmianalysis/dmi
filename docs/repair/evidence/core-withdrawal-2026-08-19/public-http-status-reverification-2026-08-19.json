@@ -1,0 +1,252 @@
+{
+  "all_withdrawn_accounted_for": true,
+  "cache_note": "No withdrawn URL returned 200.",
+  "checked_at_utc": "2026-08-19T04:37:08Z",
+  "cloudflare_cache_condition": false,
+  "inconclusive": [],
+  "origin_withdrawal": {
+    "absence_confirmed": true,
+    "source": "/private/tmp/claude-502/-Users-tcw-dev-dmi/7d676590-48d0-48f5-b962-7f2fea839745/scratchpad/withdrawal-artifacts/core-withdrawal-evidence/_temp/evidence/origin-post-check.json"
+  },
+  "user_agent": "dmi-public-verifier/1.0 (+https://github.com/dmianalysis/dmi)",
+  "verifier_client": {
+    "blocked": false,
+    "reason": "operational controls were reachable"
+  },
+  "withdrawn_demonstrated": [
+    "/data/outputs/dmi-2026-03-core.csv",
+    "/data/outputs/dmi-2026-03-core.parquet",
+    "/data/outputs/dmi-2026-04-core.csv",
+    "/data/outputs/dmi-2026-04-core.parquet",
+    "/data/outputs/dmi-2026-05-core.csv",
+    "/data/outputs/dmi-2026-05-core.parquet",
+    "/data/outputs/dmi-2026-06-core.csv",
+    "/data/outputs/dmi-2026-06-core.parquet",
+    "/data/outputs/dmi-2026-07-core.csv",
+    "/data/outputs/dmi-2026-07-core.parquet",
+    "/data/outputs/dmi_release_2024-11_core.json",
+    "/data/outputs/dmi_release_2026-03_core.json",
+    "/data/outputs/dmi_release_2026-04_core.json",
+    "/data/outputs/dmi_release_2026-05_core.json",
+    "/data/outputs/dmi_release_2026-06_core.json",
+    "/data/outputs/dmi_release_2026-07_core.json",
+    "/data/outputs/qa_report_2026-03_core.json",
+    "/data/outputs/qa_report_2026-04_core.json",
+    "/data/outputs/qa_report_2026-05_core.json",
+    "/data/outputs/qa_report_2026-06_core.json",
+    "/data/outputs/qa_report_2026-07_core.json"
+  ],
+  "withdrawn_returning_200": [],
+  "withdrawn_urls": [
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-03-core.csv",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-03-core.parquet",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-04-core.csv",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-04-core.parquet",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-05-core.csv",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-05-core.parquet",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-06-core.csv",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-06-core.parquet",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-07-core.csv",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi-2026-07-core.parquet",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2024-11_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2026-03_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2026-04_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2026-05_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2026-06_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/dmi_release_2026-07_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/qa_report_2026-03_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/qa_report_2026-04_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/qa_report_2026-05_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/qa_report_2026-06_core.json",
+      "verdict": "withdrawn"
+    },
+    {
+      "acceptable": true,
+      "headers": {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Server": "cloudflare"
+      },
+      "status": 404,
+      "url": "/data/outputs/qa_report_2026-07_core.json",
+      "verdict": "withdrawn"
+    }
+  ]
+}

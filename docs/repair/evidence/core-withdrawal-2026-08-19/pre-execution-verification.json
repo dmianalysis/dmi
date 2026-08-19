@@ -1,0 +1,17 @@
+{
+  "file_count": 21,
+  "file_sha256": "ce1e55939c2c10c04c18cb96b2457db802241f9bdfcdf484438f5250ba84e11c",
+  "file_sha256_expected": "ce1e55939c2c10c04c18cb96b2457db802241f9bdfcdf484438f5250ba84e11c",
+  "integrity_sha256": "3812991fa2ed52e4e3cfcc543c28c3f1769c20a3033c307abdb8085fd1887fd6",
+  "integrity_sha256_expected": "3812991fa2ed52e4e3cfcc543c28c3f1769c20a3033c307abdb8085fd1887fd6",
+  "integrity_sha256_recomputed": "3812991fa2ed52e4e3cfcc543c28c3f1769c20a3033c307abdb8085fd1887fd6",
+  "inventory_path": "/home/runner/work/dmi/dmi/docs/repair/inventories/core-withdrawal-2026-08-19.json",
+  "problems": [],
+  "remote_base": "/home/agiraces/dmianalysis",
+  "remote_outputs": "/home/agiraces/dmianalysis/data/outputs",
+  "schema_version": "1.0.0",
+  "total_bytes": 63598,
+  "total_bytes_expected": 63598,
+  "unique_paths": 21,
+  "verified": true
+}

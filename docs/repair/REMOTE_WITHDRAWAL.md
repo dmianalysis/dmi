@@ -1,7 +1,20 @@
 # Remote Withdrawal Procedure — v0.1.12 Core Artifacts
 
-**Status**: **NOT AUTHORIZED, NOT EXECUTED.** Neither phase of this
-procedure has been run against the live site.
+**Status**: **EXECUTED 2026-08-19 — this procedure is complete and the destructive workflow has been retired.**
+
+Both phases have run. The outcome, evidence and hashes are recorded in
+[`docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md`](REMOTE_WITHDRAWAL_LOG_2026-08-19.md).
+All 21 inventoried Core artifacts were verified absent and all 15
+protected operational artifacts verified present; no restoration and no
+CDN purge were performed.
+
+This document is retained as the **procedure of record** — the steps that
+were followed — not as a pending instruction. The destructive workflow
+`execute_withdrawn_core.yml` was removed from `.github/workflows` after
+the successful run, so the commands below are no longer dispatchable as
+written; re-running any of them would require deliberately reinstating a
+destructive entry point, which is a new decision requiring new
+authorization.
 
 Three things are easy to conflate; they are separate and only the first
 is finished:

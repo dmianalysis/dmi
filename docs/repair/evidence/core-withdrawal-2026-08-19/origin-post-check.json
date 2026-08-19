@@ -1,0 +1,9 @@
+{
+  "all_operational_present": true,
+  "all_withdrawn_absent": true,
+  "checked_at_utc": "2026-08-19T04:14:49Z",
+  "operational_expected_present": 15,
+  "operational_missing": [],
+  "withdrawn_expected_absent": 21,
+  "withdrawn_still_present": []
+}

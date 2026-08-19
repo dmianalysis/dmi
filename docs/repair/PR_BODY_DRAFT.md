@@ -77,7 +77,7 @@ These are four distinct events. Only the first two are automatic.
 | **PR preparation** | This branch, pushed | **Done.** Nothing was deployed. |
 | **Merge to `main`** | A reviewer merging this PR | Not done — awaiting review. |
 | **Production deployment** | Automatic, on the merge commit, via `deploy_production.yml` | **Will occur on merge.** |
-| **Remote artifact withdrawal** | A separately authorized manual run | **Not authorized, not executed.** |
+| **Remote artifact withdrawal** | A separately authorized manual run | **Completed 2026-08-19** — see `docs/repair/REMOTE_WITHDRAWAL_LOG_2026-08-19.md`. (Not authorized or executed at the time this draft was written.) |
 
 Merging this PR **will deploy to the live site**, from the merged commit,
 through the single authoritative deployment workflow. That is the
