@@ -850,9 +850,15 @@ def update_health_json(reference_period: str):
     # defect. `sanitize_health_endpoints` below strips it if a stale
     # checkout carried it in.
 
-    # Update observations count if we can determine it
-    if "observations_count" not in health:
-        health["observations_count"] = 895  # Default based on recent data
+    # Finalization updates the public timeseries before health.json.
+    # Recount its actual observations; an existing health count is stale
+    # as soon as a new month is added. Never invent a count if unavailable.
+    timeseries_path = Path("data/outputs/published/dmi_timeseries.json")
+    if timeseries_path.is_file():
+        timeseries = json.loads(timeseries_path.read_text())
+        health["observations_count"] = len(timeseries["observations"])
+    else:
+        health.pop("observations_count", None)
 
     # §8: strip any retired / unknown endpoint keys that the on-disk
     # health.json may have brought in via a stale checkout. This is the

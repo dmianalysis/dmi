@@ -329,6 +329,7 @@ def main() -> int:
         reference_period=reference_period,
         alpha=0.5,
         scale_factor=2.0,
+        weights_year=weights_year,
         spec=spec
     )
 
