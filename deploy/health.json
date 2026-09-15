@@ -1,16 +1,16 @@
 {
   "status": "healthy",
   "version": "0.1.12",
-  "build_timestamp": "2026-08-15T10:42:13.765800Z",
+  "build_timestamp": "2026-09-15T10:30:56.294726Z",
   "git_sha": "production",
-  "latest_period": "2026-07",
+  "latest_period": "2026-08",
   "data_vintage": "2023",
-  "observations_count": 895,
-  "last_updated": "2026-08-15",
+  "observations_count": 930,
+  "last_updated": "2026-09-15",
   "endpoints": {
     "dashboard": "/dashboard.html",
-    "latest": "/data/outputs/dmi_release_2026-07.json",
-    "latest_slack_plus": "/data/outputs/dmi_release_2026-07_slack_plus.json",
+    "latest": "/data/outputs/dmi_release_2026-08.json",
+    "latest_slack_plus": "/data/outputs/dmi_release_2026-08_slack_plus.json",
     "releases": "/data/outputs/releases.json",
     "specifications": "/data/outputs/specifications.json"
   }

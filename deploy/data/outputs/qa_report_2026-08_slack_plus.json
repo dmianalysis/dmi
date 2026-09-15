@@ -1,8 +1,8 @@
 {
   "schema_version": "0.1.8",
-  "run_id": "a23e2dde-b906-4099-a569-0124d703ff98",
-  "reference_period": "2026-07",
-  "created_at": "2026-08-18T21:38:31.569103Z",
+  "run_id": "dfd10e4c-55fd-4800-96b5-fe05fe7df354",
+  "reference_period": "2026-08",
+  "created_at": "2026-09-15T10:30:55.605961Z",
   "status": "PASS_WITH_WARNING",
   "hard_checks": [
     {
@@ -13,25 +13,25 @@
     {
       "check_id": "DMI_VALUES_REASONABLE_RANGE",
       "status": "PASS",
-      "message": "All DMI values in [0, 100]: range 11.17 to 11.35",
+      "message": "All DMI values in [0, 100]: range 10.92 to 11.14",
       "metrics": {
-        "min": 11.17223863154078,
-        "max": 11.352376716747653
+        "min": 10.915643530952073,
+        "max": 11.139984086018465
       }
     },
     {
       "check_id": "INFLATION_VALUES_PRESENT",
       "status": "PASS",
-      "message": "Inflation computed for all quintiles: range 3.27% to 3.45%",
+      "message": "Inflation computed for all quintiles: range 3.22% to 3.44%",
       "metrics": {
-        "min": 3.2722386315407803,
-        "max": 3.4523767167476516
+        "min": 3.2156435309520726,
+        "max": 3.439984086018466
       }
     },
     {
       "check_id": "CPI_CATEGORY_COVERAGE_COMPLETE",
       "status": "PASS",
-      "message": "All 8 CPI categories present at t=2026-07",
+      "message": "All 8 CPI categories present at t=2026-08",
       "metrics": {
         "categories_count": 8
       }
@@ -46,10 +46,10 @@
     {
       "check_id": "DMI_DISTRIBUTIONAL_GRADIENT",
       "status": "WARN",
-      "message": "Unusual pattern: Q5 (11.34) > Q1 (11.17) - verify data",
+      "message": "Unusual pattern: Q5 (11.14) > Q1 (10.92) - verify data",
       "metrics": {
-        "q1_dmi": 11.17223863154078,
-        "q5_dmi": 11.342015828238843
+        "q1_dmi": 10.915643530952073,
+        "q5_dmi": 11.139984086018465
       }
     },
     {
@@ -77,7 +77,7 @@
     }
   ],
   "warnings": [
-    "Unusual pattern: Q5 (11.34) > Q1 (11.17) - verify data",
+    "Unusual pattern: Q5 (11.14) > Q1 (10.92) - verify data",
     "Weights vintage age: 3 years (>2 years old, consider updating)",
     "Using 2023 weights for 2026 data (outdated - review needed)"
   ],
@@ -89,8 +89,8 @@
   },
   "subject": {
     "specification": "slack_plus",
-    "reference_period": "2026-07",
-    "raw_artifact": "data/outputs/dmi_release_2026-07_slack_plus.json",
-    "raw_sha256": "33ee32abc36065e5c455262ed1ca4fd03c3c401d342bd224d9dae69e92ff10f8"
+    "reference_period": "2026-08",
+    "raw_artifact": "data/outputs/dmi_release_2026-08_slack_plus.json",
+    "raw_sha256": "35358d2cc5212aee42f3f72c7c29d13b104d3cb678ba477e0402bef8317935e7"
   }
 }

@@ -1,0 +1,96 @@
+{
+  "schema_version": "0.1.8",
+  "run_id": "efd08572-acdd-42eb-a4b7-02ebf551e323",
+  "reference_period": "2026-08",
+  "created_at": "2026-09-15T10:30:53.941802Z",
+  "status": "PASS_WITH_WARNING",
+  "hard_checks": [
+    {
+      "check_id": "DMI_OUTPUT_ALL_QUINTILES_PRESENT",
+      "status": "PASS",
+      "message": "All 5 quintiles present in output"
+    },
+    {
+      "check_id": "DMI_VALUES_REASONABLE_RANGE",
+      "status": "PASS",
+      "message": "All DMI values in [0, 100]: range 7.32 to 7.54",
+      "metrics": {
+        "min": 7.315643530952072,
+        "max": 7.539984086018466
+      }
+    },
+    {
+      "check_id": "INFLATION_VALUES_PRESENT",
+      "status": "PASS",
+      "message": "Inflation computed for all quintiles: range 3.22% to 3.44%",
+      "metrics": {
+        "min": 3.2156435309520726,
+        "max": 3.439984086018466
+      }
+    },
+    {
+      "check_id": "CPI_CATEGORY_COVERAGE_COMPLETE",
+      "status": "PASS",
+      "message": "All 8 CPI categories present at t=2026-08",
+      "metrics": {
+        "categories_count": 8
+      }
+    },
+    {
+      "check_id": "WEIGHTS_SUM_TO_ONE",
+      "status": "PASS",
+      "message": "All quintile weights sum to 1.0 \u00b1 0.001"
+    }
+  ],
+  "soft_checks": [
+    {
+      "check_id": "DMI_DISTRIBUTIONAL_GRADIENT",
+      "status": "WARN",
+      "message": "Unusual pattern: Q5 (7.54) > Q1 (7.32) - verify data",
+      "metrics": {
+        "q1_dmi": 7.315643530952072,
+        "q5_dmi": 7.539984086018466
+      }
+    },
+    {
+      "check_id": "WEIGHTS_VINTAGE_AGE",
+      "status": "WARN",
+      "message": "Weights vintage age: 3 years (>2 years old, consider updating)",
+      "metrics": {
+        "weights_year": 2023,
+        "reference_year": 2026,
+        "age": 3
+      }
+    }
+  ],
+  "policy_gates": [
+    {
+      "gate_id": "CE_WEIGHTS_CONSERVATIVE_POLICY",
+      "status": "WARN",
+      "policy_ref": "ce_weights_policy_v0_1.json",
+      "decision": {
+        "weights_year": 2023,
+        "reference_year": 2026,
+        "is_current": false
+      },
+      "message": "Using 2023 weights for 2026 data (outdated - review needed)"
+    }
+  ],
+  "warnings": [
+    "Unusual pattern: Q5 (7.54) > Q1 (7.32) - verify data",
+    "Weights vintage age: 3 years (>2 years old, consider updating)",
+    "Using 2023 weights for 2026 data (outdated - review needed)"
+  ],
+  "errors": [],
+  "summary": {
+    "hard_fail_count": 0,
+    "soft_warn_count": 2,
+    "policy_fail_count": 0
+  },
+  "subject": {
+    "specification": "baseline",
+    "reference_period": "2026-08",
+    "raw_artifact": "data/outputs/dmi_release_2026-08.json",
+    "raw_sha256": "d8702c43fdf075cc7ef76f0bbc93682e8e75a1a1b29e8e78de8cae9a3dc7a918"
+  }
+}
