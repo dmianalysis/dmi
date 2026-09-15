@@ -32,9 +32,11 @@ import hashlib
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.finalize_release import (
     finalize,
@@ -455,6 +457,88 @@ class TestCrossSpecificationIdentityGate(GateRejectionCase):
 
 class TestSuccessfulFinalizationPublishes(unittest.TestCase):
     """The positive path: gates pass, everything is written, tree verifies."""
+
+    def test_new_period_preserves_weights_vintage_and_refreshes_health_count(self):
+        """Exercise computation and publication when the monthly period advances."""
+        from scripts.compute_dmi_release import (
+            main as compute_release,
+            staging_window_for_period,
+        )
+
+        with _RealTree() as tree:
+            current = json.loads((tree.outputs / "latest.json").read_text())
+            year, month = map(int, current["current_release_id"].split("-"))
+            next_year, next_month = year + month // 12, month % 12 + 1
+            next_period = f"{next_year:04d}-{next_month:02d}"
+            base_period = f"{next_year - 1:04d}-{next_month:02d}"
+            start_year, end_year = staging_window_for_period(next_period)
+            staging = tree.root / "data" / "staging"
+            curated = tree.root / "data" / "curated"
+            staging.mkdir()
+            curated.mkdir()
+
+            # Controlled next-month inputs, using the real quintile weights.
+            # A different vintage catches a dropped --weights-year argument.
+            weights = json.loads(
+                (REPO_ROOT / "data/curated/weights_by_group_2023.json").read_text()
+            )
+            weights["weights_year"] = 2024
+            (curated / "weights_by_group_2024.json").write_text(json.dumps(weights))
+            categories = sorted({row["category_id"] for row in weights["rows"]})
+            cpi = {"data": [
+                {"period": base_period, **{cat: 100.0 for cat in categories}},
+                {"period": next_period,
+                 **{cat: 102.0 + i / 10 for i, cat in enumerate(categories)}},
+            ]}
+            (staging / f"cpi_levels_{start_year}_{end_year}.json").write_text(
+                json.dumps(cpi)
+            )
+            for measure, value in (("u3", 4.1), ("u6", 7.7)):
+                (staging / f"slack_{measure}_{start_year}_{end_year}.json").write_text(
+                    json.dumps([{"period": next_period, "value": value}])
+                )
+
+            before_count = len(json.loads(
+                (tree.outputs / "published/dmi_timeseries.json").read_text()
+            )["observations"])
+            for spec in ("baseline", "slack_plus"):
+                with patch.object(sys, "argv", [
+                    "compute_dmi_release", next_period, "--spec", spec,
+                    "--weights-year", "2024",
+                ]):
+                    self.assertEqual(compute_release(), 0)
+                suffix = "_slack_plus" if spec == "slack_plus" else ""
+                raw = json.loads(
+                    (tree.outputs / f"dmi_release_{next_period}{suffix}.json").read_text()
+                )
+                self.assertEqual(raw["parameters"]["weights_year"], 2024)
+                qa = json.loads(
+                    (tree.outputs / f"qa_report_{next_period}_{spec}.json").read_text()
+                )
+                vintage_check = next(c for c in qa["soft_checks"]
+                                     if c["check_id"] == "WEIGHTS_VINTAGE_AGE")
+                self.assertEqual(vintage_check["metrics"]["age"], next_year - 2024)
+
+            rc, problems, _ = finalize(
+                next_period, output_dir=tree.outputs, repo_root=tree.root
+            )
+            self.assertEqual(rc, 0, problems)
+            latest = json.loads((tree.outputs / "latest.json").read_text())
+            self.assertEqual(latest["current_release_id"], next_period)
+            self.assertEqual(set(latest["releases"][0]["spec_urls"]),
+                             {"baseline", "slack_plus"})
+            timeseries = json.loads(
+                (tree.outputs / "published/dmi_timeseries.json").read_text()
+            )
+            self.assertEqual(len(timeseries["observations"]), before_count + 5)
+            health = json.loads((tree.root / "web/health.json").read_text())
+            self.assertEqual(
+                health["observations_count"], len(timeseries["observations"])
+            )
+            self.assertEqual(
+                (tree.root / "deploy/health.json").read_bytes(),
+                (tree.root / "web/health.json").read_bytes(),
+            )
 
     def test_finalization_publishes_and_verifies(self):
         with _RealTree() as tree:
