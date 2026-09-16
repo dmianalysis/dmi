@@ -1,13 +1,55 @@
 {
   "schema_version": "3.0.0",
-  "generated_at": "2026-08-16T04:37:51.285319Z",
-  "current_release_id": "2026-07",
+  "generated_at": "2026-09-15T10:30:56.238287Z",
+  "current_release_id": "2026-08",
   "releases": [
+    {
+      "release_id": "2026-08",
+      "data_through_label": "August 2026",
+      "published_at": "2026-09-15",
+      "status": "current",
+      "methodology_version": "v0.1.12",
+      "summary": "Economic pressure was little changed in August 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread widened slightly from the prior month.",
+      "summary_facts": {
+        "lower_income_more_pressure": false,
+        "higher_income_more_pressure": true,
+        "pressure_similar_across_bottom_top": false,
+        "most_pressured_group": "Q5",
+        "least_pressured_group": "Q1",
+        "median_delta_mom": -0.038914834315950664,
+        "stress_delta_mom": -0.012392630729185505,
+        "spread_delta_mom": 0.04420246985952225,
+        "tilt_delta_mom": -0.05456335836833137,
+        "unemployment_delta_mom": 0.0,
+        "overall_direction": "little_changed",
+        "spread_direction": "spread_widened_slightly"
+      },
+      "release_note": "/data/outputs/releases/2026-08.html",
+      "spec_urls": {
+        "baseline": {
+          "csv": "/data/outputs/dmi-2026-08-baseline.csv",
+          "parquet": "/data/outputs/dmi-2026-08-baseline.parquet"
+        },
+        "slack_plus": {
+          "csv": "/data/outputs/dmi-2026-08-slack_plus.csv",
+          "parquet": "/data/outputs/dmi-2026-08-slack_plus.parquet"
+        }
+      },
+      "metrics": {
+        "dmi_median": 7.478042628539956,
+        "dmi_stress": 7.539984086018466,
+        "income_pressure_spread": 0.2243405550663935,
+        "income_pressure_tilt": -0.2243405550663935,
+        "most_pressured_group": "Q5",
+        "least_pressured_group": "Q1",
+        "unemployment": 4.1
+      }
+    },
     {
       "release_id": "2026-07",
       "data_through_label": "July 2026",
       "published_at": "2026-08-15",
-      "status": "current",
+      "status": "superseded",
       "methodology_version": "v0.1.12",
       "summary": "Economic pressure fell modestly in July 2026. Higher-income households faced more pressure than lower-income households, and the Income Pressure Spread narrowed slightly from the prior month. The labor-market backdrop improved slightly, with unemployment edging down to 4.1%.",
       "summary_facts": {
