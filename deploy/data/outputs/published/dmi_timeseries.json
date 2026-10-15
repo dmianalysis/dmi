@@ -1,10 +1,10 @@
 {
   "series_id": "DMI_NATIONAL_QUINTILE",
   "start_period": "2011-01",
-  "end_period": "2026-08",
+  "end_period": "2026-09",
   "geography": "US",
   "grouping": "quintile",
-  "observations_count": 930,
+  "observations_count": 935,
   "observations": [
     {
       "period": "2011-01",
@@ -7444,6 +7444,46 @@
       "dmi": 7.539984086018466,
       "inflation": 3.439984086018466,
       "slack": 4.1,
+      "weights_vintage": 2023
+    },
+    {
+      "period": "2026-09",
+      "group_id": "Q1",
+      "dmi": 7.626129838737824,
+      "inflation": 3.4261298387378236,
+      "slack": 4.2,
+      "weights_vintage": 2023
+    },
+    {
+      "period": "2026-09",
+      "group_id": "Q2",
+      "dmi": 7.736390968370906,
+      "inflation": 3.536390968370906,
+      "slack": 4.2,
+      "weights_vintage": 2023
+    },
+    {
+      "period": "2026-09",
+      "group_id": "Q3",
+      "dmi": 7.861946038819308,
+      "inflation": 3.661946038819308,
+      "slack": 4.2,
+      "weights_vintage": 2023
+    },
+    {
+      "period": "2026-09",
+      "group_id": "Q4",
+      "dmi": 7.906075798809905,
+      "inflation": 3.7060757988099047,
+      "slack": 4.2,
+      "weights_vintage": 2023
+    },
+    {
+      "period": "2026-09",
+      "group_id": "Q5",
+      "dmi": 7.958948294211506,
+      "inflation": 3.758948294211506,
+      "slack": 4.2,
       "weights_vintage": 2023
     }
   ],
