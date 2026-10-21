@@ -1,0 +1,101 @@
+# .github/workflows/release_gate_reminder.yml
+
+name: DMI Release Gate Reminder
+
+on:
+  schedule:
+    - cron: '15 14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Remind on unattended release PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+
+          repo = os.environ["GH_REPO"]
+
+          result = subprocess.run(
+              [
+                  "gh", "pr", "list",
+                  "--repo", repo,
+                  "--state", "open",
+                  "--label", "release",
+                  "--label", "not-deployed",
+                  "--json", "number,title,createdAt,url"
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          )
+
+          prs = json.loads(result.stdout)
+          now = datetime.now(timezone.utc)
+
+          for pr in prs:
+              created = datetime.fromisoformat(
+                  pr["createdAt"].replace("Z", "+00:00")
+              )
+              age_hours = (now - created).total_seconds() / 3600
+
+              if age_hours < 24:
+                  continue
+
+              view = subprocess.run(
+                  [
+                      "gh", "pr", "view", str(pr["number"]),
+                      "--repo", repo,
+                      "--json", "comments"
+                  ],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+
+              comments = json.loads(view.stdout)["comments"]
+              bodies = [c.get("body", "") for c in comments]
+
+              if age_hours >= 72:
+                  marker = "<!-- dmi-release-reminder-72h -->"
+                  message = (
+                      f"{marker}\n"
+                      "⚠️ **DMI release still awaiting review after 72 hours.**\n\n"
+                      "This release has passed automated preparation but has not "
+                      "been merged or deployed. Please review the release PR and "
+                      "either merge it or close it if publication should be withheld."
+                  )
+              else:
+                  marker = "<!-- dmi-release-reminder-24h -->"
+                  message = (
+                      f"{marker}\n"
+                      "⏰ **DMI release awaiting review for more than 24 hours.**\n\n"
+                      "The automated release preparation completed successfully, "
+                      "but the release has not yet been merged or deployed."
+                  )
+
+              if any(marker in body for body in bodies):
+                  continue
+
+              subprocess.run(
+                  [
+                      "gh", "pr", "comment", str(pr["number"]),
+                      "--repo", repo,
+                      "--body", message
+                  ],
+                  check=True,
+              )
+          PY
