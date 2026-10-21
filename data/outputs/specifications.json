@@ -1,22 +1,22 @@
 {
   "schema_version": "0.3.0",
-  "generated_at": "2026-09-15T10:30:56.193450Z",
-  "reference_period": "2026-08",
+  "generated_at": "2026-10-15T15:05:52.610594Z",
+  "reference_period": "2026-09",
   "headline_spec": "baseline",
   "specifications": [
     {
       "spec_id": "baseline",
       "label": "DMI Baseline",
       "summary": "Headline DMI using current inflation inputs and U-3 unemployment.",
-      "release_json": "/data/outputs/dmi_release_2026-08.json",
+      "release_json": "/data/outputs/dmi_release_2026-09.json",
       "metrics": {
-        "dmi_median": 7.478042628539956,
-        "dmi_stress": 7.539984086018466,
-        "income_pressure_spread": 0.2243405550663935,
-        "income_pressure_tilt": -0.2243405550663935,
+        "dmi_median": 7.861946038819308,
+        "dmi_stress": 7.958948294211506,
+        "income_pressure_spread": 0.3328184554736824,
+        "income_pressure_tilt": -0.3328184554736824,
         "most_pressured_group": "Q5",
         "least_pressured_group": "Q1",
-        "slack": 4.1,
+        "slack": 4.2,
         "slack_measure": "u3"
       }
     },
@@ -24,15 +24,15 @@
       "spec_id": "slack_plus",
       "label": "DMI Slack+",
       "summary": "Companion DMI using broader labor-market slack.",
-      "release_json": "/data/outputs/dmi_release_2026-08_slack_plus.json",
+      "release_json": "/data/outputs/dmi_release_2026-09_slack_plus.json",
       "metrics": {
-        "dmi_median": 11.078042628539958,
-        "dmi_stress": 11.139984086018465,
-        "income_pressure_spread": 0.2243405550663926,
-        "income_pressure_tilt": -0.2243405550663926,
+        "dmi_median": 11.261946038819307,
+        "dmi_stress": 11.358948294211505,
+        "income_pressure_spread": 0.3328184554736815,
+        "income_pressure_tilt": -0.3328184554736815,
         "most_pressured_group": "Q5",
         "least_pressured_group": "Q1",
-        "slack": 7.7,
+        "slack": 7.6,
         "slack_measure": "u6"
       }
     }
