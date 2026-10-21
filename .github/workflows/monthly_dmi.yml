@@ -414,10 +414,12 @@ jobs:
           git restore --source=HEAD --staged --worktree .github/workflows || true
 
       - name: Create Release PR (no deployment)
-        id: create-pr
+        id: create-pr      
         if: steps.mode.outputs.mode == 'prepare_release'
         uses: peter-evans/create-pull-request@v8
         with:
+          assignees: tcwilliams79
+          reviewers: tcwilliams79  
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
             Add DMI release for ${{ steps.period.outputs.period }}
@@ -459,7 +461,7 @@ jobs:
                   endpoints (releases, latest, specifications, health,
                   timeseries, raw baseline + slack_plus).
             - [ ] No Core, `_u6`, or `_with_ci` artifacts staged.
-            - [ ] Merge only after independent review. **This PR is
+            - [ ] Merge only after human review. **This PR is
                   never auto-merged.**
 
             After merge, the post-merge deployment workflow will rebuild
