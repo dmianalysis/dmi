@@ -279,8 +279,8 @@ class TestLocks(unittest.TestCase):
         """3.12 runs the same numerical libraries as the last 3.9 release.
 
         The October 15, 2026 run (Python 3.9.25) installed exactly these
-        versions, and the migration verified that 3.12 reproduces published
-        artifacts bit for bit with them. Changing them is a deliberate
+        versions. The migration verified that, on the same machine, 3.12
+        with them gives results identical to 3.9. Changing them is a deliberate
         refresh: update this test in the same PR and show that
         test_published_values_reproduce still passes.
         """

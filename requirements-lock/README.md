@@ -60,9 +60,13 @@ The Python 3.13 lock is identical except for numpy 2.1.3. numpy 2.0.2
 publishes no Python 3.13 wheels, and 2.1.3 is the earliest release that
 does.
 
-Both interpreters reproduce, bit for bit, every published release whose
-inputs are committed to the repository. `tests/test_published_values_reproduce.py` checks this
-on every PR.
+On any one machine, Python 3.9, 3.12 and 3.13 produce identical results
+for every published release whose inputs are committed.
+`tests/test_published_values_reproduce.py` checks those releases on every
+PR. It allows at most 4 units in the last place per value, because some
+inflation contributions differ by one or two in the last bit between CPUs
+with and without AVX-512. Published releases already vary this way, by
+whichever runner computed them. The interpreter has no effect on it.
 
 `requirements.txt` caps pandas below 3. pandas 3 changes copy and
 string-dtype semantics, and an unbounded `pandas>=2.0.0` would install
@@ -91,7 +95,8 @@ platform-specific dependencies for the machine it runs on.
    package, add `--upgrade-package NAME==VERSION`. To move everything,
    add `--upgrade`; this is rarely what you want.
 3. Run the full suite on both interpreters. A change that moves any
-   published value fails `tests/test_published_values_reproduce.py`.
+   published value by more than 4 units in the last place fails
+   `tests/test_published_values_reproduce.py`.
    Do not regenerate the published files to make it pass. Revert the
    refresh and report the difference.
 4. If numpy, pandas, pyarrow or openpyxl changed in the 3.12 lock, update
