@@ -29,22 +29,14 @@ from scripts.compute_dmi import (
     load_weights,
     save_dmi_output,
 )
+# Shared with scripts.test_bls_api, so fetching and computation always
+# read and write the same staging files for a given reference period.
+from scripts.reference_period import staging_window_for_period
 
 MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ]
-
-
-def staging_window_for_period(reference_period: str) -> tuple[int, int]:
-    """Map a release period to the staged data file window that should contain it."""
-    year_str, month_str = reference_period.split('-')
-    year = int(year_str)
-    month = int(month_str)
-
-    if month >= 11:
-        return year, year + 1
-    return year - 1, year
 
 
 def ensure_period_available(reference_period: str, cpi_df, slack_df) -> None:
@@ -287,7 +279,10 @@ def main() -> int:
     print(f"Requested reference period: {reference_period}")
     print(f"Requested weights year: {weights_year}")
     
-    start_year, end_year = staging_window_for_period(reference_period)
+    try:
+        start_year, end_year = staging_window_for_period(reference_period)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     weights_path = Path(f"data/curated/weights_by_group_{weights_year}.json")
 

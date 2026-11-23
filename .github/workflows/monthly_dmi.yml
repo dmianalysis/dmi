@@ -186,8 +186,11 @@ jobs:
         env:
           BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
         run: |
-          echo "Fetching CPI data for ${{ steps.period.outputs.period }}..."
-          python -m scripts.test_bls_api
+          # The fetch stages into the window of the resolved reference
+          # period, the same files the compute steps below read. It
+          # writes nothing if a required observation is missing.
+          python -m scripts.test_bls_api \
+            --reference-period "${{ steps.period.outputs.period }}"
 
       - name: Compute DMI Baseline (live only)
         if: steps.mode.outputs.data_source == 'live'

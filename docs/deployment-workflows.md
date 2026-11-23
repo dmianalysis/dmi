@@ -244,6 +244,24 @@ A scheduled release missed this way must be prepared again by manual
 dispatch of `monthly_dmi.yml` with `mode=prepare_release`,
 `data_source=live` and the missed `reference_period`.
 
+### 9) "Fetch CPI data" fails with "BLS data cannot support DMI reference period"
+The BLS response lacks an observation the release needs: a CPI category
+in the reference month, a CPI category in the same month one year
+earlier (the base of 12-month inflation), or U-3 in the reference month.
+The step stops before writing anything to `data/staging/`, so no
+computation runs and nothing is published.
+
+If BLS has not yet released the month, rerun once it has. If BLS never
+published it, the release cannot be computed. Do not estimate,
+interpolate or backfill the missing observation. For example, October
+2025 CPI was not published because of the 2025 federal government
+shutdown, so the October 2026 release, whose base month it is, cannot be
+computed. How such a month is labelled publicly is a separate decision.
+
+Both the fetch and the compute steps pick their staging files from the
+reference period through `scripts/reference_period.py`, never from the
+date the workflow runs. A rerun of any period uses the same files.
+
 ---
 
 ## Suggested repository placement
