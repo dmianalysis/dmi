@@ -50,6 +50,7 @@ from scripts.compute_dmi import (
     load_slack_data,
     load_weights,
 )
+from scripts.reference_period import staging_window_for_period as _staging_window
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUTS = ROOT / "data" / "outputs"
@@ -69,13 +70,6 @@ SPECS = {
     "baseline": ("", "u3"),
     "slack_plus": ("_slack_plus", "u6"),
 }
-
-
-def _staging_window(period: str) -> tuple[int, int]:
-    # Mirrors scripts.compute_dmi_release.staging_window_for_period, which
-    # is not imported because that module also wires up network fetches.
-    year, month = (int(x) for x in period.split("-"))
-    return (year, year + 1) if month >= 11 else (year - 1, year)
 
 
 def published_periods() -> list[str]:

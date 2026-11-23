@@ -20,6 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No methodology, formula, weight, input series or published value
   changed.
 
+### Fixed - BLS staging window
+- The fetch step chose its staging files from the date it ran, while the
+  compute step chose them from the reference period. An October release
+  prepared in November therefore fetched into `*_2026_2027.json` and
+  computed from the stale `*_2025_2026.json`. Both steps now derive the
+  window from the reference period through `scripts/reference_period.py`,
+  and the monthly workflow passes the period to the fetch with
+  `--reference-period`.
+- The fetch now stages nothing unless every CPI category is present in
+  the reference month and in its 12-month base month, and U-3 is present
+  in the reference month. Missing official observations fail the run;
+  they are not estimated.
+- The October 2026 release remains unpublished: its base month, October
+  2025, has no official CPI observations.
+
 ## [0.1.12] - 2026-08-19
 
 **Formal release of the finalized operational DMI contract.** Two
