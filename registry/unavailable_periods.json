@@ -1,0 +1,10 @@
+{
+  "description": "Reference periods for which no DMI observation is published, and why. Release summaries that compare across one of these months name it and give this reason. Listing a period here publishes nothing and estimates nothing; it only explains an existing gap.",
+  "periods": [
+    {
+      "release_id": "2026-10",
+      "reason": "the required official CPI comparison data are unavailable",
+      "detail": "BLS did not publish October 2025 CPI because of the 2025 federal government shutdown. October 2025 is the 12-month base month for October 2026 inflation, so the October 2026 DMI cannot be computed. It is not estimated, interpolated or backfilled."
+    }
+  ]
+}

@@ -89,16 +89,158 @@ def classify_unemployment_direction(unemp_delta: float) -> str:
         return 'unemployment_rose_noticeably' if unemp_delta > 0 else 'unemployment_fell_noticeably'
 
 
+UNAVAILABLE_PERIODS_PATH = Path(__file__).resolve().parents[1] / "registry" / "unavailable_periods.json"
+
+_MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+]
+_COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six',
+                'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+
+
+def _month_index(release_id: str) -> int:
+    year, month = release_id.split('-')
+    return int(year) * 12 + int(month) - 1
+
+
+def _release_id(month_index: int) -> str:
+    return f"{month_index // 12:04d}-{month_index % 12 + 1:02d}"
+
+
+def _period_label(release_id: str) -> str:
+    year, month = release_id.split('-')
+    return f"{_MONTH_NAMES[int(month) - 1]} {year}"
+
+
+def load_unavailable_periods(path: Path = UNAVAILABLE_PERIODS_PATH) -> dict:
+    """Documented reasons for months with no published DMI, by release_id."""
+    if not path.exists():
+        return {}
+    with open(path) as f:
+        return {p['release_id']: p['reason'] for p in json.load(f)['periods']}
+
+
+def _change_phrase(delta: float, level: float, up: str, down: str) -> str:
+    """Direction and measured size only; no threshold classification."""
+    if round(delta, 2) == 0:
+        return f"was unchanged at {level:.2f}, to two decimal places"
+    return f"{up if delta > 0 else down} by {abs(delta):.2f} points, to {level:.2f}"
+
+
+def build_nonconsecutive_summary(
+    current_release: dict,
+    prior_release: dict,
+    unavailable_reasons: Optional[dict] = None,
+) -> tuple[dict, str]:
+    """Summary when the preceding calendar month has no published release.
+
+    The change is reported as a difference since the named comparison
+    period. It is never called month over month, never classified with
+    the monthly THRESHOLDS, and never spread across the missing months.
+    The ``*_delta_mom`` facts are not populated; the
+    ``*_delta_since_comparison`` facts are used instead.
+    """
+    if unavailable_reasons is None:
+        unavailable_reasons = load_unavailable_periods()
+
+    metrics = current_release['metrics']
+    prior_metrics = prior_release['metrics']
+    current_id = current_release['release_id']
+    prior_id = prior_release['release_id']
+    elapsed = _month_index(current_id) - _month_index(prior_id)
+    missing = [_release_id(i) for i in
+               range(_month_index(prior_id) + 1, _month_index(current_id))]
+
+    label = current_release['data_through_label']
+    prior_label = _period_label(prior_id)
+    tilt = metrics['income_pressure_tilt']
+    tilt_similar = THRESHOLDS['tilt_similar']
+
+    deltas = {
+        'median_delta_since_comparison': metrics['dmi_median'] - prior_metrics['dmi_median'],
+        'stress_delta_since_comparison': metrics['dmi_stress'] - prior_metrics['dmi_stress'],
+        'spread_delta_since_comparison': (metrics['income_pressure_spread']
+                                          - prior_metrics['income_pressure_spread']),
+        'tilt_delta_since_comparison': tilt - prior_metrics['income_pressure_tilt'],
+        'unemployment_delta_since_comparison': (metrics['unemployment']
+                                                - prior_metrics['unemployment']),
+    }
+    summary_facts = {
+        'lower_income_more_pressure': tilt > tilt_similar,
+        'higher_income_more_pressure': tilt < -tilt_similar,
+        'pressure_similar_across_bottom_top': abs(tilt) <= tilt_similar,
+        'most_pressured_group': metrics['most_pressured_group'],
+        'least_pressured_group': metrics['least_pressured_group'],
+        'overall_direction': 'nonconsecutive',
+        'comparison_release_id': prior_id,
+        'comparison_months_elapsed': elapsed,
+        'unavailable_release_ids': missing,
+        **deltas,
+    }
+
+    median = _change_phrase(deltas['median_delta_since_comparison'],
+                            metrics['dmi_median'], 'increased', 'decreased')
+    spread = _change_phrase(deltas['spread_delta_since_comparison'],
+                            metrics['income_pressure_spread'], 'widened', 'narrowed')
+    if summary_facts['lower_income_more_pressure']:
+        who = "Lower-income households faced more pressure than higher-income households"
+    elif summary_facts['higher_income_more_pressure']:
+        who = "Higher-income households faced more pressure than lower-income households"
+    else:
+        who = "Pressure was similar across the bottom and top income fifths"
+    unemployment, prior_unemployment = metrics['unemployment'], prior_metrics['unemployment']
+    if unemployment == prior_unemployment:
+        unemp = f"Unemployment was {unemployment}%, the same as in {prior_label}."
+    else:
+        unemp = f"Unemployment was {unemployment}%, compared with {prior_unemployment}% in {prior_label}."
+
+    sentences = [
+        f"Compared with {prior_label}, the most recent earlier published release, "
+        f"the {label} DMI Median {median}.",
+        f"{who} in {label}.",
+        f"Over the same comparison, the Income Pressure Spread {spread}.",
+        unemp,
+    ]
+    for period in missing:
+        reason = unavailable_reasons.get(period)
+        sentences.append(
+            f"{_period_label(period)} has no published DMI observation"
+            + (f" because {reason}." if reason else ".")
+        )
+    span = _COUNT_WORDS[elapsed] if elapsed < len(_COUNT_WORDS) else str(elapsed)
+    sentences.append(f"These are differences over {span} months, not a monthly change.")
+    return summary_facts, ' '.join(sentences)
+
+
 def build_release_summary(
     current_release: dict,
     prior_release: Optional[dict] = None,
     contributor_context: Optional[dict] = None,
+    unavailable_reasons: Optional[dict] = None,
 ) -> tuple[dict, str]:
     """
     Generate deterministic plain-English summary for a DMI release.
 
+    ``prior_release`` is the most recent earlier published release. When it
+    is the immediately preceding calendar month, or either release_id is
+    absent, the month-over-month summary below applies unchanged. When the
+    preceding month has no published release, the summary comes from
+    ``build_nonconsecutive_summary`` instead.
+
     Returns (summary_facts, summary_text)
     """
+    if (
+        prior_release
+        and current_release.get('release_id')
+        and prior_release.get('release_id')
+        and _month_index(current_release['release_id'])
+            - _month_index(prior_release['release_id']) > 1
+    ):
+        return build_nonconsecutive_summary(
+            current_release, prior_release, unavailable_reasons
+        )
+
     metrics = current_release['metrics']
     dmi_median = metrics['dmi_median']
     dmi_stress = metrics['dmi_stress']

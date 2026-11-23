@@ -275,6 +275,33 @@ If there is no prior release:
 Fallback example:
 `The February 2026 release shows higher measured pressure for lower-income households than for higher-income households. The current dashboard reports a DMI Median of 6.85, a DMI Stress reading of 7.01, and an Income Pressure Spread of 0.28.`
 
+### Nonconsecutive releases
+
+If the preceding calendar month has no published release (for example,
+2026-11 follows 2026-09 because October 2026 cannot be computed), the
+summary compares with the most recent earlier published release instead,
+and must not read as a one-month movement:
+
+- name the comparison period and report each change as a difference
+  since that period, with direction and measured size only;
+- do not apply the monthly thresholds, so no "slightly", "modestly",
+  "sharply", "materially", "edged" or "little changed";
+- name every month in between as having no published DMI observation,
+  with the reason documented in `registry/unavailable_periods.json`;
+- state how many months the differences span;
+- do not interpolate, annualise or divide the change across the missing
+  months.
+
+`summary_facts` then carries `overall_direction: "nonconsecutive"`,
+`comparison_release_id`, `comparison_months_elapsed`,
+`unavailable_release_ids` and the `*_delta_since_comparison` differences.
+The `*_delta_mom` fields and `spread_direction` are not populated.
+
+Example, for 2026-11 compared with 2026-09:
+`Compared with September 2026, the most recent earlier published release, the November 2026 DMI Median increased by 0.12 points, to 7.98. Higher-income households faced more pressure than lower-income households in November 2026. Over the same comparison, the Income Pressure Spread narrowed by 0.04 points, to 0.29. Unemployment was 4.3%, compared with 4.2% in September 2026. October 2026 has no published DMI observation because the required official CPI comparison data are unavailable. These are differences over two months, not a monthly change.`
+
+Consecutive releases are summarised exactly as described above.
+
 ## Contributor support
 
 If contributor data is available from the pipeline, support:

@@ -35,6 +35,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The October 2026 release remains unpublished: its base month, October
   2025, has no official CPI observations.
 
+### Fixed - Comparisons across a missing month
+- Release summaries assumed the most recent earlier release was the
+  previous month. With no October 2026 release, the November 2026
+  summary would have presented a two-month difference from September as
+  a monthly change, classified with the monthly thresholds.
+- When the preceding month has no published release, the summary now
+  names the comparison period, reports differences since it without
+  threshold labels, names each missing month and its documented reason
+  (`registry/unavailable_periods.json`), and states the span.
+- New optional `summary_facts` fields in `releases.schema.json`:
+  `comparison_release_id`, `comparison_months_elapsed`,
+  `unavailable_release_ids` and `*_delta_since_comparison`. The
+  `*_delta_mom` fields are left empty in that case. Schema version
+  stays 3.0.0; every existing manifest remains valid.
+- Consecutive releases are summarised exactly as before; every
+  published summary reproduces unchanged.
+
 ## [0.1.12] - 2026-08-19
 
 **Formal release of the finalized operational DMI contract.** Two
