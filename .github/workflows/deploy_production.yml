@@ -62,7 +62,12 @@ permissions:
   contents: read
 
 env:
-  PYTHON_VERSION: '3.9'
+  # Operational Python runtime. It must have a hash-pinned lock at
+  # requirements-lock/python<version>.txt, and "Verify Python runtime"
+  # fails the job if setup-python provides any other interpreter. The
+  # runner stays ubuntu-latest: nothing here depends on an Ubuntu release.
+  # See requirements-lock/README.md.
+  PYTHON_VERSION: '3.12'
 
 jobs:
   # -------------------------------------------------------------------
@@ -114,11 +119,33 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: requirements-lock/python${{ env.PYTHON_VERSION }}.txt
+
+      - name: Verify Python runtime
+        run: |
+          # Stop before any DMI code runs if the interpreter is not the
+          # one this workflow declares. Never substitute another version.
+          python --version
+          python -m pip --version
+          python - <<'PY'
+          import os, sys
+          want = os.environ["PYTHON_VERSION"]
+          have = "%d.%d" % sys.version_info[:2]
+          print(f"interpreter: {sys.version.split()[0]} at {sys.executable}")
+          if have != want:
+              sys.exit(f"FAIL: interpreter is Python {have}; this workflow requires {want}")
+          PY
 
       - name: Install dependencies
         run: |
+          # Install the hash-pinned lock for this interpreter, wheels only.
+          # A missing lock, a hash mismatch, or a package with no wheel for
+          # this interpreter fails here. See requirements-lock/README.md.
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --require-hashes --only-binary=:all: \
+            -r "requirements-lock/python${PYTHON_VERSION}.txt"
+          python -m pip --version
+          python -m pip freeze --all
 
       - name: Build deployment staging via the canonical builder
         run: |

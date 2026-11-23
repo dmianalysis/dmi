@@ -1,7 +1,7 @@
 # Distributional Misery Index (DMI) v0.1.12
 
 ![Status](https://img.shields.io/badge/status-pre--1.0-yellow)
-![Python](https://img.shields.io/badge/python-3.9+-blue)
+![Python](https://img.shields.io/badge/python-3.12+-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Data](https://img.shields.io/badge/data-monthly-blue)
 
@@ -119,7 +119,9 @@ dmi/
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.12 or newer. Production runs 3.12, and CI tests 3.12 and 3.13.
+  See [requirements-lock/README.md](requirements-lock/README.md) for the
+  support policy.
 - BLS API key (register at https://data.bls.gov/registrationEngine/)
 
 ### Installation
@@ -134,10 +136,14 @@ dmi/
 2. **Set up Python environment**:
 
    ```bash
-   python3 -m venv venv
+   python3.12 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
+   pip install --require-hashes -r requirements-lock/python3.12.txt
    ```
+
+   This installs the exact versions production uses. The lock is compiled
+   for Linux. On Windows, install with the lock as a constraints file:
+   `pip install -r requirements.txt -c requirements-lock/python3.12.txt`.
 
 3. **Configure environment**:
 

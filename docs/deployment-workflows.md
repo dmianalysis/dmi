@@ -142,6 +142,18 @@ These should be updated through `deploy_wp_plugins.yml`, not by manual wp-admin 
 
 ---
 
+## Runtime requirements
+- Every workflow that runs DMI code uses **Python 3.12** on
+  `ubuntu-latest`. PR CI also tests Python 3.13.
+- Dependencies come from the hash-pinned lock for that interpreter in
+  `requirements-lock/`. See [requirements-lock/README.md](../requirements-lock/README.md)
+  for the support policy and the refresh procedure.
+- Deployment uses SSH with pinned host keys and rsync, so it needs a Linux
+  runner. It does not need a particular Ubuntu release.
+- The web host serves static files and needs no Python.
+
+---
+
 ## Troubleshooting
 
 ### 1) Monthly release ran, but the site still shows the previous month
@@ -216,6 +228,21 @@ Check:
 - whether the plugin folders were actually synced
 - whether the plugin version/header was updated
 - whether WordPress or browser caching is masking the change
+
+### 8) A workflow fails at "Set up Python" or "Verify Python runtime"
+This means the runner could not provide the declared interpreter. No DMI
+code ran and nothing was published.
+
+Do not pin an older Ubuntu image to get past it. Check:
+- whether the version in `PYTHON_VERSION` is still supported by
+  `actions/setup-python` on `ubuntu-latest`
+- whether a matching lock exists at `requirements-lock/python<version>.txt`
+
+If the interpreter must change, follow "Adding or retiring a Python
+version" in [requirements-lock/README.md](../requirements-lock/README.md).
+A scheduled release missed this way must be prepared again by manual
+dispatch of `monthly_dmi.yml` with `mode=prepare_release`,
+`data_source=live` and the missed `reference_period`.
 
 ---
 

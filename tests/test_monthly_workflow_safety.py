@@ -409,6 +409,13 @@ INVENTORY_PATH = WORKFLOWS / "inventory_withdrawn_core.yml"
 #: run on 2026-08-19; see test_phase2_withdrawal.py for the assertions
 #: that no runnable destructive entry point remains.
 PUBLIC_VERIFY_PATH = WORKFLOWS / "verify_core_withdrawal_public.yml"
+#: Daily reminder on open, unmerged release PRs. Holds pull-requests:
+#: write to post a comment and nothing else: no secrets, no checkout, no
+#: deployment capability. It runs only standard-library Python on the
+#: runner image's interpreter; test_python_runtime_policy.py requires it
+#: to adopt the pinned runtime if it ever installs packages or runs DMI
+#: code.
+REMINDER_PATH = WORKFLOWS / "release_gate_reminder.yml"
 
 #: Every workflow that must obey the deployment-safety policy.
 ALL_WORKFLOWS = (
@@ -419,6 +426,7 @@ ALL_WORKFLOWS = (
     PR_CI_PATH,
     INVENTORY_PATH,
     PUBLIC_VERIFY_PATH,
+    REMINDER_PATH,
 )
 
 #: Workflows that are allowed to touch production at all.
@@ -1309,7 +1317,10 @@ class TestPullRequestCiIsReadOnly(unittest.TestCase):
         required = {
             "full test suite": "pytest",
             "python compilation": "compileall",
-            "python 3.9 syntax": "feature_version=(3, 9)",
+            # The minimum supported Python is 3.12 (see
+            # requirements-lock/README.md). test_python_runtime_policy.py
+            # ties this level to the CI matrix and the production runtime.
+            "python 3.12 syntax": "feature_version=(3, 12)",
             "json parsing": "ls-files",
             "workflow yaml + cff": "CITATION.cff",
             "schema validation": "Draft202012Validator",

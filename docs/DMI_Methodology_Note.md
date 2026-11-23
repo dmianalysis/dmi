@@ -813,7 +813,7 @@ Okun, A. M. (1970). *The Political Economy of Prosperity*. Brookings Institution
 
 ### Software Requirements
 
-- Python 3.9+
+- Python 3.12 or newer (see `requirements-lock/README.md`)
 - Libraries: `pandas`, `numpy`, `requests`, `jsonschema`
 - Optional: `matplotlib` for charts
 
@@ -827,9 +827,10 @@ cd dmi
 
 **2. Install Dependencies**
 ```bash
-python3 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+# The exact library versions used to compute published releases:
+pip install --require-hashes -r requirements-lock/python3.12.txt
 ```
 
 **3. Set BLS API Key** (optional, increases rate limits)

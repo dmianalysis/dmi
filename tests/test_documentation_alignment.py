@@ -1369,7 +1369,7 @@ class TestNoStaticStatusBadges(unittest.TestCase):
     tell it from a real status.
 
     Editorial and stable-fact badges are untouched by this rule. ``status``,
-    ``data``, ``python-3.9+`` and ``license-MIT`` do not claim a result
+    ``data``, ``python-3.12+`` and ``license-MIT`` do not claim a result
     that changes from run to run, so a static image states them honestly.
     """
 
@@ -1394,7 +1394,7 @@ class TestNoStaticStatusBadges(unittest.TestCase):
         """The rule must not overreach into badges that state stable facts."""
         keep = (
             "![Status](https://img.shields.io/badge/status-pre--1.0-yellow)\n"
-            "![Python](https://img.shields.io/badge/python-3.9+-blue)\n"
+            "![Python](https://img.shields.io/badge/python-3.12+-blue)\n"
             "![License](https://img.shields.io/badge/license-MIT-green)\n"
             "![Data](https://img.shields.io/badge/data-monthly-blue)\n"
         )

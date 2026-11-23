@@ -22,12 +22,20 @@ on:
 permissions:
   contents: read
 
-env:
-  PYTHON_VERSION: '3.9'
+# Python support policy (see requirements-lock/README.md):
+#   minimum supported  3.12  (the syntax gate below parses at this level)
+#   production         3.12  (PYTHON_VERSION in every operational workflow)
+#   CI-tested          3.12 and 3.13, each with its own hash-pinned lock
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout PR head
@@ -41,11 +49,33 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: requirements-lock/python${{ env.PYTHON_VERSION }}.txt
+
+      - name: Verify Python runtime
+        run: |
+          # Stop before any DMI code runs if the interpreter is not the
+          # one this workflow declares. Never substitute another version.
+          python --version
+          python -m pip --version
+          python - <<'PY'
+          import os, sys
+          want = os.environ["PYTHON_VERSION"]
+          have = "%d.%d" % sys.version_info[:2]
+          print(f"interpreter: {sys.version.split()[0]} at {sys.executable}")
+          if have != want:
+              sys.exit(f"FAIL: interpreter is Python {have}; this workflow requires {want}")
+          PY
 
       - name: Install dependencies
         run: |
+          # Install the hash-pinned lock for this interpreter, wheels only.
+          # A missing lock, a hash mismatch, or a package with no wheel for
+          # this interpreter fails here. See requirements-lock/README.md.
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --require-hashes --only-binary=:all: \
+            -r "requirements-lock/python${PYTHON_VERSION}.txt"
+          python -m pip --version
+          python -m pip freeze --all
 
       # ---------------- test suite ----------------
 
@@ -61,15 +91,16 @@ jobs:
         run: |
           python -m compileall -q scripts tests dmi_pipeline dmi_calculator dmi_web
 
-      - name: Python 3.9 syntax compatibility
+      - name: Python 3.12 syntax compatibility
         run: |
-          # The deployment target runs 3.9. Parse every module under the
-          # 3.9 feature set so a 3.10+ construct cannot reach production
-          # via a newer local interpreter.
+          # 3.12 is the minimum supported version and the production
+          # runtime. Parse every module under the 3.12 feature set so a
+          # construct from a newer Python (for example 3.13 in this matrix)
+          # cannot reach production through a newer interpreter.
           python - <<'PY'
           import ast, pathlib, sys
-          if sys.version_info[:2] != (3, 9):
-              print(f"NOTE: interpreter is {sys.version_info[:2]}, expected 3.9")
+          if sys.version_info[:2] != (3, 12):
+              print(f"NOTE: interpreter is {sys.version_info[:2]}; parsing at the 3.12 feature level")
           roots = ("scripts", "tests", "dmi_pipeline", "dmi_calculator", "dmi_web")
           bad = []
           count = 0
@@ -78,10 +109,10 @@ jobs:
                   count += 1
                   try:
                       ast.parse(path.read_text(), filename=str(path),
-                                feature_version=(3, 9))
+                                feature_version=(3, 12))
                   except SyntaxError as exc:
                       bad.append(f"{path}: {exc}")
-          print(f"parsed {count} module(s) against Python 3.9")
+          print(f"parsed {count} module(s) against Python 3.12")
           for item in bad:
               print(f"  FAIL {item}")
           sys.exit(1 if bad else 0)
@@ -336,3 +367,62 @@ jobs:
             dmi-v0.1.10-deployment/ dmi-v0.1.10-deployment.zip | wc -l)
           echo "frozen archive files changed: $CHANGED"
           [ "$CHANGED" -eq 0 ]
+
+  # Application portability, not deployment portability. The calculator
+  # and the published-value reproduction check are OS-independent, so they
+  # run on macOS and Windows as a smoke test. SSH/rsync deployment
+  # orchestration is Linux-only by design and is not exercised here.
+  portability:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHON_VERSION: '3.12'
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements-lock/python${{ env.PYTHON_VERSION }}.txt
+
+      - name: Verify Python runtime
+        run: |
+          python --version
+          python -m pip --version
+          python - <<'PY'
+          import os, platform, sys
+          want = os.environ["PYTHON_VERSION"]
+          have = "%d.%d" % sys.version_info[:2]
+          print(f"interpreter: {sys.version.split()[0]} on {platform.platform()}")
+          if have != want:
+              sys.exit(f"FAIL: interpreter is Python {have}; this job requires {want}")
+          PY
+
+      - name: Install dependencies (lock as constraints)
+        run: |
+          # The lock is compiled for Linux, the production platform. Used
+          # as a constraints file it pins every shared package to the
+          # production version, while platform-only extras such as
+          # colorama on Windows resolve normally. Production installs the
+          # same lock with --require-hashes instead.
+          python -m pip install --upgrade pip
+          python -m pip install --only-binary=:all: -r requirements.txt \
+            -c "requirements-lock/python${PYTHON_VERSION}.txt"
+          python -m pip freeze --all
+
+      - name: Calculator and published-value reproduction
+        run: |
+          python -m pytest -q -rs \
+            tests/test_calculator.py \
+            tests/test_baseline_slack_plus_identity.py \
+            tests/test_published_values_reproduce.py
