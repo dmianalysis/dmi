@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Python runtime
+- The November 15, 2026 scheduled release preparation failed before any
+  DMI code ran. `ubuntu-latest` moved to Ubuntu 26.04, which has no
+  Python 3.9 build. Every operational workflow now runs Python 3.12 on
+  `ubuntu-latest`, and PR CI tests Python 3.12 and 3.13.
+- Workflows install a hash-pinned, wheels-only lock per interpreter from
+  `requirements-lock/` and stop if the interpreter differs from the one
+  declared. The 3.12 lock keeps the numerical libraries of the last 3.9
+  production run, so published values are unchanged.
+- `requirements.txt` caps pandas below 3.
+- No methodology, formula, weight, input series or published value
+  changed.
+
 ## [0.1.12] - 2026-08-19
 
 **Formal release of the finalized operational DMI contract.** Two

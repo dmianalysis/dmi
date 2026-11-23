@@ -1,8 +1,15 @@
 # DMI v0.1 - Python Dependencies
+#
+# This file is the human-maintained list of DIRECT dependencies. It is not
+# what CI or production installs. Workflows install the hash-pinned lock
+# for their interpreter, requirements-lock/python<MAJOR.MINOR>.txt, which is
+# compiled from this file. See requirements-lock/README.md before editing.
 
 # Core Calculator
 numpy>=1.24.0
-pandas>=2.0.0
+# pandas 3 changes copy and string-dtype semantics. Adopting it is a
+# methodology-review decision, not a routine refresh.
+pandas>=2.0.0,<3
 
 # Data Pipeline
 requests>=2.31.0
