@@ -59,10 +59,34 @@ def release(release_id, median=7.0, stress=7.2, spread=0.30, tilt=-0.10, unemplo
     }
 
 
-def entry_validator():
-    """Validate summary_facts the way releases.json would carry them."""
-    item = SCHEMA["properties"]["releases"]["items"]["properties"]["summary_facts"]
-    return Draft202012Validator(item)
+class _FactsValidator:
+    """Validate summary_facts inside a real 3.1.0 manifest.
+
+    The committed manifest is re-declared as 3.1.0 and the facts are put
+    on a copy of its newest entry, so they are checked by the same
+    version-aware rules releases.json is.
+    """
+
+    def __init__(self, version="3.1.0"):
+        self.version = version
+        self.validator = Draft202012Validator(SCHEMA)
+        self.base = json.loads(RELEASES.read_text())
+
+    def _doc(self, facts):
+        doc = json.loads(json.dumps(self.base))
+        doc["schema_version"] = self.version
+        doc["releases"][0]["summary_facts"] = facts
+        return doc
+
+    def is_valid(self, facts):
+        return self.validator.is_valid(self._doc(facts))
+
+    def iter_errors(self, facts):
+        return self.validator.iter_errors(self._doc(facts))
+
+
+def entry_validator(version="3.1.0"):
+    return _FactsValidator(version)
 
 
 class TestConsecutiveUnchanged(unittest.TestCase):

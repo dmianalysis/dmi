@@ -1,10 +1,21 @@
 {
-  "description": "Reference periods for which no DMI observation is published, and why. Release summaries that compare across one of these months name it and give this reason. Listing a period here publishes nothing and estimates nothing; it only explains an existing gap.",
+  "description": "Reviewed exceptions: reference periods for which no DMI observation is published, and why. scripts.finalize_release refuses to publish a release that follows an unpublished month not listed here, and release summaries name each listed month with its reason. Every entry is added by hand in a reviewed pull request, never by the pipeline. Listing a period publishes nothing and estimates nothing.",
   "periods": [
     {
       "release_id": "2026-10",
       "reason": "the required official CPI comparison data are unavailable",
-      "detail": "BLS did not publish October 2025 CPI because of the 2025 federal government shutdown. October 2025 is the 12-month base month for October 2026 inflation, so the October 2026 DMI cannot be computed. It is not estimated, interpolated or backfilled."
+      "detail": "BLS did not publish October 2025 CPI because of the 2025 lapse in federal government appropriations. October 2025 is the 12-month base month for October 2026 inflation, and BLS states it will not publish October 2026 12-month percent changes for indexes where October 2025 data are not available, so the October 2026 DMI cannot be computed. It is not estimated, interpolated or backfilled.",
+      "sources": [
+        {
+          "title": "BLS, Consumer Price Index Archived News Releases (October 2025: \"Not published because of 2025 lapse in federal government appropriations\")",
+          "url": "https://www.bls.gov/bls/news-release/cpi.htm"
+        },
+        {
+          "title": "BLS, 2025 federal government shutdown impact on the Consumer Price Index",
+          "url": "https://www.bls.gov/cpi/additional-resources/2025-federal-government-shutdown-impact-cpi-faq.htm"
+        }
+      ],
+      "approved_in": "dmianalysis/dmi#40"
     }
   ]
 }

@@ -114,11 +114,13 @@ def _period_label(release_id: str) -> str:
 
 
 def load_unavailable_periods(path: Path = UNAVAILABLE_PERIODS_PATH) -> dict:
-    """Documented reasons for months with no published DMI, by release_id."""
-    if not path.exists():
-        return {}
-    with open(path) as f:
-        return {p['release_id']: p['reason'] for p in json.load(f)['periods']}
+    """Documented reasons for months with no published DMI, by release_id.
+
+    The registry is validated by ``scripts.finalize_release`` before any
+    publication; see ``scripts.unavailable_periods``.
+    """
+    from scripts.unavailable_periods import reasons
+    return reasons(path)
 
 
 def _change_phrase(delta: float, level: float, up: str, down: str) -> str:

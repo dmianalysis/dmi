@@ -73,7 +73,7 @@ Interactive dashboard: <https://dmianalysis.org/dashboard.html>
 
 ## Manifest Contracts
 
-### `releases.json` (schema `releases.schema.json` 3.0.0)
+### `releases.json` (schema `releases.schema.json` 3.1.0; 3.0.0 still accepted)
 
 Lists every published release in reverse-chronological order.
 
@@ -118,6 +118,17 @@ Lists every published release in reverse-chronological order.
 Historical baseline-only releases (2025-12..2026-02) advertise only the
 `baseline` key inside `spec_urls`; they never carry a `slack_plus` key.
 **No release entry ever carries a `core` key** under schema 3.0.0.
+
+**Schema versions.** New manifests declare `3.1.0`; manifests published
+earlier declare `3.0.0` and remain valid. The schema validates each
+document against the rules of the version it declares. 3.1.0 adds
+nonconsecutive comparisons: when the preceding calendar month has no
+published release, `summary_facts` has `overall_direction:
+"nonconsecutive"`, the comparison period (`comparison_release_id`), the
+months elapsed (`comparison_months_elapsed`), the months with no
+published DMI (`unavailable_release_ids`) and the differences since the
+comparison period (`*_delta_since_comparison`). It never has
+`*_delta_mom` or `spread_direction`, which describe a one-month change.
 
 ### `latest.json`
 

@@ -258,10 +258,12 @@ class TestBackfillWriterOutputIsValid(BackfillWriterFixture):
             [r["release_id"] for r in self.latest["releases"]], ["2026-07"]
         )
 
-    def test_manifests_declare_schema_3_0_0(self):
-        """Controlling decision: releases/latest use schema 3.0.0."""
-        self.assertEqual(self.releases["schema_version"], "3.0.0")
-        self.assertEqual(self.latest["schema_version"], "3.0.0")
+    def test_manifests_declare_the_current_schema_version(self):
+        """Writers emit RELEASES_SCHEMA_VERSION (3.1.0 since PR #40)."""
+        from scripts.schema_versions import RELEASES_SCHEMA_VERSION
+        self.assertEqual(RELEASES_SCHEMA_VERSION, "3.1.0")
+        self.assertEqual(self.releases["schema_version"], RELEASES_SCHEMA_VERSION)
+        self.assertEqual(self.latest["schema_version"], RELEASES_SCHEMA_VERSION)
 
 
 class TestBackfillWriterUsesExactHistoricalFilenames(BackfillWriterFixture):

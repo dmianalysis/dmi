@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "DMI Releases Manifest",
+  "description": "Releases manifest (releases.json, latest.json). Version-aware: 3.0.0 documents validate exactly as they always have; 3.1.0 adds nonconsecutive comparisons, for a release whose preceding calendar month has no published DMI. Writers emit RELEASES_SCHEMA_VERSION (scripts/schema_versions.py).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,7 +13,10 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "3.0.0"
+      "enum": [
+        "3.0.0",
+        "3.1.0"
+      ]
     },
     "generated_at": {
       "type": "string",
@@ -24,181 +28,61 @@
     },
     "releases": {
       "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
         "required": [
-          "release_id",
-          "data_through_label",
-          "published_at",
-          "status",
-          "methodology_version",
-          "summary",
-          "summary_facts",
-          "release_note",
-          "spec_urls",
-          "metrics"
+          "schema_version"
         ],
         "properties": {
-          "release_id": {
-            "type": "string",
-            "pattern": "^\\d{4}-\\d{2}$"
-          },
-          "data_through_label": {
-            "type": "string"
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["current", "superseded", "revised"]
-          },
-          "methodology_version": {
-            "type": "string"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "summary_facts": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "overall_direction": {
-                "type": "string"
-              },
-              "median_delta_mom": {
-                "type": "number"
-              },
-              "stress_delta_mom": {
-                "type": "number"
-              },
-              "spread_delta_mom": {
-                "type": "number"
-              },
-              "tilt_delta_mom": {
-                "type": "number"
-              },
-              "unemployment_delta_mom": {
-                "type": "number"
-              },
-              "comparison_release_id": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}$",
-                "description": "Nonconsecutive comparisons only: the most recent earlier published release the *_delta_since_comparison fields are measured against. Present only when the preceding calendar month has no published release."
-              },
-              "comparison_months_elapsed": {
-                "type": "integer",
-                "minimum": 2,
-                "description": "Nonconsecutive comparisons only: calendar months between comparison_release_id and this release."
-              },
-              "unavailable_release_ids": {
-                "type": "array",
-                "items": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
-                "description": "Nonconsecutive comparisons only: the months between the two releases that have no published DMI observation."
-              },
-              "median_delta_since_comparison": {"type": "number"},
-              "stress_delta_since_comparison": {"type": "number"},
-              "spread_delta_since_comparison": {"type": "number"},
-              "tilt_delta_since_comparison": {"type": "number"},
-              "unemployment_delta_since_comparison": {"type": "number"},
-              "spread_direction": {
-                "type": "string"
-              },
-              "most_pressured_group": {
-                "type": "string",
-                "pattern": "^Q[1-5]$"
-              },
-              "least_pressured_group": {
-                "type": "string",
-                "pattern": "^Q[1-5]$"
-              },
-              "lower_income_more_pressure": {
-                "type": "boolean"
-              },
-              "higher_income_more_pressure": {
-                "type": "boolean"
-              },
-              "pressure_similar_across_bottom_top": {
-                "type": "boolean"
-              }
-            }
-          },
-          "release_note": {
-            "type": "string",
-            "format": "uri-reference",
-            "description": "Shared release-note HTML for this release entry. Covers the shared distributional summary across all specifications published for the period."
-          },
-          "spec_urls": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["baseline"],
-            "description": "URL block per published specification. `baseline` is always present. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published. Neither block carries a release_note; the shared top-level `release_note` field covers all specifications.",
-            "properties": {
-              "baseline": {
-                "$ref": "#/$defs/spec_url_block"
-              },
-              "slack_plus": {
-                "$ref": "#/$defs/spec_url_block"
-              }
-            }
-          },
-          "metrics": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "dmi_median",
-              "dmi_stress",
-              "income_pressure_spread",
-              "income_pressure_tilt",
-              "most_pressured_group",
-              "least_pressured_group",
-              "unemployment"
-            ],
-            "properties": {
-              "dmi_median": {
-                "type": "number"
-              },
-              "dmi_stress": {
-                "type": "number"
-              },
-              "income_pressure_spread": {
-                "type": "number",
-                "minimum": 0
-              },
-              "income_pressure_tilt": {
-                "type": "number"
-              },
-              "most_pressured_group": {
-                "type": "string",
-                "pattern": "^Q[1-5]$"
-              },
-              "least_pressured_group": {
-                "type": "string",
-                "pattern": "^Q[1-5]$"
-              },
-              "unemployment": {
-                "type": "number"
-              }
-            }
-          },
-          "notes": {
-            "type": "array",
+          "schema_version": {
+            "const": "3.0.0"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "releases": {
             "items": {
-              "type": "string"
+              "$ref": "#/$defs/release_v3_0_0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "schema_version"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "3.1.0"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "releases": {
+            "items": {
+              "$ref": "#/$defs/release_v3_1_0"
             }
           }
         }
       }
     }
-  },
+  ],
   "$defs": {
     "spec_url_block": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["csv", "parquet"],
+      "required": [
+        "csv",
+        "parquet"
+      ],
       "description": "Per-specification artifact URLs. No release_note is nested here; the shared release_note lives at the top of the release entry.",
       "properties": {
         "csv": {
@@ -208,6 +92,410 @@
         "parquet": {
           "type": "string",
           "format": "uri-reference"
+        }
+      }
+    },
+    "release_v3_0_0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_id",
+        "data_through_label",
+        "published_at",
+        "status",
+        "methodology_version",
+        "summary",
+        "summary_facts",
+        "release_note",
+        "spec_urls",
+        "metrics"
+      ],
+      "properties": {
+        "release_id": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "data_through_label": {
+          "type": "string"
+        },
+        "published_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "current",
+            "superseded",
+            "revised"
+          ]
+        },
+        "methodology_version": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "summary_facts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "overall_direction": {
+              "type": "string"
+            },
+            "median_delta_mom": {
+              "type": "number"
+            },
+            "stress_delta_mom": {
+              "type": "number"
+            },
+            "spread_delta_mom": {
+              "type": "number"
+            },
+            "tilt_delta_mom": {
+              "type": "number"
+            },
+            "unemployment_delta_mom": {
+              "type": "number"
+            },
+            "spread_direction": {
+              "type": "string"
+            },
+            "most_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "least_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "lower_income_more_pressure": {
+              "type": "boolean"
+            },
+            "higher_income_more_pressure": {
+              "type": "boolean"
+            },
+            "pressure_similar_across_bottom_top": {
+              "type": "boolean"
+            }
+          }
+        },
+        "release_note": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "Shared release-note HTML for this release entry. Covers the shared distributional summary across all specifications published for the period."
+        },
+        "spec_urls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseline"
+          ],
+          "description": "URL block per published specification. `baseline` is always present. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published. Neither block carries a release_note; the shared top-level `release_note` field covers all specifications.",
+          "properties": {
+            "baseline": {
+              "$ref": "#/$defs/spec_url_block"
+            },
+            "slack_plus": {
+              "$ref": "#/$defs/spec_url_block"
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dmi_median",
+            "dmi_stress",
+            "income_pressure_spread",
+            "income_pressure_tilt",
+            "most_pressured_group",
+            "least_pressured_group",
+            "unemployment"
+          ],
+          "properties": {
+            "dmi_median": {
+              "type": "number"
+            },
+            "dmi_stress": {
+              "type": "number"
+            },
+            "income_pressure_spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "income_pressure_tilt": {
+              "type": "number"
+            },
+            "most_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "least_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "unemployment": {
+              "type": "number"
+            }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "release_v3_1_0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_id",
+        "data_through_label",
+        "published_at",
+        "status",
+        "methodology_version",
+        "summary",
+        "summary_facts",
+        "release_note",
+        "spec_urls",
+        "metrics"
+      ],
+      "properties": {
+        "release_id": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "data_through_label": {
+          "type": "string"
+        },
+        "published_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "current",
+            "superseded",
+            "revised"
+          ]
+        },
+        "methodology_version": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "summary_facts": {
+          "if": {
+            "type": "object",
+            "required": [
+              "overall_direction"
+            ],
+            "properties": {
+              "overall_direction": {
+                "const": "nonconsecutive"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/summary_facts_nonconsecutive"
+          },
+          "else": {
+            "$ref": "#/$defs/summary_facts_monthly"
+          }
+        },
+        "release_note": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "Shared release-note HTML for this release entry. Covers the shared distributional summary across all specifications published for the period."
+        },
+        "spec_urls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseline"
+          ],
+          "description": "URL block per published specification. `baseline` is always present. `slack_plus` is present only for periods for which a companion Slack-Plus artifact was published. Neither block carries a release_note; the shared top-level `release_note` field covers all specifications.",
+          "properties": {
+            "baseline": {
+              "$ref": "#/$defs/spec_url_block"
+            },
+            "slack_plus": {
+              "$ref": "#/$defs/spec_url_block"
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dmi_median",
+            "dmi_stress",
+            "income_pressure_spread",
+            "income_pressure_tilt",
+            "most_pressured_group",
+            "least_pressured_group",
+            "unemployment"
+          ],
+          "properties": {
+            "dmi_median": {
+              "type": "number"
+            },
+            "dmi_stress": {
+              "type": "number"
+            },
+            "income_pressure_spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "income_pressure_tilt": {
+              "type": "number"
+            },
+            "most_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "least_pressured_group": {
+              "type": "string",
+              "pattern": "^Q[1-5]$"
+            },
+            "unemployment": {
+              "type": "number"
+            }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "summary_facts_monthly": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overall_direction": {
+          "type": "string"
+        },
+        "median_delta_mom": {
+          "type": "number"
+        },
+        "stress_delta_mom": {
+          "type": "number"
+        },
+        "spread_delta_mom": {
+          "type": "number"
+        },
+        "tilt_delta_mom": {
+          "type": "number"
+        },
+        "unemployment_delta_mom": {
+          "type": "number"
+        },
+        "spread_direction": {
+          "type": "string"
+        },
+        "most_pressured_group": {
+          "type": "string",
+          "pattern": "^Q[1-5]$"
+        },
+        "least_pressured_group": {
+          "type": "string",
+          "pattern": "^Q[1-5]$"
+        },
+        "lower_income_more_pressure": {
+          "type": "boolean"
+        },
+        "higher_income_more_pressure": {
+          "type": "boolean"
+        },
+        "pressure_similar_across_bottom_top": {
+          "type": "boolean"
+        }
+      },
+      "description": "Facts for a release whose preceding calendar month is published (month-over-month), or that has no earlier release (overall_direction 'no_prior'). The nonconsecutive-comparison fields are not allowed here."
+    },
+    "summary_facts_nonconsecutive": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Facts for a release whose preceding calendar month has no published release. Differences are measured since comparison_release_id, the most recent earlier published release. Month-over-month fields (*_delta_mom) and monthly classifications (spread_direction, threshold values of overall_direction) are not allowed.",
+      "required": [
+        "overall_direction",
+        "comparison_release_id",
+        "comparison_months_elapsed",
+        "unavailable_release_ids",
+        "median_delta_since_comparison",
+        "stress_delta_since_comparison",
+        "spread_delta_since_comparison",
+        "tilt_delta_since_comparison",
+        "unemployment_delta_since_comparison",
+        "most_pressured_group",
+        "least_pressured_group",
+        "lower_income_more_pressure",
+        "higher_income_more_pressure",
+        "pressure_similar_across_bottom_top"
+      ],
+      "properties": {
+        "overall_direction": {
+          "const": "nonconsecutive"
+        },
+        "comparison_release_id": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "description": "The most recent earlier published release."
+        },
+        "comparison_months_elapsed": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Calendar months from comparison_release_id to this release."
+        },
+        "unavailable_release_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "description": "Every intervening month; each has no published DMI observation."
+        },
+        "median_delta_since_comparison": {
+          "type": "number"
+        },
+        "stress_delta_since_comparison": {
+          "type": "number"
+        },
+        "spread_delta_since_comparison": {
+          "type": "number"
+        },
+        "tilt_delta_since_comparison": {
+          "type": "number"
+        },
+        "unemployment_delta_since_comparison": {
+          "type": "number"
+        },
+        "most_pressured_group": {
+          "type": "string",
+          "pattern": "^Q[1-5]$"
+        },
+        "least_pressured_group": {
+          "type": "string",
+          "pattern": "^Q[1-5]$"
+        },
+        "lower_income_more_pressure": {
+          "type": "boolean"
+        },
+        "higher_income_more_pressure": {
+          "type": "boolean"
+        },
+        "pressure_similar_across_bottom_top": {
+          "type": "boolean"
         }
       }
     }

@@ -288,6 +288,8 @@ and must not read as a one-month movement:
   "sharply", "materially", "edged" or "little changed";
 - name every month in between as having no published DMI observation,
   with the reason documented in `registry/unavailable_periods.json`;
+  finalization refuses the release if any such month has no reviewed
+  entry there (`scripts/unavailable_periods.py`);
 - state how many months the differences span;
 - do not interpolate, annualise or divide the change across the missing
   months.
@@ -296,6 +298,7 @@ and must not read as a one-month movement:
 `comparison_release_id`, `comparison_months_elapsed`,
 `unavailable_release_ids` and the `*_delta_since_comparison` differences.
 The `*_delta_mom` fields and `spread_direction` are not populated.
+`releases.schema.json` 3.1.0 requires the former set and forbids the latter.
 
 Example, for 2026-11 compared with 2026-09:
 `Compared with September 2026, the most recent earlier published release, the November 2026 DMI Median increased by 0.12 points, to 7.98. Higher-income households faced more pressure than lower-income households in November 2026. Over the same comparison, the Income Pressure Spread narrowed by 0.04 points, to 0.29. Unemployment was 4.3%, compared with 4.2% in September 2026. October 2026 has no published DMI observation because the required official CPI comparison data are unavailable. These are differences over two months, not a monthly change.`
