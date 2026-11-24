@@ -25,6 +25,12 @@ Summaries are created by the `build_release_summary()` function in `scripts/comp
 - Modestly: 0.15-0.30
 - Sharply: > 0.30
 
+These thresholds classify month-over-month changes only. When the
+preceding calendar month has no published release, the summary instead
+reports the difference since the most recent earlier release, names that
+period and the missing months, and applies no threshold. See
+"Nonconsecutive releases" in `dmi_summary_generator_spec.md`.
+
 ## Output
 
 Each release includes:

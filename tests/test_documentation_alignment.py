@@ -499,14 +499,17 @@ class TestStatusRecordsCarryNoSupersededClaims(unittest.TestCase):
 
     def test_version_split_matches_the_shipped_manifests(self):
         """The documented split must equal reality."""
+        # releases/latest are 3.0.0 until the next finalized release,
+        # which writes 3.1.0 (scripts/schema_versions.py).
+        from scripts.schema_versions import RELEASES_SCHEMA_VERSIONS_ACCEPTED
         outputs = ROOT / "data" / "outputs"
-        self.assertEqual(
+        self.assertIn(
             _json.loads((outputs / "releases.json").read_text())
-            ["schema_version"], "3.0.0",
+            ["schema_version"], RELEASES_SCHEMA_VERSIONS_ACCEPTED,
         )
-        self.assertEqual(
+        self.assertIn(
             _json.loads((outputs / "latest.json").read_text())
-            ["schema_version"], "3.0.0",
+            ["schema_version"], RELEASES_SCHEMA_VERSIONS_ACCEPTED,
         )
         self.assertEqual(
             _json.loads((outputs / "specifications.json").read_text())

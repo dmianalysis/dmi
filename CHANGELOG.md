@@ -35,6 +35,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The October 2026 release remains unpublished: its base month, October
   2025, has no official CPI observations.
 
+### Fixed - Comparisons across a missing month
+- Release summaries assumed the most recent earlier release was the
+  previous month. With no October 2026 release, the November 2026
+  summary would have presented a two-month difference from September as
+  a monthly change, classified with the monthly thresholds.
+- When the preceding month has no published release, the summary now
+  names the comparison period, reports differences since it without
+  threshold labels, names each missing month and its documented reason
+  (`registry/unavailable_periods.json`), and states the span.
+- `releases.schema.json` 3.1.0, written by every new manifest. The
+  schema is version-aware: 3.0.0 manifests validate exactly as before,
+  so committed manifests are not rewritten. In 3.1.0 a nonconsecutive
+  entry (`overall_direction: "nonconsecutive"`) must carry
+  `comparison_release_id`, `comparison_months_elapsed`,
+  `unavailable_release_ids` and the five `*_delta_since_comparison`
+  fields, and must not carry `*_delta_mom` or `spread_direction`.
+- New finalization gate: a release that follows an unpublished month is
+  refused unless every intervening month is a reviewed entry in
+  `registry/unavailable_periods.json`, with a substantive reason, https
+  sources and the approving pull request. Malformed, duplicate and
+  contradictory entries (for a published month, or the month being
+  finalized) are refused too. Dry-run and live finalization run the same
+  gate, before anything is published.
+- The October 2026 entry cites the BLS CPI release archive and the BLS
+  shutdown-impact FAQ. No October 2026 value is generated.
+- Consecutive releases are summarised exactly as before; every
+  published summary reproduces unchanged.
+
 ## [0.1.12] - 2026-08-19
 
 **Formal release of the finalized operational DMI contract.** Two

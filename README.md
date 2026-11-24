@@ -98,7 +98,7 @@ dmi/
 │       ├── specifications.json
 │       └── releases/*.html
 ├── schemas/                         # JSON Schema contracts
-│   ├── releases.schema.json         # 3.0.0
+│   ├── releases.schema.json         # 3.1.0 (accepts 3.0.0)
 │   ├── dmi_output.schema.json
 │   └── specifications.schema.json   # 0.3.0
 ├── docs/
@@ -187,7 +187,7 @@ After a new release computes, rebuild the aggregate manifests:
 
 This regenerates `data/outputs/releases.json` and
 `data/outputs/latest.json` — both conforming to `releases.schema.json`
-version 3.0.0.
+version 3.1.0.
 
 ### Access data programmatically
 

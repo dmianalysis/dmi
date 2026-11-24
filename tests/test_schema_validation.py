@@ -55,13 +55,24 @@ class TestSchemasEnforceConstVersion(unittest.TestCase):
     fails closed.
     """
 
-    def test_releases_schema_pins_version_with_const(self):
+    def test_releases_schema_pins_versions_with_enum(self):
+        """Version-aware since 3.1.0: an explicit enum, still never a pattern.
+
+        Each accepted version has its own rule branch (see
+        tests/test_unavailable_periods_gate.py), so an unlisted version such
+        as 2.0.0 or 3.2.0 still fails closed.
+        """
+        from scripts.schema_versions import RELEASES_SCHEMA_VERSIONS_ACCEPTED
         schema = _load(SCHEMAS_DIR / "releases.schema.json")
         prop = schema["properties"]["schema_version"]
-        self.assertEqual(prop.get("const"), "3.0.0",
-            "releases.schema.json must pin schema_version with const=3.0.0")
+        self.assertEqual(prop.get("enum"), ["3.0.0", "3.1.0"])
+        self.assertEqual(tuple(prop["enum"]), RELEASES_SCHEMA_VERSIONS_ACCEPTED)
         self.assertNotIn("pattern", prop,
             "releases.schema.json schema_version must not use pattern")
+        branches = {b["if"]["properties"]["schema_version"]["const"]
+                    for b in schema["allOf"]}
+        self.assertEqual(branches, set(prop["enum"]),
+            "every accepted version needs its own validation branch")
 
     def test_specifications_schema_pins_version_with_const(self):
         schema = _load(SCHEMAS_DIR / "specifications.schema.json")
@@ -112,18 +123,23 @@ class TestReleasesManifestSchema(unittest.TestCase):
                     f"release must not advertise slack_plus",
                 )
 
-    def test_schema_version_is_exactly_3_0_0(self):
-        """v0.1.12 pins the releases schema to 3.0.0 (const, not regex)."""
-        from scripts.schema_versions import RELEASES_SCHEMA_VERSION
+    def test_schema_version_is_an_accepted_version(self):
+        """Writers emit 3.1.0; committed manifests may still be 3.0.0.
 
-        self.assertEqual(RELEASES_SCHEMA_VERSION, "3.0.0",
-            "central RELEASES_SCHEMA_VERSION constant drifted from 3.0.0")
+        3.0.0 manifests are not rewritten just to change a version number.
+        The next finalized release writes 3.1.0.
+        """
+        from scripts.schema_versions import (
+            RELEASES_SCHEMA_VERSION, RELEASES_SCHEMA_VERSIONS_ACCEPTED)
+
+        self.assertEqual(RELEASES_SCHEMA_VERSION, "3.1.0",
+            "central RELEASES_SCHEMA_VERSION constant drifted from 3.1.0")
         for name in ("releases.json", "latest.json"):
             instance = _load(OUTPUTS_DIR / name)
-            self.assertEqual(
-                instance["schema_version"], "3.0.0",
-                f"{name}: schema_version must be exactly '3.0.0' "
-                f"(got {instance['schema_version']!r})",
+            self.assertIn(
+                instance["schema_version"], RELEASES_SCHEMA_VERSIONS_ACCEPTED,
+                f"{name}: schema_version {instance['schema_version']!r} "
+                f"is not an accepted version",
             )
 
     def test_release_note_is_top_level_field(self):

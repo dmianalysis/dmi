@@ -25,6 +25,9 @@ The order this enforces
 4. validate both QA reports against their schema
 5. enforce QA outcome policy
 6. enforce Baseline/Slack-Plus identity
+6b. require every unpublished month since the most recent earlier
+    published release to be a reviewed entry in
+    ``registry/unavailable_periods.json`` (``scripts.unavailable_periods``)
 7. only now: publish CSV/Parquet, releases.json, latest.json,
    specifications.json, the release note, the timeseries, health.json,
    and deployment staging
@@ -71,6 +74,7 @@ from scripts.release_evidence import (
     verify_raw_artifact,
 )
 from scripts.release_policy import GateFailure, check_cross_spec, evaluate_qa_report
+from scripts.unavailable_periods import REGISTRY_RELATIVE_PATH, gap_problems
 
 #: Directory for diagnostics from a failed run. Deliberately dot-prefixed
 #: and named so nothing mistakes it for published output; no manifest
@@ -206,18 +210,42 @@ def public_digest(period: str, repo_root: Path = REPO_ROOT) -> dict[str, Optiona
 # Gates 3-6
 # ---------------------------------------------------------------------------
 
+def _published_release_ids(output_dir: Path) -> tuple[set[str], list[str]]:
+    manifest = output_dir / "releases.json"
+    if not manifest.exists():
+        return set(), []
+    try:
+        doc = json.loads(manifest.read_text())
+        return {r["release_id"] for r in doc["releases"]}, []
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return set(), [f"unavailable-periods: cannot read published release ids "
+                       f"from {manifest.name}: {exc}"]
+
+
 def run_gates(
     period: str,
     output_dir: Path,
     require_subject: bool = True,
+    registry_path: Optional[Path] = None,
 ) -> tuple[list[str], list[str]]:
-    """Run gates 3-6. Returns ``(problems, warnings)``; empty problems = pass.
+    """Run gates 3-6 and the missing-period gate.
 
-    Read-only by construction: nothing here writes to the repository.
+    Returns ``(problems, warnings)``; empty problems = pass. Read-only by
+    construction: nothing here writes to the repository. Dry-run and live
+    finalization run exactly these gates.
     """
     problems: list[str] = []
     warnings: list[str] = []
     raws: dict[str, dict] = {}
+
+    # --- gate 2b: every unpublished month since the prior release is a
+    #     reviewed, documented exception ---------------------------------
+    published_ids, read_problems = _published_release_ids(output_dir)
+    problems.extend(read_problems)
+    problems.extend(gap_problems(
+        period, published_ids,
+        registry_path or (REPO_ROOT / REGISTRY_RELATIVE_PATH),
+    ))
 
     # --- gate 3: raw outputs validate and identify themselves -----------
     for spec in OPERATIONAL_SPECS:
@@ -296,7 +324,11 @@ def publish(period: str, output_dir: Path, repo_root: Path = REPO_ROOT) -> None:
         "metrics": build_metrics_payload(baseline),
     }
     prior_release = load_prior_release(period)
-    summary_facts, summary = build_release_summary(current_release, prior_release)
+    from scripts.unavailable_periods import reasons
+    summary_facts, summary = build_release_summary(
+        current_release, prior_release,
+        unavailable_reasons=reasons(repo_root / REGISTRY_RELATIVE_PATH),
+    )
     metrics_payload = build_metrics_payload(baseline)
 
     update_releases_json(
@@ -351,7 +383,10 @@ def finalize(
     """
     output_dir = output_dir or (repo_root / "data" / "outputs")
 
-    problems, warnings = run_gates(period, output_dir, require_subject)
+    problems, warnings = run_gates(
+        period, output_dir, require_subject,
+        registry_path=repo_root / REGISTRY_RELATIVE_PATH,
+    )
 
     for warning in warnings:
         print(f"  QA WARNING: {warning}", file=sys.stderr)

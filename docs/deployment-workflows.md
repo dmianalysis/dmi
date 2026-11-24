@@ -256,7 +256,15 @@ published it, the release cannot be computed. Do not estimate,
 interpolate or backfill the missing observation. For example, October
 2025 CPI was not published because of the 2025 federal government
 shutdown, so the October 2026 release, whose base month it is, cannot be
-computed. How such a month is labelled publicly is a separate decision.
+computed.
+
+The next release after a missing month is finalized only if the month
+has a reviewed entry in `registry/unavailable_periods.json`: a
+substantive reason, https sources, and the approving pull request as
+`owner/repo#N`. Without one, "Finalize release" fails, names every
+undocumented month, and publishes nothing. Add an entry by hand in a
+reviewed pull request, and only when the official data do not exist.
+A failed monthly run is not a reason to add one: rerun it instead.
 
 Both the fetch and the compute steps pick their staging files from the
 reference period through `scripts/reference_period.py`, never from the

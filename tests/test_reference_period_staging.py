@@ -458,6 +458,30 @@ class TestNovember2026FeedsBothSpecifications(unittest.TestCase):
                                            repo_root=tree.root)
             self.assertEqual(rc, 0, problems)
 
+            # There is no October 2026 release, so the published summary
+            # compares with September 2026 and says so.
+            from jsonschema import Draft202012Validator
+            schema = json.loads((ROOT / "schemas/releases.schema.json").read_text())
+            for name in ("releases.json", "latest.json"):
+                doc = json.loads((tree.outputs / name).read_text())
+                Draft202012Validator(schema).validate(doc)
+                entry = next(r for r in doc["releases"] if r["release_id"] == period)
+                with self.subTest(manifest=name):
+                    self.assertTrue(entry["summary"].startswith(
+                        "Compared with September 2026, the most recent earlier "
+                        "published release, the November 2026 DMI Median"))
+                    self.assertIn("October 2026 has no published DMI observation",
+                                  entry["summary"])
+                    facts = entry["summary_facts"]
+                    self.assertEqual(facts["comparison_release_id"], "2026-09")
+                    self.assertEqual(facts["comparison_months_elapsed"], 2)
+                    self.assertFalse({k for k in facts if k.endswith("_delta_mom")})
+            releases = json.loads((tree.outputs / "releases.json").read_text())["releases"]
+            self.assertNotIn("2026-10", {r["release_id"] for r in releases})
+            note = (tree.outputs / "releases" / f"{period}.html").read_text()
+            self.assertIn("Compared with September 2026", note)
+            self.assertNotIn("from the prior month", note)
+
 
 if __name__ == "__main__":
     unittest.main()
