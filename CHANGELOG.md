@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   October 2026, that CPI has no observations for October 2025. An
   authentication or network error, a timeout, any other exception, or a
   log that cannot be read is reported.
+- For an approved unavailable period the report states the exception, asks
+  for no release rerun, and says a defect has been repaired only when a
+  later run on `main` passed the step that failed.
 - It runs on the runner image's `python3` with the standard library only,
   independent of `actions/setup-python` and the DMI lock.
 - It only reads, apart from creating an Issue or commenting on one. It

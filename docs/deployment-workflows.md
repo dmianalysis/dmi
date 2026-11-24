@@ -233,7 +233,7 @@ in the run summary. An error is never read as "no runs" or "no PRs".
 - The watchdog never closes or reopens an Issue. When a closed Issue's
   period needs attention again, it comments on it.
 
-Example Issue:
+Example Issue (the 2026-10 case, checked on November 24, 2026):
 
 ```text
 [DMI Watchdog] 2026-10 — release preparation requires attention
@@ -244,22 +244,40 @@ Problem: run 43739957699 ended failure at job 'prepare-dmi', step 'Set up
 Python'. 2026-10 is an approved unavailable period, but the record does not
 show the run reaching 'Fetch CPI data (live only)' and failing there, so the
 approved exception does not explain this failure
-Checked at: 2026-11-17 23:59 UTC
+Approved data exception: 2026-10 has no published DMI because the required
+official CPI comparison data are unavailable (approved in dmianalysis/dmi#40).
+No 2026-10 release is expected; it is not estimated, interpolated or backfilled.
 
 Evidence
 - Scheduled runs this cycle (.github/workflows/monthly_dmi.yml):
   - run 43739957699 (schedule, 2026-11-15 17:14 UTC, branch main): failure;
-    failed at job 'prepare-dmi', step 'Set up Python' — https://github.com/dmianalysis/dmi/actions/runs/43739957699
-- Manual runs this cycle: none
+    failed at job 'prepare-dmi', step 'Set up Python'
+- Manual runs this cycle:
+  - run 45213869846 (..., branch fix/python-runtime-modernization): success;
+    validate/fixture (not release preparation)
+  - run 45223886484 (..., branch main): failure; failed at job 'prepare-dmi',
+    step 'Compute DMI Baseline (live only)'; live release preparation
 - Release PRs for 2026-10: none
 - data/outputs/releases.json on main: 2026-10 absent
 - registry/unavailable_periods.json: 2026-10 listed (valid), approved in dmianalysis/dmi#40
 
 Suggested action
-Open the run, read the failed step's log and fix the cause in a reviewed PR.
-Then prepare the release manually: run Monthly DMI Preparation with
-mode=prepare_release, data_source=live and reference_period=2026-10. ...
+The scheduled October 2026 release preparation failed during Python setup.
+This infrastructure defect has since been repaired: run 45223886484 on main
+(2026-11-23, ...) passed 'Set up Python'. October 2026 cannot be published
+under DMI's methodology because the necessary October 2025 CPI comparison
+observations are unavailable, as documented in PR #40. No October release
+rerun is required. Record the incident as resolved after verifying the
+corrective changes, and confirm that the December 15 preparation of November
+2026 data succeeds.
 ```
+
+For an approved period the report adds the **Approved data exception**
+line and a suggested action that asks for no release rerun. It says a
+defect "has since been repaired" only when a later run on `main` passed
+the step that failed, and names that run; otherwise it says the repair is
+not confirmed. For any other period the suggested action is to fix the
+cause and prepare the release manually.
 
 ### Running it by hand
 Manual runs are dry runs unless **notify** is ticked. A dry run prints the

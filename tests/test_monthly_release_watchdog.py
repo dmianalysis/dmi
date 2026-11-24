@@ -638,6 +638,132 @@ class TestSourceFailureEvidence(unittest.TestCase):
         self.assertEqual(wd.base_month("2027-01"), "2026-01")
 
 
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestApprovedExceptionReport(unittest.TestCase):
+    """For an approved period the report names the exception and asks for no rerun."""
+
+    SAMPLE = (
+        "The scheduled October 2026 release preparation failed during Python setup. "
+        "This infrastructure defect has since been repaired: run 602 on main "
+        "(2026-11-23, https://github.com/dmianalysis/dmi/actions/runs/602) passed "
+        "'Set up Python'. October 2026 cannot be published under DMI's methodology "
+        "because the necessary October 2025 CPI comparison observations are "
+        "unavailable, as documented in PR #40. No October release rerun is required. "
+        "Record the incident as resolved after verifying the corrective changes, and "
+        "confirm that the December 15 preparation of November 2026 data succeeds.")
+
+    def november(self, later=None):
+        fake = FakeGitHub()
+        fake.run(601, "2026-11-15T17:14:00Z", conclusion="failure", failed_step="Set up Python")
+        if later:
+            later(fake)
+        ev, v = check(fake, "2026-11-24T04:19:00Z")
+        return ev, v, wd.render(ev, v)
+
+    def test_matches_the_approved_wording_when_a_later_run_proves_the_repair(self):
+        ev, v, body = self.november(lambda f: f.run(
+            602, "2026-11-23T17:06:00Z", event="workflow_dispatch", conclusion="failure",
+            failed_step="Compute DMI Baseline (live only)"))
+        self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED)
+        self.assertEqual(wd.suggested_action(ev, v), self.SAMPLE)
+        self.assertIn("**Approved data exception:** 2026-10 has no published DMI because the "
+                      "required official CPI comparison data are unavailable (approved in "
+                      "dmianalysis/dmi#40). No 2026-10 release is expected", body)
+        for generic in ("prepare the release manually", "record that in registry",
+                        "If the official data"):
+            self.assertNotIn(generic, body)
+
+    def test_repair_is_not_claimed_without_evidence(self):
+        cases = {
+            "no later run": None,
+            "later run on another branch": lambda f: f.run(
+                602, "2026-11-23T16:12:00Z", event="workflow_dispatch", data_source="fixture",
+                branch="fix/python-runtime-modernization"),
+            "later run failed at the same step": lambda f: f.run(
+                602, "2026-11-20T09:00:00Z", event="workflow_dispatch", conclusion="failure",
+                failed_step="Set up Python"),
+        }
+        for name, later in cases.items():
+            with self.subTest(case=name):
+                ev, v, body = self.november(later)
+                action = wd.suggested_action(ev, v)
+                self.assertNotIn("has since been repaired", action)
+                self.assertIn("No later run on main has passed 'Set up Python' yet, so the "
+                              "repair is not confirmed.", action)
+                self.assertIn("No October release rerun is required.", action)
+                self.assertIn("once a run on main passes that step", action)
+
+    def test_an_earlier_run_is_not_evidence_of_repair(self):
+        fake = FakeGitHub()
+        fake.run(600, "2026-11-10T09:00:00Z", event="workflow_dispatch")
+        fake.run(601, "2026-11-15T17:14:00Z", conclusion="failure", failed_step="Set up Python")
+        ev, v = check(fake, "2026-11-24T04:19:00Z")
+        self.assertNotIn("has since been repaired", wd.suggested_action(ev, v))
+
+    def test_unexplained_fetch_failure_points_at_the_log(self):
+        fake = FakeGitHub()
+        fake.run(603, "2026-11-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
+        fake.logs[6030] = actions_log("2026-10", *fetch_output("2026-10", TimeoutError("t")))
+        ev, v = check(fake, NOV)
+        action = wd.suggested_action(ev, v)
+        self.assertIn("failed at step 'Fetch CPI data (live only)', and the job log does not "
+                      "show the documented limitation (the step raised an exception", action)
+        self.assertIn("Read the failed step's log to find the actual cause", action)
+        self.assertIn("No October release rerun is required.", action)
+
+    def test_missing_trigger_in_an_approved_period(self):
+        ev, v = check(FakeGitHub(), NOV)
+        action = wd.suggested_action(ev, v)
+        self.assertIn("No scheduled run of monthly_dmi.yml started for the October 2026 "
+                      "release.", action)
+        self.assertIn("no October release rerun is required", action)
+        self.assertIn("December 15 preparation of November 2026 data starts and succeeds", action)
+
+    def test_unapproved_periods_keep_the_generic_action(self):
+        fake = FakeGitHub()
+        fake.run(604, "2026-12-15T17:14:00Z", conclusion="failure", failed_step="Set up Python")
+        ev, v = check(fake)
+        body = wd.render(ev, v)
+        self.assertNotIn("Approved data exception", body)
+        self.assertIn("prepare the release manually", body)
+        self.assertIn("reference_period=2026-11", body)
+
+    def test_invalid_registry_entry_is_not_presented_as_approved(self):
+        fake = FakeGitHub()
+        fake.registry = json.loads(json.dumps(REAL_REGISTRY))
+        fake.registry["periods"][0]["reason"] = "TODO"
+        fake.run(605, "2026-11-15T17:14:00Z", conclusion="failure", failed_step="Set up Python")
+        ev, v = check(fake, NOV)
+        body = wd.render(ev, v)
+        self.assertNotIn("Approved data exception", body)
+        self.assertNotIn("No October release rerun is required", body)
+
+    def test_next_preparation_crosses_the_year(self):
+        fake = FakeGitHub()
+        fake.manifest_ids = ["2027-10"]
+        fake.registry = json.loads(json.dumps(REAL_REGISTRY))
+        entry = json.loads(json.dumps(REAL_REGISTRY["periods"][0]))
+        entry.update(release_id="2027-11", detail=entry["detail"].replace(
+            "October 2025", "November 2026"))
+        fake.registry["periods"] = [entry]
+        fake.run(606, "2027-12-15T10:20:00Z", conclusion="failure", failed_step="Set up Python")
+        ev, v = check(fake, "2027-12-17T16:37:00Z")
+        action = wd.suggested_action(ev, v)
+        self.assertIn("The scheduled November 2027 release preparation", action)
+        self.assertIn("November 2026 CPI comparison observations", action)
+        self.assertIn("January 15 preparation of December 2027 data", action)
+
+    def test_wording_does_not_change_the_issue_state(self):
+        _, v, _ = self.november()
+        self.assertEqual(v.fingerprint("2026-10"),
+                         "2026-10:SCHEDULED_RUN_FAILED:run=601:failure")
+
+    def test_labels(self):
+        self.assertEqual(wd.period_label("2026-10"), "October 2026")
+        self.assertEqual(wd._review_label("dmianalysis/dmi#40", "dmianalysis/dmi"), "PR #40")
+        self.assertEqual(wd._review_label("other/repo#7", "dmianalysis/dmi"), "PR other/repo#7")
+
+
 class TestLogTransport(unittest.TestCase):
     """The token goes to the API only, never to the redirected log host."""
 

@@ -145,6 +145,37 @@ ACTIONS = {
         "the schedule is intact and Actions is enabled before next month."),
 }
 
+#: Suggested actions when the period is an approved unavailable period. No
+#: release is expected, so these never ask for one to be prepared or for a
+#: registry entry to be added; they point at what did go wrong.
+APPROVED_ACTIONS = {
+    SCHEDULED_RUN_FAILED: (
+        "The scheduled {label} release preparation {failed}. {repair} {label} cannot be "
+        "published under DMI's methodology because {limitation}, as documented in "
+        "{approved}. No {month} release rerun is required. {record}, and confirm that the "
+        "{next_date} preparation of {next_label} data succeeds."),
+    SCHEDULED_RUN_MISSING: (
+        "No scheduled run of monthly_dmi.yml started for the {label} release. {label} "
+        "cannot be published under DMI's methodology because {limitation}, as documented "
+        "in {approved}, so no {month} release rerun is required. The missing trigger still "
+        "needs attention: check that the schedule in monthly_dmi.yml is intact and that "
+        "Actions is enabled for the repository (GitHub disables schedules in a public "
+        "repository after 60 days without activity), and confirm that the {next_date} "
+        "preparation of {next_label} data starts and succeeds."),
+    SCHEDULED_RUN_STALLED: (
+        "The scheduled {label} release preparation has not finished. {label} cannot be "
+        "published under DMI's methodology because {limitation}, as documented in "
+        "{approved}, so no {month} release rerun is required. Cancel the stalled run in the "
+        "Actions tab, find out why it did not finish, and confirm that the {next_date} "
+        "preparation of {next_label} data succeeds."),
+    RUN_SUCCEEDED_NO_RELEASE_PR: (
+        "The scheduled {label} release preparation succeeded, which should not happen: "
+        "{label} is documented in {approved} as unpublishable because {limitation}, so "
+        "the fetch should have stopped. Read the run's log before anything is published. "
+        "A {month} release may be published only after the registry entry is removed in "
+        "a reviewed PR."),
+}
+
 _PERIOD = re.compile(r"\d{4}-(0[1-9]|1[0-2])")
 
 
@@ -377,6 +408,8 @@ class RunEvidence:
     #: "live" if the CPI fetch step ran, "fixture" if it was skipped,
     #: None when the run stopped before the mode was known.
     data_source: Optional[str] = None
+    #: Conclusion of every step by name, across the run's jobs.
+    step_conclusions: dict = field(default_factory=dict)
     opened_pr: bool = False
     #: Set only for a fetch failure in an approved period, from the job log.
     source_explained: bool = False
@@ -421,6 +454,7 @@ class PREvidence:
 class Evidence:
     period: str
     as_of: datetime
+    repo: str = ""
     workflow_url: str = ""
     scheduled_runs: list = field(default_factory=list)
     manual_runs: list = field(default_factory=list)
@@ -452,6 +486,7 @@ def _run_details(gh: GitHubClient, run: RunEvidence) -> None:
     for job in jobs:
         steps = job.get("steps") or []
         by_name = {s.get("name"): s.get("conclusion") for s in steps}
+        run.step_conclusions.update(by_name)
         if FETCH_STEP in by_name:
             run.data_source = {"skipped": "fixture", None: None}.get(by_name[FETCH_STEP], "live")
         if by_name.get(CREATE_PR_STEP) == "success":
@@ -469,7 +504,7 @@ def _run_details(gh: GitHubClient, run: RunEvidence) -> None:
 
 def gather(gh: GitHubClient, as_of: datetime) -> Evidence:
     period = expected_period(as_of)
-    ev = Evidence(period=period, as_of=as_of)
+    ev = Evidence(period=period, as_of=as_of, repo=gh.repo)
     start = cycle_start(as_of)
 
     workflow = gh.get(f"/actions/workflows/{WORKFLOW_PATH.rsplit('/', 1)[-1]}")
@@ -609,6 +644,14 @@ def _fetch_output(log_text: str, period: str) -> Optional[list]:
     return found[0] if len(found) == 1 else None
 
 
+def names_base_month(entry: dict, period: str) -> bool:
+    """Whether the registry entry names the period's base month as missing."""
+    base = base_month(period)
+    named = (base, f"{_MONTHS[int(base[5:]) - 1]} {base[:4]}")
+    entry_text = f"{entry.get('reason', '')} {entry.get('detail', '')}"
+    return any(n in entry_text for n in named)
+
+
 def source_failure_evidence(log_text: str, period: str, entry: dict) -> tuple:
     """``(explained, evidence)`` for a fetch failure in an approved period.
 
@@ -652,9 +695,7 @@ def source_failure_evidence(log_text: str, period: str, entry: dict) -> tuple:
     expected = [f"CPI has no observations for {base} (12-month CPI base month)."]
     if problems != expected:
         return False, f"the acquisition error lists {problems}, not only {expected}"
-    named = (base, f"{_MONTHS[int(base[5:]) - 1]} {base[:4]}")
-    entry_text = f"{entry.get('reason', '')} {entry.get('detail', '')}"
-    if not any(n in entry_text for n in named):
+    if not names_base_month(entry, period):
         return False, f"the registry entry for {period} does not name {base} as the missing data"
     return True, (f"the job log shows the fetch completed and stopped only because CPI has no "
                   f"observations for {base}, the 12-month base month, which the registry "
@@ -798,11 +839,107 @@ def issue_title(period: str) -> str:
     return f"[DMI Watchdog] {period} — release preparation requires attention"
 
 
+def period_label(period: str) -> str:
+    """``2026-10`` -> ``October 2026``."""
+    return f"{_MONTHS[int(period[5:]) - 1]} {period[:4]}"
+
+
+#: How a failed setup step reads in a sentence; other steps are named.
+_STEP_PHRASES = {
+    "Set up job": "while the runner was being set up",
+    "Checkout repository": "while checking out the repository",
+    "Set up Python": "during Python setup",
+    "Verify Python runtime": "during Python setup",
+    "Install dependencies": "while installing dependencies",
+}
+
+
+def _failure_phrase(run: RunEvidence) -> str:
+    if run.conclusion and run.conclusion != "failure":
+        return f"was {run.conclusion}"
+    if not run.failed_step:
+        return "failed at an unknown step"
+    phrase = _STEP_PHRASES.get(run.failed_step, f"at step '{run.failed_step}'")
+    text = f"failed {phrase}"
+    if run.source_evidence and not run.source_explained:
+        text += (f", and the job log does not show the documented limitation "
+                 f"({run.source_evidence})")
+    return text
+
+
+def repaired_by(ev: Evidence, run: RunEvidence) -> Optional[RunEvidence]:
+    """A later run on main in which the step that failed succeeded.
+
+    Positive evidence that the defect behind ``run`` has been repaired. A
+    run on another branch does not count; neither does a run that did not
+    reach the step.
+    """
+    if not run.failed_step or run.failed_step == FETCH_STEP:
+        return None
+    for later in ev.scheduled_runs + ev.manual_runs:
+        if (later.created_at > run.created_at and later.branch == DEFAULT_BRANCH
+                and later.step_conclusions.get(run.failed_step) == "success"):
+            return later
+    return None
+
+
+def _review_label(approved_in: str, repo: str) -> str:
+    """``owner/repo#40`` -> ``PR #40`` for this repository."""
+    owner_repo, _, number = approved_in.partition("#")
+    return f"PR #{number}" if owner_repo == repo else f"PR {approved_in}"
+
+
+def suggested_action(ev: Evidence, verdict: Verdict) -> Optional[str]:
+    if ev.approved_unavailable and verdict.classification in APPROVED_ACTIONS:
+        run = verdict.run
+        entry = ev.registry_entry
+        if names_base_month(entry, ev.period):
+            limitation = (f"the necessary {period_label(base_month(ev.period))} CPI "
+                          "comparison observations are unavailable")
+        else:
+            limitation = entry["reason"]
+        next_month = release_id_for(month_index(ev.period) + 1)
+        later = repaired_by(ev, run) if run else None
+        if later is not None:
+            repair = (f"This infrastructure defect has since been repaired: run {later.id} "
+                      f"on {DEFAULT_BRANCH} ({later.created_at:%Y-%m-%d}, {later.url}) "
+                      f"passed '{run.failed_step}'.")
+            record = ("Record the incident as resolved after verifying the corrective "
+                      "changes")
+        elif run is not None and run.failed_step == FETCH_STEP:
+            repair = "Read the failed step's log to find the actual cause and fix it."
+            record = ("Record the incident as resolved once the cause is fixed in a "
+                      "reviewed PR")
+        else:
+            failed = f"'{run.failed_step}'" if run and run.failed_step else "the failed step"
+            repair = (f"No later run on {DEFAULT_BRANCH} has passed {failed} yet, so the "
+                      "repair is not confirmed. Fix the cause in a reviewed PR.")
+            record = ("Record the incident as resolved once a run on main passes that step "
+                      "and the corrective changes are verified")
+        return APPROVED_ACTIONS[verdict.classification].format(
+            label=period_label(ev.period), month=_MONTHS[int(ev.period[5:]) - 1],
+            failed=_failure_phrase(run) if run else "did not run",
+            repair=repair, record=record, limitation=limitation,
+            approved=_review_label(entry["approved_in"], ev.repo),
+            next_date=f"{_MONTHS[int(next_month[5:]) % 12]} {SCHEDULE_DAY}",
+            next_label=period_label(next_month))
+    action = ACTIONS.get(verdict.classification)
+    return action.format(period=ev.period) if action else None
+
+
 def render(ev: Evidence, verdict: Verdict) -> str:
     lines = [
         f"**Expected reference period:** {ev.period}",
         f"**Classification:** `{verdict.classification}`",
         f"**Problem:** {verdict.reason}",
+    ]
+    if ev.approved_unavailable:
+        entry = ev.registry_entry
+        lines.append(f"**Approved data exception:** {ev.period} has no published DMI "
+                     f"because {entry['reason']} (approved in {entry['approved_in']}). "
+                     f"No {ev.period} release is expected; it is not estimated, "
+                     "interpolated or backfilled.")
+    lines += [
         f"**Checked at:** {ev.as_of:%Y-%m-%d %H:%M} UTC",
         "",
         "**Evidence**",
@@ -821,9 +958,9 @@ def render(ev: Evidence, verdict: Verdict) -> str:
     else:
         lines.append(f"- {REGISTRY_RELATIVE_PATH.as_posix()}: {ev.period} not listed")
     lines += [f"- Note: {n}" for n in verdict.notes]
-    action = ACTIONS.get(verdict.classification)
+    action = suggested_action(ev, verdict)
     if action:
-        lines += ["", "**Suggested action**", action.format(period=ev.period)]
+        lines += ["", "**Suggested action**", action]
     lines += ["", "This watchdog never reruns workflows, merges PRs or deploys."]
     return "\n".join(lines)
 
