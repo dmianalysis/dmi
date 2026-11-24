@@ -17,7 +17,12 @@ pinning an older Ubuntu image. These tests hold that repair in place:
   ``requirements-lock/``, never from the unpinned direct list;
 - no job pins a specific Ubuntu release;
 - a job may use the runner image's own Python only when it neither checks
-  out the repository nor installs packages, so it cannot run DMI code.
+  out the repository nor installs packages, so it cannot run DMI code;
+- one named monitoring-only workflow, the missing-release watchdog, is
+  the exception. It checks out the repository and runs one
+  standard-library module on the image's ``python3``, and must not use
+  ``actions/setup-python`` or the lock: it exists to report failures of
+  that setup, so it cannot depend on it. It may run nothing else.
 
 Every rule is a function over the parsed workflow, and each has a
 non-vacuity test that feeds it a deliberately bad workflow.
@@ -52,6 +57,16 @@ OPERATIONAL = (
     "inventory_withdrawn_core.yml",
     "verify_core_withdrawal_public.yml",
 )
+
+#: Monitoring-only workflows exempt from the runtime and lock rules, each
+#: with the one standard-library module it may run on the image's python3.
+#: Nothing else may be added here without the same justification.
+MONITORING_ONLY = {
+    "monthly_release_watchdog.yml": "scripts.monthly_release_watchdog",
+}
+#: Repository modules a monitoring-only module may import. Both must stay
+#: standard-library only (TestMonitoringOnlyExemption checks it).
+MONITORING_IMPORTS = {"scripts.unavailable_periods"}
 PR_CI = "pr_ci.yml"
 
 SETUP_PYTHON = "actions/setup-python@"
@@ -106,6 +121,38 @@ def _runner_values(job: dict) -> list[str]:
     return [str(runs_on)]
 
 
+def _python_lines(lines: list[str]) -> list[str]:
+    return [line for line in lines if re.match(r"(\S+=\S+\s+)*python[\d.]*\b", line)]
+
+
+def monitoring_violations(where: str, steps: list, module: str) -> list[str]:
+    """The rules for a monitoring-only job: image python3, stdlib, one module."""
+    found = []
+    for step in steps:
+        uses = str(step.get("uses", ""))
+        if uses and not uses.startswith("actions/checkout@"):
+            found.append(f"{where}: a monitoring-only job may use only actions/checkout, "
+                         f"not {uses}")
+    lines = [line for s in steps for line in _logical_lines(str(s.get("run", "")))]
+    for line in lines:
+        if re.search(r"\bpip3?\b|requirements|PYTHON_VERSION", line):
+            found.append(f"{where}: a monitoring-only job must not install packages or "
+                         f"use the DMI lock: {line}")
+    allowed = ("python3 --version", f"python3 -m {module}")
+    runs_module = False
+    for line in _python_lines(lines):
+        if line == allowed[0]:
+            continue
+        if line == allowed[1] or line.startswith(allowed[1] + " "):
+            runs_module = True
+            continue
+        found.append(f"{where}: a monitoring-only job may run only `{allowed[1]}` on the "
+                     f"image's python3: {line}")
+    if not runs_module:
+        found.append(f"{where}: does not run `{allowed[1]}`")
+    return found
+
+
 def runtime_violations(name: str, doc: dict, lock_dir: Path = LOCKS) -> list[str]:
     """Every runtime-policy violation in one parsed workflow."""
     found = []
@@ -121,6 +168,10 @@ def runtime_violations(name: str, doc: dict, lock_dir: Path = LOCKS) -> list[str
             if runner not in ALLOWED_RUNNERS:
                 found.append(f"{where}: runs-on {runner!r} pins a specific image; "
                              f"use one of {sorted(ALLOWED_RUNNERS)}")
+
+        if name in MONITORING_ONLY:
+            found += monitoring_violations(where, steps, MONITORING_ONLY[name])
+            continue
 
         setup_idx = [i for i, s in enumerate(steps)
                      if str(s.get("uses", "")).startswith(SETUP_PYTHON)]
@@ -384,6 +435,117 @@ class TestDetectorsAreNotVacuous(unittest.TestCase):
             self.assertEqual(len(found), 1, found)
             self.assertIn("pandas", found[0])
             self.assertTrue(lock_violations(path, "3.13"))
+
+
+
+def _imports(path: Path) -> set[str]:
+    import ast
+    found = set()
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.ImportFrom) and node.level == 0:
+            found.add(node.module)
+        elif isinstance(node, ast.Import):
+            found |= {a.name for a in node.names}
+    return found
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestMonitoringOnlyExemption(unittest.TestCase):
+    """The watchdog's exemption is narrow, and the watchdog stays dependency-free."""
+
+    GOOD = {"jobs": {"watch": {"runs-on": "ubuntu-latest", "steps": [
+        {"uses": "actions/checkout@v6", "with": {"persist-credentials": False}},
+        {"run": "python3 --version\n"},
+        {"run": 'ARGS=(--dry-run)\npython3 -m scripts.monthly_release_watchdog "${ARGS[@]}"\n'},
+    ]}}}
+    NAME = "monthly_release_watchdog.yml"
+
+    def _mutate(self, fn, name=NAME):
+        import copy
+        doc = copy.deepcopy(self.GOOD)
+        fn(doc["jobs"]["watch"]["steps"])
+        return runtime_violations(name, doc)
+
+    def test_exemption_names_only_the_watchdog(self):
+        self.assertEqual(MONITORING_ONLY, {self.NAME: "scripts.monthly_release_watchdog"})
+        self.assertFalse(set(MONITORING_ONLY) & set(OPERATIONAL))
+        self.assertNotIn(PR_CI, MONITORING_ONLY)
+        self.assertTrue((WORKFLOWS / self.NAME).is_file())
+
+    def test_watchdog_shape_is_clean(self):
+        self.assertEqual(runtime_violations(self.NAME, self.GOOD), [])
+
+    def test_the_same_shape_is_rejected_for_any_other_workflow(self):
+        found = runtime_violations("monthly_dmi.yml", self.GOOD)
+        self.assertTrue(any("runner image's interpreter" in f for f in found), found)
+
+    def test_flags_setup_python(self):
+        found = self._mutate(lambda s: s.insert(1, {"uses": "actions/setup-python@v6"}))
+        self.assertTrue(any("only actions/checkout" in f for f in found), found)
+
+    def test_flags_package_installation(self):
+        for line in ("python3 -m pip install requests",
+                     'pip install --require-hashes -r "requirements-lock/python3.12.txt"'):
+            with self.subTest(line=line):
+                found = self._mutate(lambda s: s.insert(1, {"run": line}))
+                self.assertTrue(any("must not install packages" in f for f in found), found)
+
+    def test_flags_running_any_other_python(self):
+        for line in ("python3 -m scripts.compute_dmi", "python -m scripts.monthly_release_watchdog",
+                     "python3 - <<'PY'", "python3.12 -m scripts.monthly_release_watchdog"):
+            with self.subTest(line=line):
+                found = self._mutate(lambda s: s.insert(2, {"run": line}))
+                self.assertTrue(any("may run only" in f for f in found), found)
+
+    def test_flags_a_workflow_that_no_longer_runs_the_module(self):
+        found = self._mutate(lambda s: s.pop())
+        self.assertTrue(any("does not run" in f for f in found), found)
+
+    def test_watchdog_workflow_uses_no_setup_python_or_lock(self):
+        text = (WORKFLOWS / self.NAME).read_text()
+        doc = _load(WORKFLOWS / self.NAME)
+        steps = [s for job in doc["jobs"].values() for s in job["steps"]]
+        self.assertFalse(any(SETUP_PYTHON in str(s.get("uses", "")) for s in steps))
+        self.assertNotIn("PYTHON_VERSION", doc.get("env") or {})
+        code = "\n".join(line for s in steps for line in _logical_lines(str(s.get("run", ""))))
+        self.assertNotIn("requirements", code)
+        self.assertNotIn("pip", code)
+        self.assertIn("python3 -m scripts.monthly_release_watchdog", text)
+
+    def test_monitoring_modules_import_only_the_standard_library(self):
+        import sys
+        for module in set(MONITORING_ONLY.values()) | MONITORING_IMPORTS:
+            path = ROOT / (module.replace(".", "/") + ".py")
+            with self.subTest(module=module):
+                for name in _imports(path):
+                    top = name.split(".")[0]
+                    if name in MONITORING_IMPORTS:
+                        continue
+                    self.assertIn(top, sys.stdlib_module_names,
+                                  f"{module} imports {name}, which is not in the standard "
+                                  "library; the watchdog must stay dependency-free")
+
+    def test_watchdog_runs_without_site_packages(self):
+        """Import and classify with site-packages disabled (-S)."""
+        import subprocess
+        import sys
+        code = (
+            "import sys\n"
+            "assert not any('site-packages' in p for p in sys.path), sys.path\n"
+            "from datetime import datetime, timezone\n"
+            "from scripts import monthly_release_watchdog as wd\n"
+            "ev = wd.Evidence(period='2026-11', as_of=datetime(2026, 12, 17, 16, 37, "
+            "tzinfo=timezone.utc))\n"
+            "v = wd.classify(ev)\n"
+            "assert v.classification == wd.SCHEDULED_RUN_MISSING, v\n"
+            "wd.render(ev, v)\n"
+            "print('ok', sorted(m for m in sys.modules if m.split('.')[0] in "
+            "('numpy', 'pandas', 'yaml', 'requests', 'jsonschema')))\n"
+        )
+        out = subprocess.run([sys.executable, "-S", "-E", "-c", code], cwd=ROOT,
+                             capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(out.stdout.strip(), "ok []")
 
 
 if __name__ == "__main__":

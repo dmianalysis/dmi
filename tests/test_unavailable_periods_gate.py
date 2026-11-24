@@ -150,7 +150,9 @@ class TestRegistry(unittest.TestCase):
         }
         self.assertEqual(referencing, {"scripts/unavailable_periods.py",
                                        "scripts/compute_dmi.py",
-                                       "scripts/finalize_release.py"})
+                                       "scripts/finalize_release.py",
+                                       # Reads it from main through the API; never writes.
+                                       "scripts/monthly_release_watchdog.py"})
         for workflow in (ROOT / ".github" / "workflows").glob("*.yml"):
             with self.subTest(workflow=workflow.name):
                 self.assertNotIn("unavailable_periods", workflow.read_text())
