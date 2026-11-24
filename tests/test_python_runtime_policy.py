@@ -43,7 +43,8 @@ MINIMUM_PYTHON = "3.12"
 PRODUCTION_PYTHON = "3.12"
 CI_PYTHONS = ("3.12", "3.13")
 
-#: Workflows that run DMI code and therefore must use the production runtime.
+#: Workflows that check out and run repository code, and therefore must
+#: use the production runtime.
 OPERATIONAL = (
     "monthly_dmi.yml",
     "deploy_production.yml",
@@ -51,6 +52,7 @@ OPERATIONAL = (
     "deploy_wp_plugins.yml",
     "inventory_withdrawn_core.yml",
     "verify_core_withdrawal_public.yml",
+    "monthly_release_watchdog.yml",
 )
 PR_CI = "pr_ci.yml"
 

@@ -1,0 +1,109 @@
+# Missing-release watchdog (monitoring only — never prepares, merges or deploys).
+#
+# The release-gate reminder follows release PRs that exist. This workflow
+# catches the case it cannot see: the monthly preparation run on the 15th
+# never started, failed before opening a PR, or succeeded without one.
+# It derives the expected reference period from the date, reads the
+# GitHub evidence and opens or updates one Issue per period when a human
+# needs to act. See docs/deployment-workflows.md, "Missing-release
+# watchdog".
+#
+# It has no secrets beyond the job token, which can read Actions, PRs and
+# contents and write Issues. scripts.monthly_release_watchdog refuses
+# every write except creating an Issue or commenting on one.
+
+name: DMI Missing-Release Watchdog
+
+on:
+  schedule:
+    # Daily from the 17th to the 28th, two days after monthly_dmi.yml.
+    - cron: '37 16 17-28 * *'
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: >-
+          Evaluation date (YYYY-MM-DD, UTC) to replay a past cycle. Leave
+          blank for today. A replayed date is always a dry run.
+        required: false
+        default: ''
+      notify:
+        description: >-
+          Create or update the GitHub Issue. Off by default: a manual run
+          only prints its findings to the run summary.
+        required: false
+        default: false
+        type: boolean
+
+env:
+  # Operational Python runtime; see requirements-lock/README.md.
+  PYTHON_VERSION: '3.12'
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: monthly-release-watchdog
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements-lock/python${{ env.PYTHON_VERSION }}.txt
+
+      - name: Verify Python runtime
+        run: |
+          python --version
+          python -m pip --version
+          python - <<'PY'
+          import os, sys
+          want = os.environ["PYTHON_VERSION"]
+          have = "%d.%d" % sys.version_info[:2]
+          print(f"interpreter: {sys.version.split()[0]} at {sys.executable}")
+          if have != want:
+              sys.exit(f"FAIL: interpreter is Python {have}; this workflow requires {want}")
+          PY
+
+      - name: Install dependencies
+        run: |
+          # The watchdog itself uses only the standard library. The lock is
+          # installed so the job runs the same environment as every other
+          # workflow that checks out this repository.
+          python -m pip install --require-hashes --only-binary=:all: \
+            -r "requirements-lock/python${PYTHON_VERSION}.txt"
+
+      - name: Check this month's release preparation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_AS_OF: ${{ github.event.inputs.as_of }}
+          INPUT_NOTIFY: ${{ github.event.inputs.notify }}
+        run: |
+          # Scheduled runs notify. Manual runs are dry runs unless notify
+          # is ticked, and a replayed date is always a dry run.
+          ARGS=()
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            ARGS+=(--notify)
+          elif [ -n "$INPUT_AS_OF" ]; then
+            ARGS+=(--as-of "$INPUT_AS_OF" --dry-run)
+          elif [ "$INPUT_NOTIFY" = "true" ]; then
+            ARGS+=(--notify)
+          else
+            ARGS+=(--dry-run)
+          fi
+          python -m scripts.monthly_release_watchdog "${ARGS[@]}"

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Missing-release watchdog
+- `monthly_release_watchdog.yml` checks daily from the 17th to the 28th
+  that the month's release preparation happened. It derives the expected
+  reference period from the date, reads the monthly runs, release PRs,
+  `releases.json` and the unavailable-periods registry through the GitHub
+  API, and opens or updates one Issue per period when a human needs to
+  act. It catches a scheduled run that never started, failed before
+  opening a PR, or succeeded without one, which the release-gate reminder
+  cannot see. An approved data gap does not hide an infrastructure
+  failure.
+- It only reads, apart from creating an Issue or commenting on one. It
+  cannot rerun workflows, merge PRs, change repository content or deploy.
+  Manual runs are dry runs by default. See `docs/deployment-workflows.md`.
+
 ### Fixed - Python runtime
 - The November 15, 2026 scheduled release preparation failed before any
   DMI code ran. `ubuntu-latest` moved to Ubuntu 26.04, which has no

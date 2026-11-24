@@ -416,6 +416,10 @@ PUBLIC_VERIFY_PATH = WORKFLOWS / "verify_core_withdrawal_public.yml"
 #: to adopt the pinned runtime if it ever installs packages or runs DMI
 #: code.
 REMINDER_PATH = WORKFLOWS / "release_gate_reminder.yml"
+#: Daily check, 17th to 28th, that the month's release preparation
+#: happened. Holds issues: write and read access otherwise; no secrets,
+#: no deployment capability. Covered by tests/test_monthly_release_watchdog.py.
+WATCHDOG_PATH = WORKFLOWS / "monthly_release_watchdog.yml"
 
 #: Every workflow that must obey the deployment-safety policy.
 ALL_WORKFLOWS = (
@@ -427,6 +431,7 @@ ALL_WORKFLOWS = (
     INVENTORY_PATH,
     PUBLIC_VERIFY_PATH,
     REMINDER_PATH,
+    WATCHDOG_PATH,
 )
 
 #: Workflows that are allowed to touch production at all.

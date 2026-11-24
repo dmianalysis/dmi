@@ -142,6 +142,136 @@ These should be updated through `deploy_wp_plugins.yml`, not by manual wp-admin 
 
 ---
 
+## Missing-release watchdog (`monthly_release_watchdog.yml`)
+**Purpose:** notice when a month's release preparation did not happen.
+
+The release-gate reminder (`release_gate_reminder.yml`) follows up release
+PRs that exist. It cannot see a run that failed before opening one, which
+is how the November 15, 2026 failure went unnoticed. The watchdog covers
+that gap. It only monitors: it never reruns a workflow, merges or closes a
+PR, changes repository content or deploys.
+
+### What it does
+- runs daily at 16:37 UTC from the 17th to the 28th, two days after
+  `monthly_dmi.yml` runs on the 15th;
+- works out the expected reference period from the date alone: the
+  previous calendar month in UTC (a check on December 17, 2026 expects
+  `2026-11`, one on January 17, 2027 expects `2026-12`);
+- reads, through the GitHub API, the runs of
+  `.github/workflows/monthly_dmi.yml` this month (with the failed job and
+  step of any failed run), the release PRs for the period,
+  `data/outputs/releases.json` on `main` and
+  `registry/unavailable_periods.json` on `main`;
+- classifies the result, writes it to the run summary and, when a human
+  needs to act, opens or updates one GitHub Issue for the period.
+
+A release PR counts only when its title is `DMI Release: YYYY-MM (not
+deployed)`, its branch is `release/YYYY-MM` (with the timestamp suffix),
+it targets `main` and it carries the labels `release` and `not-deployed`.
+A PR closed without merging is not a release.
+
+### Classifications
+
+| Classification | Meaning | Issue |
+|---|---|---|
+| `NOT_YET_DUE` | Checked before 10:17 UTC on the 17th | No |
+| `RUN_IN_PROGRESS` | The scheduled run is still running | No |
+| `RELEASE_PR_PENDING_REVIEW` | A release PR for the period is open. The reminder handles review follow-up | No |
+| `RELEASE_MERGED` | The period is in `releases.json` on `main`. Merging does not deploy; this does not say the site was deployed | No |
+| `APPROVED_SOURCE_UNAVAILABLE` | The period has a valid registry entry, and the scheduled run got through every earlier step and failed at "Fetch CPI data (live only)", as that exception predicts | No |
+| `SCHEDULED_RUN_MISSING` | No scheduled run started this cycle. An approved data gap does not excuse this | Yes |
+| `SCHEDULED_RUN_FAILED` | The scheduled run failed or was cancelled and no release PR exists. Includes a failure the approved exception does not explain, such as one at "Set up Python" | Yes |
+| `SCHEDULED_RUN_STALLED` | The scheduled run has been queued or running for over 24 hours | Yes |
+| `RUN_SUCCEEDED_NO_RELEASE_PR` | The run succeeded but no open or merged release PR exists | Yes |
+| `MERGED_BUT_NOT_IN_MANIFEST` | A release PR was merged but `releases.json` on `main` lacks the period | Yes |
+| `SCHEDULED_TRIGGER_MISSING` | A release PR exists (for example from a manual recovery), but no scheduled run started, so the schedule is not shown to work | Yes |
+
+Manual recovery: a manual `prepare_release`/`live` run that opens a valid
+release PR resolves a failed scheduled run. A manual `validate`/`fixture`
+run never counts as release preparation; the watchdog reads the run's
+step record to tell them apart.
+
+If any GitHub request fails, the run fails with exit code 2 and says so
+in the run summary. An error is never read as "no runs" or "no PRs".
+
+### Issues
+- Title `[DMI Watchdog] YYYY-MM — release preparation requires attention`,
+  with the hidden marker `<!-- dmi-watchdog:YYYY-MM -->` in the body,
+  assigned to `tcwilliams79`.
+- Before creating one, the watchdog searches open **and closed** Issues
+  for the marker, so each period gets at most one Issue.
+- Each Issue and update records its state in a hidden marker. Daily
+  checks that find the same state post nothing. A changed state adds one
+  comment.
+- The watchdog never closes or reopens an Issue. When a closed Issue's
+  period needs attention again, it comments on it.
+
+Example Issue:
+
+```text
+[DMI Watchdog] 2026-10 — release preparation requires attention
+
+Expected reference period: 2026-10
+Classification: SCHEDULED_RUN_FAILED
+Problem: run 43739957699 ended failure at job 'prepare-dmi', step 'Set up
+Python'. 2026-10 is an approved unavailable period, but the record does not
+show the run reaching 'Fetch CPI data (live only)' and failing there, so the
+approved exception does not explain this failure
+Checked at: 2026-11-17 23:59 UTC
+
+Evidence
+- Scheduled runs this cycle (.github/workflows/monthly_dmi.yml):
+  - run 43739957699 (schedule, 2026-11-15 17:14 UTC, branch main): failure;
+    failed at job 'prepare-dmi', step 'Set up Python' — https://github.com/dmianalysis/dmi/actions/runs/43739957699
+- Manual runs this cycle: none
+- Release PRs for 2026-10: none
+- data/outputs/releases.json on main: 2026-10 absent
+- registry/unavailable_periods.json: 2026-10 listed (valid), approved in dmianalysis/dmi#40
+
+Suggested action
+Open the run, read the failed step's log and fix the cause in a reviewed PR.
+Then prepare the release manually: run Monthly DMI Preparation with
+mode=prepare_release, data_source=live and reference_period=2026-10. ...
+```
+
+### Running it by hand
+Manual runs are dry runs unless **notify** is ticked. A dry run prints the
+period, the run and PR evidence, the manifest and registry status, the
+classification and the Issue action it would take, and writes nothing.
+
+- **Actions → DMI Missing-Release Watchdog → Run workflow**, leaving
+  **notify** unticked. Set **as_of** (for example `2026-11-17`) to replay a
+  past check; a replayed date is always a dry run.
+- Locally, with a token that can read the repository:
+
+  ```bash
+  GH_TOKEN="$(gh auth token)" ./venv/bin/python -m scripts.monthly_release_watchdog \
+    --repo dmianalysis/dmi --as-of 2026-12-17 --dry-run
+  ```
+
+`--notify` creates or updates the Issue and is refused together with
+`--as-of`.
+
+### Limitations
+- A replayed date filters runs and PRs to that date, but reads the
+  manifest and registry as they are on `main` now.
+- "Explained by an approved exception" rests on the step record: the run
+  failed at the CPI fetch after every earlier step succeeded. The
+  watchdog does not read logs.
+- A manual run's inputs are not in the GitHub API, so its reference
+  period is known only through the release PR it opened.
+- The watchdog runs on the same runner image and Python setup as the
+  monthly workflow, so a failure of that setup can stop both. GitHub then
+  shows the watchdog's own run as failed; it does not open an Issue.
+- GitHub can start scheduled runs late (the November 15, 2026 run started
+  at 17:14 UTC) or drop them under load. The two-day grace period absorbs
+  delays; a dropped run is reported as `SCHEDULED_RUN_MISSING`.
+- GitHub disables scheduled workflows in a public repository, such as
+  this one, after 60 days without activity. That disables the watchdog
+  too.
+
+---
+
 ## Runtime requirements
 - Every workflow that runs DMI code uses **Python 3.12** on
   `ubuntu-latest`. PR CI also tests Python 3.13.
