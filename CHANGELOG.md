@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   opening a PR, or succeeded without one, which the release-gate reminder
   cannot see. An approved data gap does not hide an infrastructure
   failure.
+- A failure counts as explained by an approved exception only when the
+  failed job's log shows the documented limitation as its sole cause; for
+  October 2026, that CPI has no observations for October 2025. An
+  authentication or network error, a timeout, any other exception, or a
+  log that cannot be read is reported.
+- It runs on the runner image's `python3` with the standard library only,
+  independent of `actions/setup-python` and the DMI lock.
 - It only reads, apart from creating an Issue or commenting on one. It
   cannot rerun workflows, merge PRs, change repository content or deploy.
   Manual runs are dry runs by default. See `docs/deployment-workflows.md`.

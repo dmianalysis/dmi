@@ -161,7 +161,11 @@ PR, changes repository content or deploys.
   `.github/workflows/monthly_dmi.yml` this month (with the failed job and
   step of any failed run), the release PRs for the period,
   `data/outputs/releases.json` on `main` and
-  `registry/unavailable_periods.json` on `main`;
+  `registry/unavailable_periods.json` on `main`. For a run that failed at
+  the CPI fetch in an approved period it also reads the failed job's log;
+- runs on the runner image's own `python3` with the standard library
+  only. It does not use `actions/setup-python` or the DMI dependency lock,
+  because a failure there is one of the things it reports;
 - classifies the result, writes it to the run summary and, when a human
   needs to act, opens or updates one GitHub Issue for the period.
 
@@ -178,13 +182,36 @@ A PR closed without merging is not a release.
 | `RUN_IN_PROGRESS` | The scheduled run is still running | No |
 | `RELEASE_PR_PENDING_REVIEW` | A release PR for the period is open. The reminder handles review follow-up | No |
 | `RELEASE_MERGED` | The period is in `releases.json` on `main`. Merging does not deploy; this does not say the site was deployed | No |
-| `APPROVED_SOURCE_UNAVAILABLE` | The period has a valid registry entry, and the scheduled run got through every earlier step and failed at "Fetch CPI data (live only)", as that exception predicts | No |
+| `APPROVED_SOURCE_UNAVAILABLE` | The period has a valid registry entry naming the missing base month, the run got through every earlier step and failed at "Fetch CPI data (live only)", and the job log shows the fetch completed and stopped only because CPI has no observations for the 12-month base month (see below) | No |
 | `SCHEDULED_RUN_MISSING` | No scheduled run started this cycle. An approved data gap does not excuse this | Yes |
 | `SCHEDULED_RUN_FAILED` | The scheduled run failed or was cancelled and no release PR exists. Includes a failure the approved exception does not explain, such as one at "Set up Python" | Yes |
 | `SCHEDULED_RUN_STALLED` | The scheduled run has been queued or running for over 24 hours | Yes |
 | `RUN_SUCCEEDED_NO_RELEASE_PR` | The run succeeded but no open or merged release PR exists | Yes |
 | `MERGED_BUT_NOT_IN_MANIFEST` | A release PR was merged but `releases.json` on `main` lacks the period | Yes |
 | `SCHEDULED_TRIGGER_MISSING` | A release PR exists (for example from a manual recovery), but no scheduled run started, so the schedule is not shown to work | Yes |
+
+What counts as positive evidence for an approved exception. A failure at
+the right step is not enough. The failed job's log must show all of:
+
+- the fetch ran for the expected period, both BLS requests completed and
+  validation ran (`[3/3] Validating required observations...`);
+- no traceback;
+- exactly one `ERROR: BLS data cannot support DMI reference period
+  YYYY-MM; nothing was staged.`, whose only problem is `CPI has no
+  observations for <base month> (12-month CPI base month).`;
+- `Process completed with exit code 1.`
+
+The registry entry must also name that base month (for October 2026,
+"October 2025"). A BLS authentication error, network failure, timeout or
+any other exception raises in the BLS client and leaves a traceback, so
+it is reported. So is any additional missing observation, a log that
+cannot be read, and a log in any other shape. Only this one kind of
+exception is recognised; any other kind of approved gap still alerts
+until a person looks at it.
+
+The log is fetched with the job token (`actions: read`). GitHub answers
+with a redirect to a signed storage URL, which is fetched without the
+token.
 
 Manual recovery: a manual `prepare_release`/`live` run that opens a valid
 release PR resolves a failed scheduled run. A manual `validate`/`fixture`
@@ -245,7 +272,7 @@ classification and the Issue action it would take, and writes nothing.
 - Locally, with a token that can read the repository:
 
   ```bash
-  GH_TOKEN="$(gh auth token)" ./venv/bin/python -m scripts.monthly_release_watchdog \
+  GH_TOKEN="$(gh auth token)" python3 -m scripts.monthly_release_watchdog \
     --repo dmianalysis/dmi --as-of 2026-12-17 --dry-run
   ```
 
@@ -255,14 +282,17 @@ classification and the Issue action it would take, and writes nothing.
 ### Limitations
 - A replayed date filters runs and PRs to that date, but reads the
   manifest and registry as they are on `main` now.
-- "Explained by an approved exception" rests on the step record: the run
-  failed at the CPI fetch after every earlier step succeeded. The
-  watchdog does not read logs.
+- Recognising an approved exception depends on the wording that
+  `scripts.test_bls_api` prints. The tests generate their logs from that
+  script, so rewording it fails them. GitHub keeps job logs for a limited
+  time (90 days by default); after that the evidence cannot be read and
+  the failure is reported.
 - A manual run's inputs are not in the GitHub API, so its reference
   period is known only through the release PR it opened.
-- The watchdog runs on the same runner image and Python setup as the
-  monthly workflow, so a failure of that setup can stop both. GitHub then
-  shows the watchdog's own run as failed; it does not open an Issue.
+- The watchdog needs the runner image to provide `python3` (3.9 or
+  newer). It shares the runner image with the monthly workflow but not
+  its Python setup. If the image itself breaks, both can fail; the
+  watchdog's own run then shows as failed and opens no Issue.
 - GitHub can start scheduled runs late (the November 15, 2026 run started
   at 17:14 UTC) or drop them under load. The two-day grace period absorbs
   delays; a dropped run is reported as `SCHEDULED_RUN_MISSING`.

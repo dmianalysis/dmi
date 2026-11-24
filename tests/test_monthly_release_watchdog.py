@@ -3,8 +3,10 @@
 Every test runs against ``FakeGitHub``, an in-memory stand-in for the
 GitHub REST API. Nothing here touches the network or creates a real
 Issue. Job and step records are built from the real step names in
-``monthly_dmi.yml``, so a renamed step breaks these tests rather than
-silently changing the classification.
+``monthly_dmi.yml``, and job logs from the real fetch step's script and
+the real ``scripts.test_bls_api`` output (run against a fake BLS), so a
+renamed step or a reworded error breaks these tests rather than silently
+changing the classification.
 """
 
 from __future__ import annotations
@@ -15,13 +17,16 @@ import io
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import tempfile
+import traceback
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
 try:
@@ -76,11 +81,80 @@ def job_record(failed_step=None, data_source="live"):
     return {"name": "prepare-dmi", "conclusion": state, "steps": steps}
 
 
+# -- Job logs -----------------------------------------------------------------
+
+def fetch_output(period, failure=None):
+    """(stdout, stderr) of the real ``scripts.test_bls_api`` for ``period``.
+
+    ``failure`` makes the BLS fetch raise instead, as the real client does
+    for an HTTP, authentication or network error; the traceback is what
+    the interpreter would print to stderr.
+    """
+    from scripts import test_bls_api as fetch
+    from tests.test_reference_period_staging import FakeBLS
+    out, err = io.StringIO(), io.StringIO()
+    bls = FakeBLS(last_published="2026-11" if period <= "2026-11" else period,
+                  drop=failure if isinstance(failure, set) else ())
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        (work / "registry").mkdir()
+        shutil.copy2(ROOT / "registry" / "series_catalog_v0_1.json", work / "registry")
+        cwd = Path.cwd()
+        os.chdir(work)
+        try:
+            with bls.installed(), redirect_stdout(out), redirect_stderr(err):
+                if isinstance(failure, BaseException):
+                    def raising(*args, **kwargs):
+                        raise failure
+                    with patch.object(fetch, "fetch_cpi_data", raising):
+                        try:
+                            code = fetch.main(["--reference-period", period])
+                        except BaseException as exc:  # what the interpreter prints
+                            err.write("".join(traceback.format_exception(
+                                type(exc), exc, exc.__traceback__)))
+                            code = 1
+                else:
+                    code = fetch.main(["--reference-period", period])
+        finally:
+            os.chdir(cwd)
+    return out.getvalue(), err.getvalue(), code
+
+
+def actions_log(period, stdout, stderr, code, stderr_first=True):
+    """A job log in GitHub's format around the real fetch step.
+
+    Python buffers stdout but not stderr when it is not a terminal, so in a
+    real log stderr usually comes first. Both orders are produced.
+    """
+    doc = yaml.safe_load((WORKFLOWS / "monthly_dmi.yml").read_text())
+    step = next(s for s in doc["jobs"]["prepare-dmi"]["steps"] if s["name"] == wd.FETCH_STEP)
+    script = step["run"].replace("${{ steps.period.outputs.period }}", period).splitlines()
+    lines = ["##[group]Run actions/checkout@v6", "with:", "##[endgroup]",
+             "Syncing repository: dmianalysis/dmi",
+             "##[group]Run " + script[0]]
+    lines += [f"\x1b[36;1m{line}\x1b[0m" for line in script]
+    lines += ["shell: /usr/bin/bash -e {0}", "env:", "  BLS_API_KEY: ***", "##[endgroup]"]
+    streams = [stderr.splitlines(), stdout.splitlines()]
+    for stream in (streams if stderr_first else streams[::-1]):
+        lines += stream
+    if code:
+        lines.append(f"##[error]Process completed with exit code {code}.")
+    lines.append("Post job cleanup.")
+    return "\n".join(f"2026-11-15T10:21:03.{i:07d}Z {line}" for i, line in enumerate(lines))
+
+
+def october_log(**kwargs):
+    """The log the approved October 2026 exception predicts."""
+    return actions_log("2026-10", *fetch_output("2026-10"), **kwargs)
+
+
 class FakeGitHub:
     """Serves the endpoints the watchdog reads, and records every request."""
 
     def __init__(self):
         self.runs, self.jobs, self.pulls = [], {}, []
+        self.logs, self.log_status, self.downloads = {}, {}, []
+        self.download_error = None
         self.issues, self.comments = [], {}
         self.manifest_ids = ["2026-09", "2026-08"]
         self.registry = REAL_REGISTRY
@@ -94,7 +168,7 @@ class FakeGitHub:
                           "conclusion": conclusion if status == "completed" else None,
                           "created_at": created, "head_branch": branch,
                           "html_url": f"https://github.com/{REPO}/actions/runs/{run_id}"})
-        self.jobs[run_id] = [job_record(failed_step, data_source)]
+        self.jobs[run_id] = [{**job_record(failed_step, data_source), "id": run_id * 10}]
 
     def pr(self, number, period, created, merged_at=None, state="open", closed_at=None,
            title=None, labels=("automated", "release", "not-deployed"), branch=None):
@@ -138,6 +212,14 @@ class FakeGitHub:
         m = re.fullmatch(r"/actions/runs/(\d+)/jobs", route)
         if m:
             return 200, {"jobs": self.jobs[int(m.group(1))]}
+        m = re.fullmatch(r"/actions/jobs/(\d+)/logs", route)
+        if m:
+            job_id = int(m.group(1))
+            if job_id in self.log_status:
+                return self.log_status[job_id], {"message": "log unavailable"}
+            if job_id in self.logs:
+                return 302, {"location": f"https://results.example/{job_id}?sig=s"}
+            return 404, {"message": "Not Found"}
         if route == "/pulls":
             return 200, sorted(self.pulls, key=lambda p: p["created_at"], reverse=True)
         if route == "/contents/data/outputs/releases.json":
@@ -153,6 +235,17 @@ class FakeGitHub:
         if m:
             return 200, self.comments[int(m.group(1))]
         return 404, {"message": f"fake has no route {route}"}
+
+    def download(self, url):
+        """The signed-URL fetch. It receives only the URL, never the token."""
+        self.downloads.append(url)
+        if self.download_error:
+            raise wd.WatchdogError(self.download_error)
+        return self.logs[int(urlsplit(url).path.strip("/"))]
+
+    @property
+    def log_requests(self):
+        return [p for _, p, _ in self.requests if p.endswith("/logs")]
 
     @staticmethod
     def _file(doc):
@@ -180,7 +273,7 @@ NOV = "2026-11-17T16:37:00Z"  # first November check; expects 2026-10
 
 
 def check(fake, as_of=DEC):
-    gh = wd.GitHubClient(REPO, fake)
+    gh = wd.GitHubClient(REPO, fake, download=fake.download)
     ev = wd.gather(gh, utc(as_of))
     return ev, wd.classify(ev)
 
@@ -194,7 +287,8 @@ def run_main(fake, *argv, as_of=DEC):
         try:
             with redirect_stdout(out), redirect_stderr(err):
                 code = wd.main(["--repo", REPO, *argv], transport=fake,
-                               now=lambda: utc(as_of))
+                               now=lambda: utc(as_of),
+                               download=getattr(fake, "download", None))
         finally:
             if old is None:
                 os.environ.pop("GITHUB_STEP_SUMMARY")
@@ -238,6 +332,7 @@ class TestClassification(unittest.TestCase):
         self.assertEqual((v.run.id, v.run.failed_job, v.run.failed_step),
                          (502, "prepare-dmi", "Set up Python"))
         self.assertIn("no approved exception", v.reason)
+        self.assertEqual(fake.log_requests, [], "a setup failure needs no log")
         body = wd.render(ev, v)
         for needed in ("2026-11", "SCHEDULED_RUN_FAILED", "Set up Python",
                        "https://github.com/dmianalysis/dmi/actions/runs/502",
@@ -347,6 +442,7 @@ class TestClassification(unittest.TestCase):
         fake = FakeGitHub()
         fake.run(511, "2026-11-15T10:20:00Z", conclusion="failure",
                  failed_step=wd.FETCH_STEP)
+        fake.logs[5110] = october_log()
         ev, v = check(fake, NOV)
         self.assertEqual(ev.period, "2026-10")
         self.assertTrue(ev.approved_unavailable)
@@ -354,6 +450,7 @@ class TestClassification(unittest.TestCase):
         self.assertFalse(v.alert)
         self.assertIn("dmianalysis/dmi#40", v.reason)
         self.assertIn("CPI comparison data are unavailable", v.reason)
+        self.assertIn("only because CPI has no observations for 2025-10", v.reason)
 
     def test_10_approved_gap_does_not_conceal_an_infrastructure_failure(self):
         # This is what actually happened on November 15, 2026.
@@ -378,31 +475,48 @@ class TestClassification(unittest.TestCase):
         self.assertEqual(check(fake, NOV)[1].classification, wd.SCHEDULED_RUN_FAILED)
 
     def test_11_failed_cpi_acquisition_with_an_approved_exception(self):
+        for stderr_first in (True, False):
+            with self.subTest(stderr_first=stderr_first):
+                fake = FakeGitHub()
+                fake.run(515, "2026-11-15T10:20:00Z", conclusion="failure",
+                         failed_step=wd.FETCH_STEP)
+                fake.logs[5150] = october_log(stderr_first=stderr_first)
+                ev, v = check(fake, NOV)
+                self.assertTrue(v.run.steps_before_failure_succeeded)
+                self.assertEqual(v.classification, wd.APPROVED_SOURCE_UNAVAILABLE)
+                self.assertEqual(fake.downloads, ["https://results.example/5150?sig=s"])
+                code, _, _, _ = run_main(fake, "--notify", as_of=NOV)
+                self.assertEqual((code, fake.writes), (0, []))
+
+    def test_11c_failing_at_the_fetch_step_is_not_enough(self):
         fake = FakeGitHub()
         fake.run(515, "2026-11-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
-        ev, v = check(fake, NOV)
-        self.assertTrue(v.run.steps_before_failure_succeeded)
-        self.assertEqual(v.classification, wd.APPROVED_SOURCE_UNAVAILABLE)
-        code, _, _, _ = run_main(fake, "--notify", as_of=NOV)
-        self.assertEqual((code, fake.writes), (0, []))
+        ev, v = check(fake, NOV)  # no log available: 404
+        self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED)
+        self.assertIn("job log could not be read", v.reason)
+        self.assertIn("needs investigation", v.reason)
 
     def test_11b_an_invalid_registry_approves_nothing(self):
         fake = FakeGitHub()
         fake.registry = json.loads(json.dumps(REAL_REGISTRY))
         fake.registry["periods"][0]["reason"] = "TODO"
         fake.run(515, "2026-11-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
+        fake.logs[5150] = october_log()
         ev, v = check(fake, NOV)
         self.assertFalse(ev.approved_unavailable)
+        self.assertEqual(fake.log_requests, [], "no log is read for an unapproved period")
         self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED)
         self.assertIn("registry is not valid", v.reason)
 
     def test_12_future_missing_month_with_no_approved_exception(self):
         fake = FakeGitHub()
         fake.run(516, "2027-04-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
+        fake.logs[5160] = actions_log("2027-03", *fetch_output("2027-03", {"2026-03"}))
         ev, v = check(fake, "2027-04-17T16:37:00Z")
         self.assertEqual(ev.period, "2027-03")
         self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED)
         self.assertIn("no approved exception", v.reason)
+        self.assertEqual(fake.log_requests, [])
 
     def test_stalled_and_in_progress_runs(self):
         fake = FakeGitHub()
@@ -416,6 +530,163 @@ class TestClassification(unittest.TestCase):
         fake = FakeGitHub()
         fake.run(519, "2026-11-15T10:20:00Z")
         self.assertEqual(check(fake)[1].classification, wd.SCHEDULED_RUN_MISSING)
+
+
+@unittest.skipIf(yaml is None, "PyYAML not available")
+class TestSourceFailureEvidence(unittest.TestCase):
+    """Only the documented limitation, shown in the job log, is expected.
+
+    Every case fails at "Fetch CPI data (live only)" after every earlier
+    step succeeded, in the approved period 2026-10. Only the first is
+    explained.
+    """
+
+    def classify_with_log(self, log=None, status=None, download_error=None):
+        fake = FakeGitHub()
+        fake.run(560, "2026-11-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
+        if log is not None:
+            fake.logs[5600] = log
+        if status is not None:
+            fake.log_status[5600] = status
+        fake.download_error = download_error
+        ev, v = check(fake, NOV)
+        return fake, ev, v
+
+    def assert_alert(self, log=None, fragment="", **kwargs):
+        fake, ev, v = self.classify_with_log(log, **kwargs)
+        self.assertTrue(ev.approved_unavailable)
+        self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED, v.reason)
+        self.assertTrue(v.alert)
+        self.assertIn("needs investigation", v.reason)
+        self.assertIn(fragment, v.reason)
+        self.assertIn("job log:", wd.render(ev, v))
+        code, _, _, _ = run_main(fake, "--notify", as_of=NOV)
+        self.assertEqual((code, len(fake.issues)), (0, 1), "an Issue must be opened")
+        return v
+
+    def test_missing_october_2025_cpi_is_recognised(self):
+        stdout, stderr, code = fetch_output("2026-10")
+        self.assertIn("CPI has no observations for 2025-10 (12-month CPI base month).", stderr)
+        _, _, v = self.classify_with_log(actions_log("2026-10", stdout, stderr, code))
+        self.assertEqual(v.classification, wd.APPROVED_SOURCE_UNAVAILABLE)
+
+    def test_bls_authentication_failure_alerts(self):
+        exc = ValueError("BLS API error: The key provided by the User is invalid.")
+        self.assert_alert(actions_log("2026-10", *fetch_output("2026-10", exc)),
+                          "traceback")
+
+    def test_network_failure_alerts(self):
+        exc = ValueError("Failed to fetch CPI data from BLS API: HTTPSConnectionPool("
+                         "host='api.bls.gov', port=443): Max retries exceeded "
+                         "(Caused by NewConnectionError('Failed to establish a new connection'))")
+        self.assert_alert(actions_log("2026-10", *fetch_output("2026-10", exc)), "traceback")
+
+    def test_timeout_alerts(self):
+        self.assert_alert(actions_log("2026-10", *fetch_output("2026-10", TimeoutError(
+            "The read operation timed out"))), "traceback")
+
+    def test_unexpected_exception_alerts(self):
+        self.assert_alert(actions_log("2026-10", *fetch_output("2026-10", KeyError("series"))),
+                          "traceback")
+
+    def test_more_missing_data_than_documented_alerts(self):
+        from tests.test_reference_period_staging import CPI_SERIES, U3_SERIES
+        some_cpi = sorted(CPI_SERIES)[0]
+        for drop, problem in (({"2026-10"}, "reference month"),
+                              ({("2026-10", some_cpi)}, "CPI observation missing"),
+                              ({("2026-10", U3_SERIES)}, "U-3 has no observation")):
+            with self.subTest(problem=problem):
+                stdout, stderr, code = fetch_output("2026-10", drop)
+                self.assertIn(problem, stderr)
+                self.assert_alert(actions_log("2026-10", stdout, stderr, code),
+                                  "the acquisition error lists")
+
+    def test_log_for_another_period_alerts(self):
+        self.assert_alert(actions_log("2026-09", *fetch_output("2026-10")), "no single")
+
+    def test_log_without_the_exit_or_validation_alerts(self):
+        stdout, stderr, _ = fetch_output("2026-10")
+        self.assert_alert(actions_log("2026-10", stdout, stderr, 0), "exit with code 1")
+        cut = stdout.split("[3/3]")[0]
+        self.assert_alert(actions_log("2026-10", cut, stderr, 1), "did not complete")
+
+    def test_repeated_acquisition_error_alerts(self):
+        stdout, stderr, code = fetch_output("2026-10")
+        self.assert_alert(actions_log("2026-10", stdout, stderr + stderr, code), "exactly one")
+
+    def test_unreadable_log_alerts(self):
+        for status in (401, 403, 404, 410, 500):
+            with self.subTest(status=status):
+                self.assert_alert(status=status, fragment=f"HTTP {status}")
+        self.assert_alert(october_log(), "download failed",
+                          download_error="job log download failed: timed out")
+
+    def test_registry_entry_must_name_the_missing_base_month(self):
+        fake = FakeGitHub()
+        fake.registry = json.loads(json.dumps(REAL_REGISTRY))
+        entry = fake.registry["periods"][0]
+        entry["detail"] = entry["detail"].replace("October 2025", "the base month")
+        fake.run(560, "2026-11-15T10:20:00Z", conclusion="failure", failed_step=wd.FETCH_STEP)
+        fake.logs[5600] = october_log()
+        ev, v = check(fake, NOV)
+        self.assertTrue(ev.approved_unavailable)
+        self.assertEqual(v.classification, wd.SCHEDULED_RUN_FAILED)
+        self.assertIn("does not name 2025-10", v.reason)
+
+    def test_base_month(self):
+        self.assertEqual(wd.base_month("2026-10"), "2025-10")
+        self.assertEqual(wd.base_month("2027-01"), "2026-01")
+
+
+class TestLogTransport(unittest.TestCase):
+    """The token goes to the API only, never to the redirected log host."""
+
+    def test_redirects_are_not_followed(self):
+        handler = wd._NoRedirect()
+        self.assertIsNone(handler.redirect_request(None, None, 302, "Found", {},
+                                                   "https://results.example/x"))
+
+    def test_api_transport_is_built_without_redirect_following(self):
+        built = []
+        real = wd.urllib.request.build_opener
+
+        def capture(*handlers):
+            built.append(handlers)
+            return real(*handlers)
+        with patch.object(wd.urllib.request, "build_opener", capture):
+            wd.urllib_transport("token", "https://api.github.com")
+        self.assertEqual(built, [(wd._NoRedirect,)])
+
+    def test_download_sends_no_token(self):
+        seen = []
+
+        class Response(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        def fake_urlopen(req, timeout):
+            seen.append(req)
+            return Response(b"log text")
+        with patch.object(wd.urllib.request, "urlopen", fake_urlopen):
+            self.assertEqual(wd.urllib_download("https://results.example/1?sig=s"), "log text")
+        self.assertEqual(len(seen), 1)
+        self.assertNotIn("Authorization", {k.title() for k in seen[0].headers})
+
+    def test_download_refuses_plain_http(self):
+        def must_not_open(req, timeout):
+            raise AssertionError("an http URL must be refused before any request")
+        with patch.object(wd.urllib.request, "urlopen", must_not_open), \
+                self.assertRaises(wd.WatchdogError):
+            wd.urllib_download("http://results.example/1")
+
+    def test_client_without_a_downloader_cannot_follow(self):
+        fake = FakeGitHub()
+        fake.logs[1] = "x"
+        with self.assertRaises(wd.WatchdogError):
+            wd.GitHubClient(REPO, fake).job_log(1)
 
 
 @unittest.skipIf(yaml is None, "PyYAML not available")
@@ -679,7 +950,7 @@ class TestNoPublicationAuthority(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, code)
         uses = {str(s.get("uses", "")).split("@")[0] for s in steps if s.get("uses")}
-        self.assertEqual(uses, {"actions/checkout", "actions/setup-python"})
+        self.assertEqual(uses, {"actions/checkout"})
         checkout = next(s for s in steps if str(s.get("uses", "")).startswith("actions/checkout"))
         self.assertIs(checkout["with"]["persist-credentials"], False)
 
@@ -706,7 +977,7 @@ class TestWorkflowWiring(unittest.TestCase):
         step = next(s for s in doc["jobs"]["watch"]["steps"]
                     if s["name"] == "Check this month's release preparation")
         with tempfile.TemporaryDirectory() as tmp:
-            stub = Path(tmp) / "python"
+            stub = Path(tmp) / "python3"
             stub.write_text('#!/bin/sh\necho "$@"\n')
             stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
             env = {"PATH": f"{tmp}:{os.environ['PATH']}", "EVENT_NAME": event,

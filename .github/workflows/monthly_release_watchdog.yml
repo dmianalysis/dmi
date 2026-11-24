@@ -11,6 +11,11 @@
 # It has no secrets beyond the job token, which can read Actions, PRs and
 # contents and write Issues. scripts.monthly_release_watchdog refuses
 # every write except creating an Issue or commenting on one.
+#
+# It runs on the runner image's python3 with the standard library only,
+# and never uses actions/setup-python or requirements-lock/: the monthly
+# workflow's Python setup is one of the things it watches.
+# tests/test_python_runtime_policy.py holds it to that.
 
 name: DMI Missing-Release Watchdog
 
@@ -34,10 +39,6 @@ on:
         default: false
         type: boolean
 
-env:
-  # Operational Python runtime; see requirements-lock/README.md.
-  PYTHON_VERSION: '3.12'
-
 permissions:
   contents: read
   actions: read
@@ -59,33 +60,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-          cache-dependency-path: requirements-lock/python${{ env.PYTHON_VERSION }}.txt
-
-      - name: Verify Python runtime
+      - name: Show runner Python
         run: |
-          python --version
-          python -m pip --version
-          python - <<'PY'
-          import os, sys
-          want = os.environ["PYTHON_VERSION"]
-          have = "%d.%d" % sys.version_info[:2]
-          print(f"interpreter: {sys.version.split()[0]} at {sys.executable}")
-          if have != want:
-              sys.exit(f"FAIL: interpreter is Python {have}; this workflow requires {want}")
-          PY
-
-      - name: Install dependencies
-        run: |
-          # The watchdog itself uses only the standard library. The lock is
-          # installed so the job runs the same environment as every other
-          # workflow that checks out this repository.
-          python -m pip install --require-hashes --only-binary=:all: \
-            -r "requirements-lock/python${PYTHON_VERSION}.txt"
+          # The runner image's own python3, on purpose. The watchdog uses
+          # only the standard library, so it does not depend on
+          # actions/setup-python or the DMI dependency lock: a failure
+          # there is one of the things it reports.
+          python3 --version
 
       - name: Check this month's release preparation
         env:
@@ -106,4 +87,4 @@ jobs:
           else
             ARGS+=(--dry-run)
           fi
-          python -m scripts.monthly_release_watchdog "${ARGS[@]}"
+          python3 -m scripts.monthly_release_watchdog "${ARGS[@]}"

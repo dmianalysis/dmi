@@ -21,7 +21,10 @@ Evidence, all read through the GitHub REST API:
   and ``not-deployed``;
 - ``data/outputs/releases.json`` on ``main``;
 - ``registry/unavailable_periods.json`` on ``main``, checked with
-  ``scripts.unavailable_periods``.
+  ``scripts.unavailable_periods``;
+- for a run that failed at the CPI fetch in an approved period, the
+  failed job's log, which must show the documented data limitation and
+  nothing else before that failure is treated as expected.
 
 The watchdog only reads, except for creating an Issue or commenting on
 one. ``GitHubClient`` refuses every other write, so it cannot rerun a
@@ -29,7 +32,11 @@ workflow, merge or close a PR, change repository content or deploy. An
 API error stops the run with a diagnostic; it is never read as "nothing
 found".
 
-Run ``python -m scripts.monthly_release_watchdog --help``. Without
+It needs only the standard library and runs on the runner's own
+``python3``: it must not depend on ``actions/setup-python`` or the DMI
+dependency lock, whose failure it exists to report.
+
+Run ``python3 -m scripts.monthly_release_watchdog --help``. Without
 ``--notify`` it is a dry run and makes no write at all.
 """
 
@@ -48,7 +55,15 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Callable, Optional
 
-from scripts.unavailable_periods import REGISTRY_RELATIVE_PATH, check_registry
+if sys.version_info < (3, 9):  # pragma: no cover - the runner image's python3
+    sys.exit("monthly_release_watchdog needs Python 3.9 or newer")
+
+from scripts.unavailable_periods import (  # noqa: E402
+    REGISTRY_RELATIVE_PATH,
+    check_registry,
+    month_index,
+    release_id_for,
+)
 
 WORKFLOW_PATH = ".github/workflows/monthly_dmi.yml"
 MANIFEST_PATH = "data/outputs/releases.json"
@@ -67,6 +82,10 @@ STALL_AFTER = timedelta(hours=24)
 #: Step names in monthly_dmi.yml that the classification relies on.
 FETCH_STEP = "Fetch CPI data (live only)"
 CREATE_PR_STEP = "Create Release PR (no deployment)"
+#: The command that step runs, as it appears in the job log.
+FETCH_COMMAND = "python -m scripts.test_bls_api"
+#: Job logs larger than this are not read.
+MAX_LOG_BYTES = 20_000_000
 
 RELEASE_LABELS = {"release", "not-deployed"}
 
@@ -187,7 +206,20 @@ Transport = Callable[[str, str, Optional[dict]], tuple[int, object]]
 _ALLOWED_WRITES = re.compile(r"/repos/[^/]+/[^/]+/issues(/\d+/comments)?")
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Return redirects to the caller instead of following them.
+
+    The job-log endpoint redirects to a signed storage URL. Following it
+    here would send the token to that host as well.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def urllib_transport(token: str, api_url: str) -> Transport:
+    opener = urllib.request.build_opener(_NoRedirect)
+
     def send(method: str, path: str, body: Optional[dict]) -> tuple[int, object]:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
@@ -199,10 +231,14 @@ def urllib_transport(token: str, api_url: str) -> Transport:
                 "User-Agent": "dmi-monthly-release-watchdog",
             })
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with opener.open(req, timeout=30) as resp:
                 raw = resp.read()
+                if "json" not in resp.headers.get("Content-Type", ""):
+                    return resp.status, raw.decode("utf-8", errors="replace")
                 return resp.status, json.loads(raw) if raw else None
         except urllib.error.HTTPError as exc:
+            if 300 <= exc.code < 400:
+                return exc.code, {"location": exc.headers.get("Location")}
             detail = exc.read().decode(errors="replace")
             try:
                 detail = json.loads(detail).get("message", detail)
@@ -214,6 +250,21 @@ def urllib_transport(token: str, api_url: str) -> Transport:
     return send
 
 
+def urllib_download(url: str) -> str:
+    """Fetch a signed log URL. No token is sent; it is not GitHub's API host."""
+    if not url.startswith("https://"):
+        raise WatchdogError("job log redirect is not an https URL")
+    req = urllib.request.Request(url, headers={"User-Agent": "dmi-monthly-release-watchdog"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = resp.read(MAX_LOG_BYTES + 1)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise WatchdogError(f"job log download failed: {exc}") from exc
+    if len(raw) > MAX_LOG_BYTES:
+        raise WatchdogError(f"job log is larger than {MAX_LOG_BYTES} bytes")
+    return raw.decode("utf-8", errors="replace")
+
+
 class GitHubClient:
     """Read access to one repository, plus Issue creation and comments.
 
@@ -222,11 +273,13 @@ class GitHubClient:
     permitted; anything else raises.
     """
 
-    def __init__(self, repo: str, transport: Transport, allow_writes: bool = False):
+    def __init__(self, repo: str, transport: Transport, allow_writes: bool = False,
+                 download: Optional[Callable[[str], str]] = None):
         if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
             raise WatchdogError(f"repository must be owner/name, got {repo!r}")
         self.repo = repo
         self._send = transport
+        self._download = download
         self.allow_writes = allow_writes
 
     def _path(self, suffix: str, params: Optional[dict] = None) -> str:
@@ -275,6 +328,20 @@ class GitHubClient:
             raise WatchdogError(f"POST {path} returned HTTP {status}: {message}")
         return payload
 
+    def job_log(self, job_id: int) -> str:
+        """The plain-text log of one Actions job (needs actions: read)."""
+        path = self._path(f"/actions/jobs/{job_id}/logs")
+        status, payload = self._send("GET", path, None)
+        if status == 200 and isinstance(payload, str):
+            return payload
+        location = payload.get("location") if isinstance(payload, dict) else None
+        if status in (301, 302, 303, 307, 308) and location:
+            if self._download is None:
+                raise WatchdogError(f"GET {path}: no way to download the redirected log")
+            return self._download(location)
+        message = payload.get("message") if isinstance(payload, dict) else payload
+        raise WatchdogError(f"GET {path} returned HTTP {status}: {message}")
+
     def file_on_main(self, path: str):
         """Parsed JSON of a file on the default branch, or None if absent."""
         api_path = self._path(f"/contents/{path}", {"ref": DEFAULT_BRANCH})
@@ -304,12 +371,16 @@ class RunEvidence:
     created_at: datetime
     branch: str
     failed_job: Optional[str] = None
+    failed_job_id: Optional[int] = None
     failed_step: Optional[str] = None
     steps_before_failure_succeeded: bool = False
     #: "live" if the CPI fetch step ran, "fixture" if it was skipped,
     #: None when the run stopped before the mode was known.
     data_source: Optional[str] = None
     opened_pr: bool = False
+    #: Set only for a fetch failure in an approved period, from the job log.
+    source_explained: bool = False
+    source_evidence: Optional[str] = None
 
     def describe(self) -> str:
         state = self.conclusion or self.status
@@ -321,7 +392,10 @@ class RunEvidence:
             kind = {"live": "live release preparation", "fixture": "validate/fixture "
                     "(not release preparation)"}.get(self.data_source, "mode unknown")
             text += f"; {kind}"
-        return text + f" — {self.url}"
+        text += f" — {self.url}"
+        if self.source_evidence:
+            text += f"\n    - job log: {self.source_evidence}"
+        return text
 
 
 @dataclass
@@ -384,6 +458,7 @@ def _run_details(gh: GitHubClient, run: RunEvidence) -> None:
             run.opened_pr = True
         if job.get("conclusion") == "failure" and run.failed_job is None:
             run.failed_job = job.get("name")
+            run.failed_job_id = job.get("id")
             for i, step in enumerate(steps):
                 if step.get("conclusion") == "failure":
                     run.failed_step = step.get("name")
@@ -462,7 +537,128 @@ def gather(gh: GitHubClient, as_of: datetime) -> Evidence:
     if ev.registry_entry is not None and period in ev.manifest_ids:
         ev.registry_problems = problems + [
             f"{period} is listed as unavailable but is published"]
+
+    if ev.approved_unavailable:
+        for run in ev.scheduled_runs:
+            if _failed_at_fetch(run):
+                _read_fetch_log(gh, run, ev)
     return ev
+
+
+def _failed_at_fetch(run: RunEvidence) -> bool:
+    return (run.conclusion == "failure" and run.failed_step == FETCH_STEP
+            and run.steps_before_failure_succeeded)
+
+
+def _read_fetch_log(gh: GitHubClient, run: RunEvidence, ev: Evidence) -> None:
+    """Look for the documented limitation in the failed job's log.
+
+    A log that cannot be read leaves the failure unexplained, so it is
+    reported for investigation; it is never taken as confirmation.
+    """
+    if run.failed_job_id is None:
+        run.source_evidence = "the failed job has no id, so its log could not be read"
+        return
+    try:
+        log = gh.job_log(run.failed_job_id)
+    except WatchdogError as exc:
+        run.source_evidence = f"the job log could not be read ({exc})"
+        return
+    run.source_explained, run.source_evidence = source_failure_evidence(
+        log, ev.period, ev.registry_entry)
+
+
+# --------------------------------------------------------------------------
+# Job-log evidence
+# --------------------------------------------------------------------------
+
+_STAMP = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z ?")
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+_MONTHS = ("January", "February", "March", "April", "May", "June", "July",
+           "August", "September", "October", "November", "December")
+
+
+def base_month(period: str) -> str:
+    """The 12-month CPI base month of a reference period."""
+    return release_id_for(month_index(period) - 12)
+
+
+def _fetch_output(log_text: str, period: str) -> Optional[list]:
+    """Output lines of the fetch step for ``period``, or None if not found once.
+
+    Each step in a job log opens with ``##[group]Run <first script line>``,
+    lists its script until ``##[endgroup]``, then prints its output.
+    """
+    lines = [_ANSI.sub("", _STAMP.sub("", line)) for line in log_text.splitlines()]
+    sections, current = [], None
+    for line in lines:
+        if line.startswith("##[group]Run "):
+            current = [line]
+            sections.append(current)
+        elif current is not None:
+            current.append(line)
+    found = []
+    for section in sections:
+        try:
+            end = section.index("##[endgroup]")
+        except ValueError:
+            continue
+        script = "\n".join(section[:end])
+        if FETCH_COMMAND in script and f'"{period}"' in script:
+            found.append(section[end + 1:])
+    return found[0] if len(found) == 1 else None
+
+
+def source_failure_evidence(log_text: str, period: str, entry: dict) -> tuple:
+    """``(explained, evidence)`` for a fetch failure in an approved period.
+
+    Explained only if the log shows all of: the fetch ran for ``period``,
+    both BLS requests completed and validation ran; no traceback; the
+    single acquisition error for ``period``, whose only problem is that
+    CPI has no observations for the 12-month base month; exit code 1. The
+    approved registry entry must name that base month too. Anything else,
+    such as a BLS authentication error, a network failure, a timeout or
+    any other exception, is not explained.
+
+    Python buffers stdout but not stderr in Actions, so the order of the
+    two streams in the log is not relied on. The error and its problem
+    list come from one write and stay together.
+    """
+    base = base_month(period)
+    output = _fetch_output(log_text, period)
+    if output is None:
+        return False, f"the log has no single '{FETCH_STEP}' section for {period}"
+    text = "\n".join(output)
+    if "Traceback (most recent call last)" in text:
+        return False, "the step raised an exception (traceback in the log)"
+    required = (
+        (f"BLS acquisition for reference period {period}", "the fetch did not start for the period"),
+        (f"12-month CPI base month: {base}", f"the fetch did not report {base} as the base month"),
+        ("[3/3] Validating required observations...", "the BLS requests did not complete"),
+        ("##[error]Process completed with exit code 1.", "the step did not exit with code 1"),
+    )
+    for needle, problem in required:
+        if needle not in text:
+            return False, f"{problem} (log lacks '{needle}')"
+    header = f"ERROR: BLS data cannot support DMI reference period {period}; nothing was staged."
+    starts = [i for i, line in enumerate(output) if line == header]
+    if len(starts) != 1:
+        return False, "the log does not contain exactly one acquisition error for the period"
+    problems = []
+    for line in output[starts[0] + 1:]:
+        if not line.startswith("  - "):
+            break
+        problems.append(line[4:])
+    expected = [f"CPI has no observations for {base} (12-month CPI base month)."]
+    if problems != expected:
+        return False, f"the acquisition error lists {problems}, not only {expected}"
+    named = (base, f"{_MONTHS[int(base[5:]) - 1]} {base[:4]}")
+    entry_text = f"{entry.get('reason', '')} {entry.get('detail', '')}"
+    if not any(n in entry_text for n in named):
+        return False, f"the registry entry for {period} does not name {base} as the missing data"
+    return True, (f"the job log shows the fetch completed and stopped only because CPI has no "
+                  f"observations for {base}, the 12-month base month, which the registry "
+                  f"entry ({entry.get('approved_in')}) documents as unavailable")
 
 
 # --------------------------------------------------------------------------
@@ -491,15 +687,14 @@ class Verdict:
 
 
 def _expected_source_failure(run: RunEvidence, ev: Evidence) -> bool:
-    """A failure the approved exception explains, on the step-level record.
+    """A failure the approved exception is shown to explain.
 
-    The run must have got through everything up to the live CPI fetch and
-    failed at that step, and the period must have a valid registry entry.
-    A failure anywhere else (setup, install, compute, finalization) is not
-    explained by missing source data.
+    The period must have a valid registry entry; the run must have got
+    through every earlier step and failed at the live CPI fetch; and the
+    job log must show the documented limitation as the only cause (see
+    ``source_failure_evidence``). Failing at the right step is not enough.
     """
-    return (ev.approved_unavailable and run.conclusion == "failure"
-            and run.failed_step == FETCH_STEP and run.steps_before_failure_succeeded)
+    return ev.approved_unavailable and _failed_at_fetch(run) and run.source_explained
 
 
 def classify(ev: Evidence) -> Verdict:
@@ -567,13 +762,15 @@ def classify(ev: Evidence) -> Verdict:
         return Verdict(APPROVED_SOURCE_UNAVAILABLE, f"{p} is an approved unavailable period "
                        f"({ev.registry_entry['approved_in']}): "
                        f"{ev.registry_entry['reason']}. Run {run.id} failed at "
-                       f"'{FETCH_STEP}' after every earlier step succeeded, which is what "
-                       "that exception predicts.", run, None, notes)
+                       f"'{FETCH_STEP}', and {run.source_evidence}.", run, None, notes)
 
     reason = f"run {run.id} ended {run.conclusion}"
     if run.failed_step or run.failed_job:
         reason += f" at job '{run.failed_job}', step '{run.failed_step or 'unknown'}'"
-    if ev.approved_unavailable:
+    if ev.approved_unavailable and run.source_evidence:
+        reason += (f". {p} is an approved unavailable period, but the evidence does not "
+                   f"link this failure to it: {run.source_evidence}. It needs investigation")
+    elif ev.approved_unavailable:
         reason += (f". {p} is an approved unavailable period, but the record does not show "
                    f"the run reaching '{FETCH_STEP}' and failing there, so the approved "
                    "exception does not explain this failure")
@@ -710,9 +907,10 @@ def _summary(text: str) -> None:
 
 
 def main(argv: Optional[list] = None, transport: Optional[Transport] = None,
-         now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)) -> int:
+         now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+         download: Optional[Callable[[str], str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m scripts.monthly_release_watchdog",
+        prog="python3 -m scripts.monthly_release_watchdog",
         description="Check that this month's DMI release preparation happened.")
     parser.add_argument("--as-of", help="evaluation date, YYYY-MM-DD (end of that UTC "
                         "day) or an ISO date-time; default now")
@@ -738,7 +936,8 @@ def main(argv: Optional[list] = None, transport: Optional[Transport] = None,
                 raise WatchdogError("no GitHub token: set GH_TOKEN or GITHUB_TOKEN")
             transport = urllib_transport(token, os.environ.get("GITHUB_API_URL",
                                                                "https://api.github.com"))
-        gh = GitHubClient(args.repo, transport, allow_writes=args.notify)
+            download = download or urllib_download
+        gh = GitHubClient(args.repo, transport, allow_writes=args.notify, download=download)
         ev = gather(gh, as_of)
         verdict = classify(ev)
         plan = plan_issue(gh, ev, verdict)
